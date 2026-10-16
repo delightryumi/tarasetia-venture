@@ -408,6 +408,13 @@ export function ChannelManagerSection() {
     const [iframeUrl, setIframeUrl] = useState<string>("");
     const [loadingIframe, setLoadingIframe] = useState<boolean>(false);
     const [showApiKey, setShowApiKey] = useState<boolean>(false);
+    const [fullSyncResultData, setFullSyncResultData] = useState<{
+        taskIds: string[];
+        availabilityTaskId?: string;
+        restrictionsTaskId?: string;
+        latencyMs?: number;
+        message?: string;
+    } | null>(null);
 
     // Global Display Toggle: Show Gross Price vs Net Price
     const [pricingViewMode, setPricingViewMode] = useState<"all" | "gross_only" | "net_only">("all");
@@ -1371,8 +1378,18 @@ export function ChannelManagerSection() {
 
             const data = await res.json();
             if (data.success) {
-                const taskMsg = data.taskIds && data.taskIds.length > 0 ? ` (Task IDs: ${data.taskIds.join(", ")})` : "";
-                toast.success(`Availability (500 Days) & Rates pushed to Channel Manager successfully.${taskMsg}`);
+                const tIds = (data.taskIds && data.taskIds.length > 0)
+                    ? data.taskIds
+                    : (data.taskId ? [data.taskId] : []);
+                const taskMsg = tIds.length > 0 ? ` (Task IDs: ${tIds.join(", ")})` : "";
+                setFullSyncResultData({
+                    taskIds: tIds,
+                    availabilityTaskId: data.availabilityTaskId || tIds[0],
+                    restrictionsTaskId: data.restrictionsTaskId || tIds[1],
+                    latencyMs: data.latencyMs,
+                    message: data.message
+                });
+                toast.success(`Availability (500 Days) & Rates berhasil dikirim ke Channel Manager!`);
                 setSyncLog(prev => [
                     {
                         time: new Date().toLocaleTimeString(),
@@ -1682,6 +1699,15 @@ export function ChannelManagerSection() {
 
             if (data.bookingId) {
                 setLastCreatedBookingId(data.bookingId);
+            }
+
+            if (stage.actionKey === "test_full_sync" && isSuccess && data.taskIds && data.taskIds.length > 0) {
+                setFullSyncResultData({
+                    taskIds: data.taskIds,
+                    availabilityTaskId: data.availabilityTaskId || data.taskIds[0],
+                    restrictionsTaskId: data.restrictionsTaskId || data.taskIds[1],
+                    message: data.message
+                });
             }
 
             setCertStages(prev => prev.map((s, idx) => idx === stageIndex ? {
@@ -2971,8 +2997,13 @@ export function ChannelManagerSection() {
                                                                     {hotelId || "(Unassigned)"}
                                                                 </span>
                                                                 {channelConfigs[ch.code]?.channexChannelId && (
-                                                                    <div style={{ fontSize: "10px", color: "var(--s-muted, #64748b)" }}>
-                                                                        CID: {channelConfigs[ch.code].channexChannelId?.slice(0, 8)}...
+                                                                    <div 
+                                                                        onClick={() => copyText(channelConfigs[ch.code].channexChannelId, "Channel ID")}
+                                                                        style={{ fontSize: "10px", color: "var(--s-muted, #64748b)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px", marginTop: "2px" }}
+                                                                        title="Klik untuk menyalin Channel ID lengkap"
+                                                                    >
+                                                                        <Copy size={9} />
+                                                                        <span>CID: <b>{channelConfigs[ch.code].channexChannelId}</b></span>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -3093,8 +3124,13 @@ export function ChannelManagerSection() {
                                                 <div className={styles.catalogHotelIdBadge}>
                                                     <span>Hotel ID: <b>{hotelId || "(Belum Diatur)"}</b></span>
                                                     {channelConfigs[ch.code]?.channexChannelId && (
-                                                        <span style={{ fontSize: "10.5px", color: "#71717a" }}>
-                                                            CID: {channelConfigs[ch.code].channexChannelId?.slice(0, 8)}...
+                                                        <span 
+                                                            onClick={() => copyText(channelConfigs[ch.code].channexChannelId, "Channel ID")}
+                                                            style={{ fontSize: "10.5px", color: "#71717a", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                                                            title="Klik untuk menyalin Channel ID lengkap"
+                                                        >
+                                                            <Copy size={9} />
+                                                            <span>CID: <b>{channelConfigs[ch.code].channexChannelId}</b></span>
                                                         </span>
                                                     )}
                                                 </div>
@@ -4776,6 +4812,146 @@ export function ChannelManagerSection() {
                 onClose={() => setIsTaxesModalOpen(false)}
                 hotelCode={activeHotelCode}
             />
+
+            {/* FULL SYNC RESULT MODAL (CERTIFICATION TEST 1 HELPER) */}
+            {fullSyncResultData && (
+                <div className={styles.modalBackdrop} onClick={() => setFullSyncResultData(null)}>
+                    <div className={styles.confirmModalBox} style={{ maxWidth: "560px", width: "95%" }} onClick={e => e.stopPropagation()}>
+                        <div className={styles.confirmHeader}>
+                            <div className={styles.confirmIcon} style={{ background: "#ecfdf5", color: "#059669" }}>
+                                <CheckCircle2 size={22} />
+                            </div>
+                            <div className={styles.flexOne}>
+                                <h3 className={styles.confirmHeaderTitle} style={{ fontSize: "16px" }}>
+                                    Full Sync ARI (500 Hari) Berhasil
+                                </h3>
+                                <p className={styles.confirmHeaderSub}>
+                                    Tepat 2 API Call Bulk Standar Channel Manager • 500 Hari
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFullSyncResultData(null)}
+                                className={styles.modalCloseBtn}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className={styles.modalBody} style={{ padding: "16px 20px" }}>
+                            <p style={{ fontSize: "12px", color: "#52525b", margin: "0 0 14px 0", lineHeight: 1.5 }}>
+                                Transmisi 500 hari ketersediaan dan tarif sukses dieksekusi. Gunakan 2 Task ID berikut untuk mengisi formulir <b>Test case #1. Full Sync</b> (1 baris per ID).
+                            </p>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                {fullSyncResultData.availabilityTaskId && (
+                                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                                            <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#475569", textTransform: "uppercase" }}>
+                                                Call 1: Availability (All Rooms, 500 Days)
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyText(fullSyncResultData.availabilityTaskId!, "Task ID Availability")}
+                                                style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "4px", padding: "2px 8px", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                                            >
+                                                <Copy size={11} /> Salin
+                                            </button>
+                                        </div>
+                                        <div style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "12px", fontWeight: 700, color: "#0f172a", wordBreak: "break-all" }}>
+                                            {fullSyncResultData.availabilityTaskId}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {fullSyncResultData.restrictionsTaskId && (
+                                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                                            <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#475569", textTransform: "uppercase" }}>
+                                                Call 2: Rates &amp; Restrictions (All Rates, 500 Days)
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyText(fullSyncResultData.restrictionsTaskId!, "Task ID Rates & Restrictions")}
+                                                style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "4px", padding: "2px 8px", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                                            >
+                                                <Copy size={11} /> Salin
+                                            </button>
+                                        </div>
+                                        <div style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "12px", fontWeight: 700, color: "#0f172a", wordBreak: "break-all" }}>
+                                            {fullSyncResultData.restrictionsTaskId}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!fullSyncResultData.availabilityTaskId && !fullSyncResultData.restrictionsTaskId && fullSyncResultData.taskIds.map((tid, idx) => (
+                                    <div key={idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px 14px" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                                            <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#475569", textTransform: "uppercase" }}>
+                                                Task ID #{idx + 1}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyText(tid, `Task ID #${idx + 1}`)}
+                                                style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "4px", padding: "2px 8px", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                                            >
+                                                <Copy size={11} /> Salin
+                                            </button>
+                                        </div>
+                                        <div style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "12px", fontWeight: 700, color: "#0f172a", wordBreak: "break-all" }}>
+                                            {tid}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className={styles.modalFooter} style={{ display: "flex", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setFullSyncResultData(null);
+                                    setActiveTab("logs");
+                                }}
+                                className={styles.btnActionSecondary}
+                                style={{ fontSize: "12px" }}
+                            >
+                                Buka Tab Riwayat Log
+                            </button>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                <button
+                                    type="button"
+                                    onClick={() => copyText(fullSyncResultData.taskIds.join("\n"), "2 Task ID (1 Baris per ID)")}
+                                    style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                        background: "#18181b",
+                                        color: "#ffffff",
+                                        border: "none",
+                                        borderRadius: "6px",
+                                        padding: "8px 14px",
+                                        fontSize: "12px",
+                                        fontWeight: 600,
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    <Copy size={13} />
+                                    <span>Salin Semua (1 ID per Baris)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFullSyncResultData(null)}
+                                    className={styles.btnActionSecondary}
+                                    style={{ fontSize: "12px" }}
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

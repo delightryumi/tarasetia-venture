@@ -606,26 +606,76 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                     </td>
                                     <td className={styles.td}>
                                         {(() => {
-                                            const displayTaskId = item.task_id || (item.task_ids && item.task_ids[0]) || item.id;
+                                            const ids = (item.task_ids && item.task_ids.length > 0)
+                                                ? item.task_ids
+                                                : (item.task_id ? [item.task_id] : [item.id]);
+
+                                            const isMulti = ids.length > 1;
+
                                             return (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleCopy(displayTaskId, `task-${item.id}`);
-                                                    }}
-                                                    className={styles.taskIdChip}
-                                                    title={`Click to copy Task ID: ${displayTaskId}`}
-                                                >
-                                                    <span className={styles.taskIdMono}>
-                                                        {displayTaskId.length > 13 ? `${displayTaskId.slice(0, 8)}...` : displayTaskId}
-                                                    </span>
-                                                    {copiedField === `task-${item.id}` ? (
-                                                        <Check size={11} color="#09090b" />
-                                                    ) : (
-                                                        <Copy size={11} className={styles.taskIdCopyIcon} />
+                                                <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                                                    {ids.map((tid, idx) => {
+                                                        const label = isMulti 
+                                                            ? (idx === 0 ? "Call 1 (Availability)" : idx === 1 ? "Call 2 (Rates/Restrictions)" : `Task ${idx + 1}`)
+                                                            : null;
+                                                        return (
+                                                            <div key={tid || idx} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
+                                                                {label && (
+                                                                    <span style={{ fontSize: "9.5px", fontWeight: 700, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                                                                        {label}:
+                                                                    </span>
+                                                                )}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleCopy(tid, `task-${item.id}-${idx}`);
+                                                                    }}
+                                                                    className={styles.taskIdChip}
+                                                                    title={`Klik untuk menyalin Task ID: ${tid}`}
+                                                                >
+                                                                    <span className={styles.taskIdMono}>
+                                                                        {tid}
+                                                                    </span>
+                                                                    {copiedField === `task-${item.id}-${idx}` ? (
+                                                                        <Check size={11} color="#09090b" />
+                                                                    ) : (
+                                                                        <Copy size={11} className={styles.taskIdCopyIcon} />
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    {isMulti && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleCopy(ids.join("\n"), `task-all-${item.id}`);
+                                                            }}
+                                                            style={{
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                gap: "5px",
+                                                                background: "#f4f4f5",
+                                                                border: "1px solid #d4d4d8",
+                                                                borderRadius: "4px",
+                                                                padding: "3px 8px",
+                                                                fontSize: "10px",
+                                                                fontWeight: 600,
+                                                                color: "#18181b",
+                                                                cursor: "pointer",
+                                                                width: "fit-content",
+                                                                marginTop: "2px",
+                                                                transition: "all 0.15s ease"
+                                                            }}
+                                                            title="Salin 2 Task ID sekaligus (format 1 ID per baris untuk Form Sertifikasi Test #1)"
+                                                        >
+                                                            {copiedField === `task-all-${item.id}` ? <Check size={10} color="#09090b" /> : <Copy size={10} />}
+                                                            <span>{copiedField === `task-all-${item.id}` ? "Tersalin (2 Baris)" : "Salin Keduanya (1 ID per baris)"}</span>
+                                                        </button>
                                                     )}
-                                                </button>
+                                                </div>
                                             );
                                         })()}
                                     </td>
@@ -816,30 +866,83 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                     </span>
                                 </div>
                                 <div className={styles.metaRow}>
-                                    <span className={styles.metaLabel}>Channex Task ID:</span>
-                                    <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#5c0f1e", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                                        <span>{selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids.join(", ")) || selectedEvent.id}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleCopy(selectedEvent.task_id || (selectedEvent.task_ids && selectedEvent.task_ids[0]) || selectedEvent.id, "Task ID")}
-                                            style={{
-                                                border: "1px solid #cbd5e1",
-                                                borderRadius: "4px",
-                                                padding: "2px 8px",
-                                                fontSize: "11px",
-                                                cursor: "pointer",
-                                                backgroundColor: "#f1f5f9",
-                                                color: "#0f172a",
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                gap: "4px"
-                                            }}
-                                            title="Copy for PMS Certification Form"
-                                        >
-                                            {copiedField === "Task ID" ? <Check size={11} color="#09090b" /> : <Copy size={11} />}
-                                            <span>{copiedField === "Task ID" ? "Copied" : "Copy"}</span>
-                                        </button>
-                                    </span>
+                                    <span className={styles.metaLabel}>Task ID:</span>
+                                    <div className={styles.metaValue} style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
+                                        {(() => {
+                                            const ids = (selectedEvent.task_ids && selectedEvent.task_ids.length > 0)
+                                                ? selectedEvent.task_ids
+                                                : (selectedEvent.task_id ? [selectedEvent.task_id] : [selectedEvent.id]);
+                                            const isMulti = ids.length > 1;
+
+                                            return (
+                                                <>
+                                                    {ids.map((tid, idx) => {
+                                                        const label = isMulti 
+                                                            ? (idx === 0 ? "Call 1 (Availability)" : idx === 1 ? "Call 2 (Rates/Restrictions)" : `Task ${idx + 1}`)
+                                                            : null;
+                                                        return (
+                                                            <div key={tid || idx} style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", background: "#fafafa", border: "1px solid #e4e4e7", borderRadius: "6px", padding: "6px 10px" }}>
+                                                                {label && (
+                                                                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                                                                        {label}:
+                                                                    </span>
+                                                                )}
+                                                                <span style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#18181b", fontWeight: 700, fontSize: "11.5px", wordBreak: "break-all" }}>
+                                                                    {tid}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleCopy(tid, `modal-task-${idx}`)}
+                                                                    style={{
+                                                                        border: "1px solid #d4d4d8",
+                                                                        borderRadius: "4px",
+                                                                        padding: "2px 8px",
+                                                                        fontSize: "11px",
+                                                                        cursor: "pointer",
+                                                                        backgroundColor: "#ffffff",
+                                                                        color: "#18181b",
+                                                                        display: "inline-flex",
+                                                                        alignItems: "center",
+                                                                        gap: "4px",
+                                                                        marginLeft: "auto"
+                                                                    }}
+                                                                    title="Salin Task ID ini"
+                                                                >
+                                                                    {copiedField === `modal-task-${idx}` ? <Check size={11} color="#09090b" /> : <Copy size={11} />}
+                                                                    <span>{copiedField === `modal-task-${idx}` ? "Disalin" : "Salin"}</span>
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                    {isMulti && (
+                                                        <div style={{ marginTop: "4px" }}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleCopy(ids.join("\n"), "modal-all-tasks")}
+                                                                style={{
+                                                                    border: "1px solid #18181b",
+                                                                    borderRadius: "5px",
+                                                                    padding: "6px 12px",
+                                                                    fontSize: "11.5px",
+                                                                    fontWeight: 600,
+                                                                    cursor: "pointer",
+                                                                    backgroundColor: "#18181b",
+                                                                    color: "#ffffff",
+                                                                    display: "inline-flex",
+                                                                    alignItems: "center",
+                                                                    gap: "6px"
+                                                                }}
+                                                                title="Salin semua Task ID sekaligus dengan format 1 ID per baris untuk form sertifikasi"
+                                                            >
+                                                                {copiedField === "modal-all-tasks" ? <Check size={12} color="#ffffff" /> : <Copy size={12} color="#ffffff" />}
+                                                                <span>{copiedField === "modal-all-tasks" ? "Tersalin (Format 2 Baris)" : "Salin Keduanya (1 ID per baris untuk Form Sertifikasi)"}</span>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
                                 </div>
                                 {selectedEvent.reason && (
                                     <div className={styles.metaRow}>

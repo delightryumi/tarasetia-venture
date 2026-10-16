@@ -631,9 +631,16 @@ export const ChannelGroupsTab: React.FC = () => {
 
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                 {group.channexGroupId ? (
-                                    <span className={styles.groupChannexBadge} title="Tersinkronisasi dengan Master Channel ID">
-                                        Group ID: {group.channexGroupId.slice(0, 8)}...
-                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => copyToClipboard(group.channexGroupId!, "Channel Manager Group UUID")}
+                                        className={styles.groupChannexBadge}
+                                        title={`Klik untuk menyalin Group UUID: ${group.channexGroupId}`}
+                                        style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px" }}
+                                    >
+                                        <Copy size={10} style={{ opacity: 0.7 }} />
+                                        <span>Group ID: <b>{group.channexGroupId}</b></span>
+                                    </button>
                                 ) : (
                                     <span style={{ fontSize: "11px", color: "#94a3b8" }}>Lokal CRS Group</span>
                                 )}
