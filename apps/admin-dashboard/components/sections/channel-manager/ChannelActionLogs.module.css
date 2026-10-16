@@ -144,8 +144,9 @@
 
 .table {
     width: 100%;
+    min-width: 1080px;
     border-collapse: collapse;
-    font-size: 10.5px;
+    font-size: 11px;
     text-align: left;
     background: #ffffff;
 }
@@ -582,13 +583,13 @@
 .taskIdChip {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     background: #f8fafc;
     border: 1px solid #cbd5e1;
-    padding: 1px 5px;
-    height: 20px;
-    border-radius: 2px;
+    padding: 3px 8px;
+    border-radius: 4px;
     cursor: pointer;
+    white-space: nowrap;
     transition: all 0.12s ease;
 }
 
@@ -599,51 +600,58 @@
 
 .taskIdMono {
     font-family: var(--font-geist-mono, monospace);
-    font-size: 10px;
+    font-size: 11px;
     color: #09090b;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: -0.01em;
+    white-space: nowrap;
 }
 
 .taskIdCopyIcon {
     color: #64748b;
+    flex-shrink: 0;
 }
 
 /* ── Multi-Task Group (e.g. Full Sync with 2 Calls) ── */
 .multiTaskGroup {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 2px 0;
+    gap: 3px;
+    padding: 3px 0;
+    min-width: 330px;
 }
 
 .multiTaskHeader {
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: space-between;
+    gap: 8px;
+    white-space: nowrap;
+    padding-bottom: 2px;
 }
 
 .multiTaskCount {
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: #64748b;
+    white-space: nowrap;
 }
 
 .btnCopyAllTasks {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     background: #0f172a;
     color: #ffffff;
     border: none;
-    border-radius: 2px;
-    padding: 0 5px;
-    height: 18px;
-    font-size: 8.5px;
+    border-radius: 3px;
+    padding: 2px 7px;
+    font-size: 9px;
     font-weight: 600;
     cursor: pointer;
+    white-space: nowrap;
     transition: opacity 0.15s ease;
 }
 
@@ -658,14 +666,14 @@
 }
 
 .multiTaskRow {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 2px;
-    padding: 1px 4px;
-    height: 20px;
+    border-radius: 3px;
+    padding: 2px 6px;
+    white-space: nowrap;
 }
 
 .multiTaskTag {
@@ -675,30 +683,32 @@
     text-transform: uppercase;
     white-space: nowrap;
     background: #e2e8f0;
-    padding: 0 3px;
+    padding: 1px 4px;
     border-radius: 2px;
-    line-height: 14px;
+    flex-shrink: 0;
 }
 
 .multiTaskUuid {
     font-family: var(--font-geist-mono, monospace);
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 10.5px;
+    font-weight: 500;
     color: #0f172a;
-    word-break: break-all;
-    flex: 1;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
 }
 
 .multiTaskCopyBtn {
     background: none;
     border: none;
-    padding: 1px;
+    padding: 2px;
     color: #64748b;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 2px;
+    margin-left: auto;
+    flex-shrink: 0;
     transition: all 0.12s ease;
 }
 

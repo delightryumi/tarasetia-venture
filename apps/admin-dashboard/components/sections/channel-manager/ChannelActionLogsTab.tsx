@@ -572,18 +572,18 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                     <table className={styles.table}>
                         <thead>
                             <tr>
-                                <th className={`${styles.th} ${styles.thWithSort}`}>
+                                <th className={`${styles.th} ${styles.thWithSort}`} style={{ minWidth: "160px" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                         <span>Action</span>
                                         <ArrowUpDown size={11} color="#94a3b8" />
                                     </div>
                                 </th>
-                                <th className={styles.th}>Task ID (Channel Manager)</th>
-                                <th className={styles.th}>Channel</th>
-                                <th className={styles.th}>User</th>
-                                <th className={styles.th}>Started At</th>
-                                <th className={styles.th}>Execution Time</th>
-                                <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
+                                <th className={styles.th} style={{ minWidth: "350px", width: "350px" }}>Task ID (Channel Manager)</th>
+                                <th className={styles.th} style={{ minWidth: "150px" }}>Channel</th>
+                                <th className={styles.th} style={{ minWidth: "180px" }}>User</th>
+                                <th className={styles.th} style={{ minWidth: "140px" }}>Started At</th>
+                                <th className={styles.th} style={{ minWidth: "100px" }}>Execution Time</th>
+                                <th className={styles.th} style={{ textAlign: "right", minWidth: "90px" }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -605,7 +605,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                                 <span style={{ fontWeight: 600, color: "#09090b", fontSize: "11px" }}>{item.action}</span>
                                             </div>
                                         </td>
-                                        <td className={styles.td}>
+                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
                                             {(() => {
                                                 const ids = (item.task_ids && item.task_ids.length > 0)
                                                     ? item.task_ids

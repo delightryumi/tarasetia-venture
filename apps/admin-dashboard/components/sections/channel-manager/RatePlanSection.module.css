@@ -660,6 +660,7 @@
 
 .ledgerTable {
   width: 100%;
+  min-width: 960px;
   border-collapse: collapse;
   text-align: left;
   font-size: 10.5px;
