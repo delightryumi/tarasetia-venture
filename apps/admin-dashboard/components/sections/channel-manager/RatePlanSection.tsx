@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useRatePlans } from "@/lib/rate-plans/useRatePlans";
 import { useRoomTypes } from "../rooms/useRoomTypes";
 import { MyTaraRatePlan } from "@/lib/channex/types";
@@ -21,7 +23,9 @@ import {
     Activity,
     LayoutGrid,
     List,
-    SlidersHorizontal
+    SlidersHorizontal,
+    ChevronDown,
+    ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -37,6 +41,29 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
     const { activeHotelCode } = useAuth();
     const [pingingId, setPingingId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<"folio" | "ledger">("folio");
+    const [channexPropertyId, setChannexPropertyId] = useState<string>("");
+    const [expandedIdRows, setExpandedIdRows] = useState<string[]>([]);
+
+    const toggleExpandRow = (id: string) => {
+        setExpandedIdRows(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    useEffect(() => {
+        if (!activeHotelCode || activeHotelCode === "0") {
+            setChannexPropertyId("");
+            return;
+        }
+        const unsub = onSnapshot(doc(db, "hotels", activeHotelCode), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const pId = data.channexPropertyId || data.channelManager?.channexPropertyId || data.channelManager?.propertyId || "";
+                setChannexPropertyId(pId);
+            }
+        });
+        return () => unsub();
+    }, [activeHotelCode]);
 
     const handlePingRatePlan = async (plan: MyTaraRatePlan) => {
         setPingingId(plan.id);
@@ -299,6 +326,17 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                     </p>
                 </div>
                 <div className={styles.mastheadActions}>
+                    {channexPropertyId ? (
+                        <div
+                            className={styles.currencyPill}
+                            onClick={() => copyToClipboard(channexPropertyId, "Channel Manager Property UUID")}
+                            title={`Klik untuk menyalin Channel Manager Property UUID: ${channexPropertyId}`}
+                            style={{ cursor: "pointer", fontFamily: "var(--font-geist-mono, monospace)" }}
+                        >
+                            <Copy size={11} />
+                            <span>Property UUID: <b>{channexPropertyId}</b></span>
+                        </div>
+                    ) : null}
                     <div className={styles.currencyPill} title={`Base Currency: ${currConfig?.name || "IDR"}`}>
                         <span>{currConfig?.flag || "🇮🇩"}</span>
                         <span>{currConfig?.code || "IDR"}</span>
@@ -586,14 +624,53 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                             onClick={() => copyToClipboard(plan.id, "PMS Plan ID")}
                                             title="Click to copy PMS Rate Plan ID"
                                         >
-                                            <Copy size={10} /> PMS: <b>{plan.id.slice(0, 8)}...</b>
+                                            <Copy size={10} /> PMS: <b>{plan.id}</b>
                                         </span>
+                                        {/* Display Channel Manager UUID(s) full without truncation */}
+                                        {plan.channexRatePlanIds && Object.keys(plan.channexRatePlanIds).length > 0 ? (
+                                            Object.entries(plan.channexRatePlanIds).map(([rtId, cUuid]) => {
+                                                const rt = roomTypes.find(r => r.id === rtId);
+                                                const roomLabel = rt?.name
+                                                    ? (rt.name.toLowerCase().includes("twin")
+                                                        ? "Twin"
+                                                        : rt.name.toLowerCase().includes("double")
+                                                        ? "Double"
+                                                        : rt.name)
+                                                    : "Room";
+                                                return (
+                                                    <span
+                                                        key={rtId}
+                                                        className={`${styles.idPill} ${styles.idPillChannex}`}
+                                                        onClick={() => copyToClipboard(cUuid, `${rt?.name || "Room"} Channel Manager Rate UUID`)}
+                                                        title={`Click to copy Channel Manager Rate Plan UUID for ${rt?.name || rtId}: ${cUuid}`}
+                                                    >
+                                                        <Copy size={10} /> Channel Manager ({roomLabel}): <b>{cUuid}</b>
+                                                    </span>
+                                                );
+                                            })
+                                        ) : plan.channexRatePlanId ? (
+                                            <span
+                                                className={`${styles.idPill} ${styles.idPillChannex}`}
+                                                onClick={() => copyToClipboard(plan.channexRatePlanId!, "Channel Manager Rate UUID")}
+                                                title={`Click to copy Channel Manager Rate Plan UUID: ${plan.channexRatePlanId}`}
+                                            >
+                                                <Copy size={10} /> Channel Manager: <b>{plan.channexRatePlanId}</b>
+                                            </span>
+                                        ) : (
+                                            <span
+                                                className={`${styles.idPill} ${styles.idPillUnsynced}`}
+                                                onClick={() => toast.info("Rate Plan ini belum disinkronkan ke Channel Manager. Buka tab Go Live lalu jalankan Sync Master.")}
+                                                title="Belum terdaftar di Channel Manager. Jalankan Go Live / Sync Master untuk mendaftarkan rate plan ini."
+                                            >
+                                                Channel Manager: <i>Not Synced</i>
+                                            </span>
+                                        )}
                                         <button
                                             type="button"
                                             onClick={() => handlePingRatePlan(plan)}
                                             disabled={pingingId === plan.id}
                                             className={styles.btnFolioPing}
-                                            title="Ping test ARI sync with Channex distribution server"
+                                            title="Ping test ARI sync with Channel Manager"
                                         >
                                             <Activity size={10} className={pingingId === plan.id ? "animate-spin" : ""} />
                                             <span>{pingingId === plan.id ? "Pinging" : "Ping ARI"}</span>
@@ -636,96 +713,150 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
                                         : (plan.roomTypeId ? [plan.roomTypeId] : []);
 
                                     return (
-                                        <tr key={plan.id}>
-                                            <td>
-                                                <div className={styles.ledgerPlanCell}>
-                                                    <span className={styles.ledgerPlanName}>{plan.name}</span>
-                                                    <span className={styles.folioCodeBadge} style={{ alignSelf: "flex-start" }}>
-                                                        {plan.code || "STD"}
+                                        <React.Fragment key={plan.id}>
+                                            <tr>
+                                                <td>
+                                                    <div className={styles.ledgerPlanCell}>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                            <span className={styles.ledgerPlanName}>{plan.name}</span>
+                                                            <span className={styles.folioCodeBadge}>
+                                                                {plan.code || "STD"}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleExpandRow(plan.id)}
+                                                            className={`${styles.btnIdToggle} ${expandedIdRows.includes(plan.id) ? styles.btnIdToggleActive : ""}`}
+                                                            title="Lihat nomor ID PMS & UUID Channel Manager lengkap"
+                                                        >
+                                                            <Copy size={9} />
+                                                            <span>{expandedIdRows.includes(plan.id) ? "Tutup ID" : "Lihat / Salin ID"}</span>
+                                                            {expandedIdRows.includes(plan.id) ? <ChevronDown size={9} /> : <ChevronRight size={9} />}
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <span style={{ fontSize: 12, color: "#18181b" }}>
+                                                        {ids.length === roomTypes.length
+                                                            ? `All Rooms (${ids.length})`
+                                                            : `${ids.length} Room(s)`}
                                                     </span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span style={{ fontSize: 12, color: "#18181b" }}>
-                                                    {ids.length === roomTypes.length
-                                                        ? `All Rooms (${ids.length})`
-                                                        : `${ids.length} Room(s)`}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className={styles.ledgerRateCell}>
-                                                    {isRange ? (
-                                                        `${formatPlanRate(minRate, plan.currency)} - ${formatPlanRate(maxRate, plan.currency)}`
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <div className={styles.ledgerRateCell}>
+                                                        {isRange ? (
+                                                            `${formatPlanRate(minRate, plan.currency)} - ${formatPlanRate(maxRate, plan.currency)}`
+                                                        ) : (
+                                                            formatPlanRate(Number(plan.baseRate || minRate || 0), plan.currency)
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    {plan.mealsIncluded ? (
+                                                        <span className={styles.badgeMonochrome}>
+                                                            <Coffee size={11} /> Bed &amp; Breakfast
+                                                        </span>
                                                     ) : (
-                                                        formatPlanRate(Number(plan.baseRate || minRate || 0), plan.currency)
+                                                        <span style={{ color: "#71717a", fontSize: 12 }}>
+                                                            Room Only (EP)
+                                                        </span>
                                                     )}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                {plan.mealsIncluded ? (
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
                                                     <span className={styles.badgeMonochrome}>
-                                                        <Coffee size={11} /> Bed &amp; Breakfast
+                                                        {plan.cancellationPolicy || "FREE"}
                                                     </span>
-                                                ) : (
-                                                    <span style={{ color: "#71717a", fontSize: 12 }}>
-                                                        Room Only (EP)
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <span style={{ fontFamily: "var(--font-geist-mono, monospace)", fontVariantNumeric: "tabular-nums" }}>
+                                                        {plan.minStay || 1} Night(s)
                                                     </span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className={styles.badgeMonochrome}>
-                                                    {plan.cancellationPolicy || "FREE"}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span style={{ fontFamily: "var(--font-geist-mono, monospace)", fontVariantNumeric: "tabular-nums" }}>
-                                                    {plan.minStay || 1} Night(s)
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className={`${styles.badgeMonochrome} ${plan.stopSell ? styles.badgeStopSell : ""}`}>
-                                                    <span className={plan.stopSell ? styles.dotGray : styles.dotBlack} />
-                                                    {plan.stopSell ? "Stop Sell" : "Open"}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                    <span className={styles.folioSyncPill}>
-                                                        <span className={plan.channexRatePlanId ? styles.dotBlack : styles.dotGray} />
-                                                        {plan.channexRatePlanId ? "Synced" : "PMS"}
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <span className={`${styles.badgeMonochrome} ${plan.stopSell ? styles.badgeStopSell : ""}`}>
+                                                        <span className={plan.stopSell ? styles.dotGray : styles.dotBlack} />
+                                                        {plan.stopSell ? "Stop Sell" : "Open"}
                                                     </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handlePingRatePlan(plan)}
-                                                        disabled={pingingId === plan.id}
-                                                        className={styles.btnFolioPing}
-                                                        title="Ping test"
-                                                    >
-                                                        <Activity size={10} className={pingingId === plan.id ? "animate-spin" : ""} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openEditModal(plan)}
-                                                        className={styles.btnFolioAction}
-                                                        title="Edit Plan"
-                                                    >
-                                                        <Edit2 size={12} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => deleteRatePlan(plan.id)}
-                                                        className={`${styles.btnFolioAction} ${styles.btnFolioDelete}`}
-                                                        title="Delete Plan"
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                        <span className={styles.folioSyncPill}>
+                                                            <span className={plan.channexRatePlanId ? styles.dotBlack : styles.dotGray} />
+                                                            {plan.channexRatePlanId ? "Synced" : "PMS"}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handlePingRatePlan(plan)}
+                                                            disabled={pingingId === plan.id}
+                                                            className={styles.btnFolioPing}
+                                                            title="Ping test"
+                                                        >
+                                                            <Activity size={10} className={pingingId === plan.id ? "animate-spin" : ""} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openEditModal(plan)}
+                                                            className={styles.btnFolioAction}
+                                                            title="Edit Plan"
+                                                        >
+                                                            <Edit2 size={12} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => deleteRatePlan(plan.id)}
+                                                            className={`${styles.btnFolioAction} ${styles.btnFolioDelete}`}
+                                                            title="Delete Plan"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {expandedIdRows.includes(plan.id) && (
+                                                <tr className={styles.ledgerIdTrayRow}>
+                                                    <td colSpan={9} className={styles.ledgerIdTrayCell}>
+                                                        <div className={styles.ledgerIdTrayInner}>
+                                                            <span className={styles.ledgerIdTrayTitle}>Nomor ID Lengkap:</span>
+                                                            <span
+                                                                className={styles.ledgerIdTrayPill}
+                                                                onClick={() => copyToClipboard(plan.id, "PMS Plan ID")}
+                                                                title="Klik untuk menyalin PMS Rate Plan ID"
+                                                            >
+                                                                <Copy size={10} /> PMS ID: <b>{plan.id}</b>
+                                                            </span>
+                                                            {plan.channexRatePlanIds && Object.keys(plan.channexRatePlanIds).length > 0 ? (
+                                                                Object.entries(plan.channexRatePlanIds).map(([rtId, cUuid]) => {
+                                                                    const rt = roomTypes.find(r => r.id === rtId);
+                                                                    const roomLabel = rt?.name || "Room";
+                                                                    return (
+                                                                        <span
+                                                                            key={rtId}
+                                                                            className={styles.ledgerIdTrayPill}
+                                                                            onClick={() => copyToClipboard(cUuid, `${roomLabel} Channel Manager Rate UUID`)}
+                                                                            title={`Klik untuk menyalin Channel Manager Rate UUID: ${cUuid}`}
+                                                                        >
+                                                                            <Copy size={10} /> Channel Manager ({roomLabel}): <b>{cUuid}</b>
+                                                                        </span>
+                                                                    );
+                                                                })
+                                                            ) : plan.channexRatePlanId ? (
+                                                                <span
+                                                                    className={styles.ledgerIdTrayPill}
+                                                                    onClick={() => copyToClipboard(plan.channexRatePlanId!, "Channel Manager Rate UUID")}
+                                                                    title={`Klik untuk menyalin Channel Manager Rate UUID: ${plan.channexRatePlanId}`}
+                                                                >
+                                                                    <Copy size={10} /> Channel Manager: <b>{plan.channexRatePlanId}</b>
+                                                                </span>
+                                                            ) : null}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
                                     );
                                 })}
                             </tbody>
@@ -760,6 +891,49 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
 
                         <form onSubmit={handleSubmit} className={styles.modalForm}>
                             <div className={styles.modalBody}>
+                                {editingPlan && (
+                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                                        <span
+                                            className={styles.idPill}
+                                            onClick={() => copyToClipboard(editingPlan.id, "PMS Plan ID")}
+                                            title="Click to copy PMS Rate Plan ID"
+                                        >
+                                            <Copy size={10} /> PMS ID: <b>{editingPlan.id}</b>
+                                        </span>
+                                        {editingPlan.channexRatePlanIds && Object.keys(editingPlan.channexRatePlanIds).length > 0 ? (
+                                            Object.entries(editingPlan.channexRatePlanIds).map(([rtId, cUuid]) => {
+                                                const rt = roomTypes.find(r => r.id === rtId);
+                                                const roomLabel = rt?.name || rtId;
+                                                return (
+                                                    <span
+                                                        key={rtId}
+                                                        className={`${styles.idPill} ${styles.idPillChannex}`}
+                                                        onClick={() => copyToClipboard(cUuid, `${roomLabel} Channel Manager Rate UUID`)}
+                                                        title={`Click to copy Channel Manager Rate Plan UUID: ${cUuid}`}
+                                                    >
+                                                        <Copy size={10} /> Channel Manager ({roomLabel}): <b>{cUuid}</b>
+                                                    </span>
+                                                );
+                                            })
+                                        ) : editingPlan.channexRatePlanId ? (
+                                            <span
+                                                className={`${styles.idPill} ${styles.idPillChannex}`}
+                                                onClick={() => copyToClipboard(editingPlan.channexRatePlanId!, "Channel Manager Rate UUID")}
+                                                title={`Click to copy Channel Manager Rate Plan UUID: ${editingPlan.channexRatePlanId}`}
+                                            >
+                                                <Copy size={10} /> Channel Manager UUID: <b>{editingPlan.channexRatePlanId}</b>
+                                            </span>
+                                        ) : (
+                                            <span
+                                                className={`${styles.idPill} ${styles.idPillUnsynced}`}
+                                                onClick={() => toast.info("Rate Plan ini belum disinkronkan ke Channel Manager. Buka tab Go Live lalu jalankan Sync Master.")}
+                                                title="Belum terdaftar di Channel Manager"
+                                            >
+                                                Channel Manager: <i>Not Synced (Run Sync Master)</i>
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                                 {/* Quick Templates */}
                                 <div className={styles.formGroup}>
                                     <label className={styles.formLabel}>

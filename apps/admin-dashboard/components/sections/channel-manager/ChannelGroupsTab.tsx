@@ -22,7 +22,8 @@ import {
     Pencil,
     Eye,
     EyeOff,
-    Save
+    Save,
+    Copy
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -361,6 +362,12 @@ export const ChannelGroupsTab: React.FC = () => {
     const totalProperties = hotels.length;
     const connectedChannexCount = hotels.filter((h) => !!h.channexPropertyId).length;
     const assignedCount = hotels.filter((h) => !!h.groupId).length;
+
+    const copyToClipboard = (text: string, label: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        toast.success(`${label} disalin ke clipboard!`);
+    };
 
     // Filter hotels & groups by search
     const filteredGroups = groups.filter((g) => 
@@ -702,9 +709,28 @@ export const ChannelGroupsTab: React.FC = () => {
                                                     <td><strong>{h.totalRooms || "-"}</strong> Kamar</td>
                                                     <td>
                                                         {h.channexPropertyId ? (
-                                                            <span style={{ fontFamily: "monospace", fontSize: "11.5px", background: "#f4f4f5", color: "#18181b", padding: "2px 6px", borderRadius: "4px", border: "1px solid #e4e4e7" }}>
-                                                                {h.channexPropertyId.slice(0, 13)}...
-                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => copyToClipboard(h.channexPropertyId, "Channel Manager Property UUID")}
+                                                                title={`Klik untuk menyalin Channel Manager Property UUID: ${h.channexPropertyId}`}
+                                                                style={{
+                                                                    display: "inline-flex",
+                                                                    alignItems: "center",
+                                                                    gap: "5px",
+                                                                    fontFamily: "var(--font-geist-mono, monospace)",
+                                                                    fontSize: "11px",
+                                                                    background: "#f4f4f5",
+                                                                    color: "#18181b",
+                                                                    padding: "2px 8px",
+                                                                    borderRadius: "4px",
+                                                                    border: "1px solid #e4e4e7",
+                                                                    cursor: "pointer",
+                                                                    transition: "all 0.15s ease"
+                                                                }}
+                                                            >
+                                                                <span>{h.channexPropertyId}</span>
+                                                                <Copy size={11} style={{ opacity: 0.6 }} />
+                                                            </button>
                                                         ) : (
                                                             <span style={{ fontSize: "11.5px", color: "#71717a" }}>Belum Dipetakan</span>
                                                         )}
@@ -851,9 +877,28 @@ export const ChannelGroupsTab: React.FC = () => {
                                             <td>{h.city}</td>
                                             <td>
                                                 {h.channexPropertyId ? (
-                                                    <span style={{ fontFamily: "monospace", fontSize: "11.5px", background: "#f4f4f5", color: "#18181b", padding: "2px 6px", borderRadius: "4px", border: "1px solid #e4e4e7" }}>
-                                                        {h.channexPropertyId.slice(0, 13)}...
-                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => copyToClipboard(h.channexPropertyId, "Channel Manager Property UUID")}
+                                                        title={`Klik untuk menyalin Channel Manager Property UUID: ${h.channexPropertyId}`}
+                                                        style={{
+                                                            display: "inline-flex",
+                                                            alignItems: "center",
+                                                            gap: "5px",
+                                                            fontFamily: "var(--font-geist-mono, monospace)",
+                                                            fontSize: "11px",
+                                                            background: "#f4f4f5",
+                                                            color: "#18181b",
+                                                            padding: "2px 8px",
+                                                            borderRadius: "4px",
+                                                            border: "1px solid #e4e4e7",
+                                                            cursor: "pointer",
+                                                            transition: "all 0.15s ease"
+                                                        }}
+                                                    >
+                                                        <span>{h.channexPropertyId}</span>
+                                                        <Copy size={11} style={{ opacity: 0.6 }} />
+                                                    </button>
                                                 ) : (
                                                     <span style={{ fontSize: "11.5px", color: "#71717a" }}>Belum Terhubung</span>
                                                 )}

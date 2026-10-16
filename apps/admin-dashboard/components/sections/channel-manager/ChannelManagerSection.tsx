@@ -1738,7 +1738,23 @@ export function ChannelManagerSection() {
                         <div className={styles.systemMetaRow}>
                             <span>Property Code: <b>{activeHotelCode}</b></span>
                             <span>•</span>
-                            <span>Property UUID: <code>{channexPropertyId || "Auto-Provisioning"}</code></span>
+                            <span>
+                                Property UUID:{" "}
+                                {channexPropertyId ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => copyText(channexPropertyId, "Channex Property UUID")}
+                                        className={styles.idPill}
+                                        style={{ display: "inline-flex", cursor: "pointer", verticalAlign: "middle", gap: 5, padding: "2px 8px" }}
+                                        title="Click to copy full Channex Property UUID"
+                                    >
+                                        <code style={{ fontFamily: "var(--font-geist-mono, monospace)", fontWeight: 600 }}>{channexPropertyId}</code>
+                                        <Copy size={11} />
+                                    </button>
+                                ) : (
+                                    <code>Auto-Provisioning</code>
+                                )}
+                            </span>
                             <span>•</span>
                             <span>Active OTA Channels: <b>{activeChannelsList.length} Connected</b></span>
                         </div>
@@ -3741,11 +3757,11 @@ export function ChannelManagerSection() {
                                         <div className={styles.propertyIdentityStatusRow}>
                                             {channexPropertyId ? (
                                                 <span className={styles.propertyBadgeConnected}>
-                                                    <Check size={12} /> TERDAFTAR DI CHANNEX
+                                                    <Check size={12} /> TERDAFTAR DI CHANNEL MANAGER
                                                 </span>
                                             ) : (
                                                 <span className={styles.propertyBadgeUnregistered}>
-                                                    <AlertTriangle size={12} /> BELUM TERDAFTAR DI CHANNEX
+                                                    <AlertTriangle size={12} /> BELUM TERDAFTAR DI CHANNEL MANAGER
                                                 </span>
                                             )}
                                             <span className={styles.propertyNameMeta}>
@@ -3754,8 +3770,8 @@ export function ChannelManagerSection() {
                                         </div>
                                         <p className={styles.propertyIdentityDesc}>
                                             {channexPropertyId
-                                                ? `Properti aktif terhubung ke Channex dengan UUID: ${channexPropertyId}. Kamar dan rate plan telah disinkronkan.`
-                                                : `Klik 'Daftarkan Hotel Ini ke Channex' untuk mendaftarkan properti ini secara nyata ke Channex ${channexEnv.toUpperCase()}. Seluruh tipe kamar & rate plan yang telah dibuat di Tara akan otomatis dibuatkan di Channex.`}
+                                                ? `Properti aktif terhubung ke Channel Manager dengan UUID: ${channexPropertyId}. Seluruh kamar dan paket harga telah disinkronkan.`
+                                                : `Klik 'Daftarkan Hotel Ini ke Channel Manager' untuk mendaftarkan properti ini ke Channel Manager ${channexEnv.toUpperCase()}. Seluruh tipe kamar & paket harga yang telah dibuat di Tara akan otomatis disinkronkan.`}
                                         </p>
                                     </div>
 
@@ -3767,14 +3783,14 @@ export function ChannelManagerSection() {
                                             className={styles.btnActionPrimary}
                                         >
                                             <RefreshCw size={13} className={syncingMaster ? "animate-spin" : ""} />
-                                            <span>{channexPropertyId ? "Sinkronkan Kamar & Rate Plan" : "🚀 Daftarkan Hotel Ini ke Channex"}</span>
+                                            <span>{channexPropertyId ? "Sinkronkan Kamar & Rate Plan" : "🚀 Daftarkan Hotel Ini ke Channel Manager"}</span>
                                         </button>
                                         {channexPropertyId && (
                                             <button
                                                 type="button"
                                                 onClick={handleUnlinkProperty}
                                                 className={`${styles.btnActionSecondary} ${styles.btnUnlinkProperty}`}
-                                                title="Putus relasi UUID Channex jika properti telah dihapus di portal Channex"
+                                                title="Putus relasi UUID Channel Manager jika diperlukan"
                                             >
                                                 <Unlink size={13} />
                                                 <span>Putus / Reset Link</span>
@@ -3784,16 +3800,37 @@ export function ChannelManagerSection() {
                                 </div>
 
                                 <div className={styles.credentialsFieldGroup}>
-                                    <label className={styles.credentialsLabelBold} style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                                        Channex Property UUID
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={channexPropertyId}
-                                        onChange={e => setChannexPropertyId(e.target.value)}
-                                        placeholder="Auto-generated setelah klik 'Daftarkan Hotel Ini ke Channex', atau input UUID manual"
-                                        className={`${styles.cellInput} ${styles.propertyIdInput}`}
-                                    />
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                                        <label className={styles.credentialsLabelBold} style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px", margin: 0 }}>
+                                            Channel Manager Property UUID
+                                        </label>
+                                        {channexPropertyId && (
+                                            <span style={{ fontSize: "11px", color: "#71717a" }}>
+                                                Format: 36-karakter UUID v4
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className={styles.inputGroupRow}>
+                                        <input
+                                            type="text"
+                                            value={channexPropertyId}
+                                            onChange={e => setChannexPropertyId(e.target.value)}
+                                            placeholder="Auto-generated setelah klik 'Daftarkan Hotel Ini ke Channex', atau input UUID manual"
+                                            className={`${styles.cellInput} ${styles.propertyIdInput}`}
+                                            style={{ fontFamily: "var(--font-geist-mono, monospace)", fontSize: "12px" }}
+                                        />
+                                        {channexPropertyId && (
+                                            <button
+                                                type="button"
+                                                onClick={() => copyText(channexPropertyId, "Channex Property UUID")}
+                                                className={`${styles.btnActionSecondary} ${styles.btnCopyWebhook}`}
+                                                title="Click to copy full Channex Property UUID"
+                                            >
+                                                <Copy size={13} />
+                                                <span>Salin UUID</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
