@@ -1,18 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     collection,
-    getDocs,
     addDoc,
     deleteDoc,
     updateDoc,
     doc,
     query,
-    orderBy
+    orderBy,
+    onSnapshot
 } from "firebase/firestore";
 import { db, storage } from "@/lib/firebase";
 import { ref, deleteObject } from "firebase/storage";
 import { toast } from "sonner";
 import { getHotelCollection } from "@/lib/firestoreHelper";
+import { useAuth } from "@/context/AuthContext";
 
 export interface RoomImage {
     url: string;
@@ -54,6 +55,7 @@ export interface RoomType {
 }
 
 export const useRoomTypes = () => {
+    const { activeHotelCode } = useAuth();
     const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
     const [loading, setLoading] = useState(true);
     const [newName, setNewName] = useState("");
@@ -75,25 +77,30 @@ export const useRoomTypes = () => {
     const [view, setView] = useState<'list' | 'stepper'>('list');
     const [currentStep, setCurrentStep] = useState(1);
 
-    const fetchRoomTypes = useCallback(async () => {
-        try {
-            const q = query(getHotelCollection(db, "roomTypes"), orderBy("name"));
-            const snapshot = await getDocs(q);
+    // 100% Realtime Listener with Zero Redundant Reads:
+    // Subscribes once on mount, updates state immediately when changes occur on any PC.
+    useEffect(() => {
+        if (!activeHotelCode || activeHotelCode === "0") {
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        const q = query(getHotelCollection(db, "roomTypes", activeHotelCode), orderBy("name"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
             const types = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as RoomType[];
             setRoomTypes(types);
-        } catch (err) {
-            console.error("Error loading room types:", err);
-        } finally {
             setLoading(false);
-        }
-    }, []);
+        }, (err) => {
+            console.error("Error loading room types:", err);
+            setLoading(false);
+        });
 
-    useEffect(() => {
-        fetchRoomTypes();
-    }, [fetchRoomTypes]);
+        return () => unsubscribe();
+    }, [activeHotelCode]);
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -104,7 +111,7 @@ export const useRoomTypes = () => {
             // Keep roomCount consistent with physicalRooms if set
             const finalRoomCount = newPhysicalRooms.length > 0 ? Math.max(newRoomCount, newPhysicalRooms.length) : newRoomCount;
 
-            await addDoc(getHotelCollection(db, "roomTypes"), {
+            await addDoc(getHotelCollection(db, "roomTypes", activeHotelCode), {
                 name: newName,
                 description: newDesc,
                 images: newImages,
@@ -118,14 +125,13 @@ export const useRoomTypes = () => {
                 physicalRooms: newPhysicalRooms,
                 createdAt: new Date().toISOString()
             });
-            await fetchRoomTypes();
             resetForm();
             setView('list');
             setCurrentStep(1);
             toast.success("Room category created successfully");
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error adding room type:", err);
-            toast.error("Failed to add room type. Please try again.");
+            toast.error(`Failed to add room type: ${err?.message || "Please try again."}`);
         } finally {
             setSaving(false);
         }
@@ -139,7 +145,7 @@ export const useRoomTypes = () => {
         try {
             const finalRoomCount = newPhysicalRooms.length > 0 ? Math.max(newRoomCount, newPhysicalRooms.length) : newRoomCount;
 
-            const roomRef = doc(getHotelCollection(db, "roomTypes"), editingRoom.id);
+            const roomRef = doc(getHotelCollection(db, "roomTypes", activeHotelCode), editingRoom.id);
             await updateDoc(roomRef, {
                 name: newName,
                 description: newDesc,
@@ -154,15 +160,14 @@ export const useRoomTypes = () => {
                 physicalRooms: newPhysicalRooms,
                 updatedAt: new Date().toISOString()
             });
-            await fetchRoomTypes();
             resetForm();
             setEditingRoom(null);
             setView('list');
             setCurrentStep(1);
             toast.success("Room category updated successfully");
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error updating room type:", err);
-            toast.error("Failed to update room type settings.");
+            toast.error(`Failed to update room type settings: ${err?.message || "Please try again."}`);
         } finally {
             setSaving(false);
         }
@@ -336,12 +341,11 @@ export const useRoomTypes = () => {
                             }));
                         }
 
-                        await deleteDoc(doc(getHotelCollection(db, "roomTypes"), id));
-                        await fetchRoomTypes();
+                        await deleteDoc(doc(getHotelCollection(db, "roomTypes", activeHotelCode), id));
                         toast.success(`${room.name} has been decommissioned.`);
-                    } catch (err) {
+                    } catch (err: any) {
                         console.error("Error deleting room type:", err);
-                        toast.error("Failed to remove room item.");
+                        toast.error(`Failed to remove room item: ${err?.message || "Please try again."}`);
                     }
                 }
             },

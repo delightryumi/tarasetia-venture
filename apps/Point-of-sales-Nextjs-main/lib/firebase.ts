@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { initializeFirestore, getFirestore, memoryLocalCache } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
 
@@ -16,15 +16,13 @@ const firebaseConfig = {
 // Prevent duplicate initialization in Next.js dev mode (HMR)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore with IndexedDB Multi-Tab Persistent Cache for browser
+// Initialize Firestore with In-Memory Cache (Prevents multi-tab IndexedDB locks, stale cross-device data, & IndexedDbTransactionError)
 let db: ReturnType<typeof getFirestore>;
 
 if (typeof window !== "undefined") {
     try {
         db = initializeFirestore(app, {
-            localCache: persistentLocalCache({
-                tabManager: persistentMultipleTabManager()
-            })
+            localCache: memoryLocalCache()
         });
     } catch {
         db = getFirestore(app);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import {
@@ -11,15 +11,13 @@ import {
     doc,
     query,
     orderBy,
-    getDocs
+    getDocs,
+    onSnapshot
 } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { MyTaraRatePlan } from "../channex/types";
 import { logAuditEvent } from "../auditLogger";
-
-const ratePlansCache = new Map<string, { list: MyTaraRatePlan[]; timestamp: number }>();
-const RATE_PLANS_CACHE_TTL = 5 * 60 * 1000;
 
 export const useRatePlans = () => {
     const { user, activeHotelCode, activeHotelName } = useAuth();
@@ -27,39 +25,31 @@ export const useRatePlans = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    const fetchRatePlans = useCallback(async (forceRefresh = false) => {
+    // 100% Realtime Listener with Zero Redundant Reads:
+    // Subscribes once per active hotel, updates instantly across all PCs when rates/plans change.
+    useEffect(() => {
         if (!activeHotelCode || activeHotelCode === "0") {
             setRatePlans([]);
             setLoading(false);
             return;
         }
 
-        const cached = ratePlansCache.get(activeHotelCode);
-        if (!forceRefresh && cached && Date.now() - cached.timestamp < RATE_PLANS_CACHE_TTL) {
-            setRatePlans(cached.list);
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const q = query(getHotelCollection(db, "ratePlans", activeHotelCode), orderBy("name"));
-            const snapshot = await getDocs(q);
+        setLoading(true);
+        const q = query(getHotelCollection(db, "ratePlans", activeHotelCode), orderBy("name"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as MyTaraRatePlan[];
-            ratePlansCache.set(activeHotelCode, { list, timestamp: Date.now() });
             setRatePlans(list);
-        } catch (err) {
-            console.error("Error loading rate plans:", err);
-        } finally {
             setLoading(false);
-        }
-    }, [activeHotelCode]);
+        }, (err) => {
+            console.error("Error loading rate plans:", err);
+            setLoading(false);
+        });
 
-    useEffect(() => {
-        fetchRatePlans();
-    }, [fetchRatePlans]);
+        return () => unsubscribe();
+    }, [activeHotelCode]);
 
     /**
      * Auto-seeds standard rate plans matching Channex certification standard:
@@ -206,8 +196,6 @@ export const useRatePlans = () => {
                 updatedAt: new Date().toISOString()
             });
 
-            ratePlansCache.delete(activeHotelCode);
-            await fetchRatePlans(true);
             toast.success("Standard Rate Plans (Best Available Rate & Bed & Breakfast Rate) berhasil digenerate.");
         } catch (err: any) {
             console.error("Error seeding rate plans:", err);
@@ -227,7 +215,6 @@ export const useRatePlans = () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             });
-            ratePlansCache.delete(activeHotelCode);
             logAuditEvent({
                 hotelCode: activeHotelCode,
                 actor: {
@@ -243,7 +230,6 @@ export const useRatePlans = () => {
                 targetName: data.name,
                 diff: { after: data }
             });
-            await fetchRatePlans(true);
             toast.success("Rate Plan berhasil ditambahkan.");
         } catch (err: any) {
             console.error("Error adding rate plan:", err);
@@ -262,7 +248,6 @@ export const useRatePlans = () => {
                 ...data,
                 updatedAt: new Date().toISOString()
             });
-            ratePlansCache.delete(activeHotelCode);
             logAuditEvent({
                 hotelCode: activeHotelCode,
                 actor: {
@@ -278,7 +263,6 @@ export const useRatePlans = () => {
                 targetName: data.name || id,
                 diff: { after: data }
             });
-            await fetchRatePlans(true);
             toast.success("Rate Plan berhasil diperbarui.");
         } catch (err: any) {
             console.error("Error updating rate plan:", err);
@@ -295,7 +279,6 @@ export const useRatePlans = () => {
             const existing = ratePlans.find(r => r.id === id);
             const ref = doc(getHotelCollection(db, "ratePlans", activeHotelCode), id);
             await deleteDoc(ref);
-            ratePlansCache.delete(activeHotelCode);
             logAuditEvent({
                 hotelCode: activeHotelCode,
                 actor: {
@@ -311,7 +294,6 @@ export const useRatePlans = () => {
                 targetName: existing?.name || id,
                 diff: { before: existing }
             });
-            await fetchRatePlans(true);
             toast.success("Rate Plan berhasil dihapus.");
         } catch (err: any) {
             console.error("Error deleting rate plan:", err);

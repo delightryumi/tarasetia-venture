@@ -225,8 +225,8 @@ export function useLexuPos() {
     }
 
     try {
-      const res = await fetch(`/api/catalog?hotelCode=${encodeURIComponent(hotelCode)}`, {
-        cache: 'default'
+      const res = await fetch(`/api/catalog?hotelCode=${encodeURIComponent(hotelCode)}&_t=${Date.now()}`, {
+        cache: 'no-store'
       });
       if (res.ok) {
         const data = await res.json();
@@ -248,7 +248,10 @@ export function useLexuPos() {
     }
   }, []);
 
-  // Multi-tier cache synchronization
+  // Multi-tier realtime synchronization across PC A & PC B:
+  // Listens to the hotel document's posCatalogVersion. When any PC adds/edits/restocks a product,
+  // posCatalogVersion updates and all other PCs refresh their catalog automatically!
+  // Cost: Only 1 read on initial load of hotel doc, 0 reads during idle.
   useEffect(() => {
     // Clear any leftover offline dummy products from IndexedDB
     try {
@@ -261,16 +264,34 @@ export function useLexuPos() {
       return;
     }
 
-    // 1. Initial background fetch / verification against server micro-cache
+    // 1. Initial background fetch
     refreshCatalog(effectiveCode);
 
-    // 2. Real-time event listener: triggers when admin adds/edits products in /product
+    // 2. Real-time listener for cross-device updates (PC A <-> PC B)
+    const hotelDocRef = doc(db, 'hotels', effectiveCode);
+    let lastVersion: number | null = null;
+    const unsub = onSnapshot(hotelDocRef, (snap) => {
+      if (snap.exists()) {
+        const v = snap.data()?.posCatalogVersion;
+        if (v && v !== lastVersion) {
+          if (lastVersion !== null) {
+            refreshCatalog(effectiveCode);
+          }
+          lastVersion = v;
+        }
+      }
+    }, (err) => {
+      console.warn("Hotel catalog version listener error:", err);
+    });
+
+    // 3. Local window event listener
     const handleCatalogUpdated = () => {
       refreshCatalog(effectiveCode);
     };
 
     window.addEventListener('pos_catalog_updated', handleCatalogUpdated);
     return () => {
+      unsub();
       window.removeEventListener('pos_catalog_updated', handleCatalogUpdated);
     };
   }, [activeHotelCode, refreshCatalog]);

@@ -340,7 +340,7 @@ export default function SelectModulePage() {
       href: getModuleFirstHref('front-office', '/overview?module=front-office'),
       active: hasAccess('front-office'),
       icon: 'domain',
-      image: '/images/modules/fo.png',
+      image: '/images/modules/fo.png?v=2',
       colSpan: 1 as const,
     },
     {
@@ -350,7 +350,7 @@ export default function SelectModulePage() {
       href: getModuleFirstHref('innalytics', '/innalytics'),
       active: hasAccess('innalytics'),
       icon: 'trending_up',
-      image: '/images/modules/innalytics.png',
+      image: '/images/modules/innalytics.png?v=2',
       colSpan: 1 as const,
     },
     {
@@ -360,7 +360,7 @@ export default function SelectModulePage() {
       href: getModuleFirstHref('housekeeping', '/overview?module=housekeeping'),
       active: hasAccess('housekeeping'),
       icon: 'cleaning_services',
-      image: '/images/modules/hk.png',
+      image: '/images/modules/hk.png?v=4',
       colSpan: 1 as const,
     },
     {
@@ -415,7 +415,7 @@ export default function SelectModulePage() {
       href: '/channel-manager',
       active: true,
       icon: 'globe',
-      image: '/images/modules/channel-manager.png',
+      image: '/images/modules/channel-manager.png?v=3',
       colSpan: 1 as const,
     });
   }
