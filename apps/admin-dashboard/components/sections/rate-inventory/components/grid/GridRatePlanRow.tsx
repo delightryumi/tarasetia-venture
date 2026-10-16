@@ -167,7 +167,7 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
     const isBreakfast = rp.mealsIncluded || rp.ratePlanName.toLowerCase().includes("breakfast") || rp.ratePlanName.toLowerCase().includes("sarapan");
 
     const { currencyCode } = useCurrency();
-    const currConfig = getCurrencyConfig(rp.currency || currencyCode || "IDR");
+    const currConfig = getCurrencyConfig(currencyCode || rp.currency || "IDR");
     const formatCurrency = (val: number) => {
         return Number(val || 0).toLocaleString("en-US", {
             minimumFractionDigits: currConfig.decimals,

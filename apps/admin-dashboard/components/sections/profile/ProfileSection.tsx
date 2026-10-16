@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { Building2, MapPin, Phone, Mail, Globe, Save, Sparkles, CheckCircle2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import superadminStyles from "../../../app/(dashboard)/superadmin/superadmin.module.css";
@@ -24,33 +24,52 @@ export const ProfileSection = () => {
     const [currency, setCurrency] = useState<string>(DEFAULT_CURRENCY);
 
     useEffect(() => {
-        const fetchHotelProfile = async () => {
-            if (!activeHotelCode || activeHotelCode === "0") {
-                setLoading(false);
-                return;
-            }
-            try {
-                const hotelRef = doc(db, "hotels", activeHotelCode);
-                const snap = await getDoc(hotelRef);
-                if (snap.exists()) {
-                    const data = snap.data();
+        if (!activeHotelCode || activeHotelCode === "0") {
+            setLoading(false);
+            return;
+        }
+
+        const hotelRef = doc(db, "hotels", activeHotelCode);
+        let isInitialLoad = true;
+
+        const unsub = onSnapshot(hotelRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                if (isInitialLoad) {
                     setName(data.name || "");
                     setAddress(data.address || "");
                     setPhone(data.phone || "");
                     setEmail(data.email || "");
                     setDomain(data.domain || "");
                     setSubdomain(data.subdomain || "");
-                    setCurrency(data.currency || DEFAULT_CURRENCY);
+                    isInitialLoad = false;
                 }
-            } catch (err) {
-                console.error("Error loading hotel profile:", err);
-                toast.error("Gagal memuat profil properti.");
-            } finally {
-                setLoading(false);
+                const activeCurr = data.currency || data.channelManager?.currency || data.baseCurrency || data.settings?.currency || DEFAULT_CURRENCY;
+                setCurrency(activeCurr);
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(`hotel_currency_${activeHotelCode}`, activeCurr);
+                    localStorage.setItem("shopCurrency", activeCurr);
+                }
+            }
+            setLoading(false);
+        }, (err) => {
+            console.error("Error loading hotel profile:", err);
+            toast.error("Gagal memuat profil properti.");
+            setLoading(false);
+        });
+
+        const handleCurrencyEvent = () => {
+            if (typeof window !== "undefined") {
+                const cached = localStorage.getItem(`hotel_currency_${activeHotelCode}`) || localStorage.getItem("shopCurrency");
+                if (cached) setCurrency(cached);
             }
         };
+        window.addEventListener("currencyChanged", handleCurrencyEvent);
 
-        fetchHotelProfile();
+        return () => {
+            unsub();
+            window.removeEventListener("currencyChanged", handleCurrencyEvent);
+        };
     }, [activeHotelCode]);
 
     const handleSave = async (e: React.FormEvent) => {
@@ -66,9 +85,13 @@ export const ProfileSection = () => {
                 phone,
                 email,
                 domain,
-                currency
+                currency,
+                baseCurrency: currency,
+                "settings.currency": currency,
+                "channelManager.currency": currency
             });
             if (typeof window !== "undefined") {
+                localStorage.setItem(`hotel_currency_${activeHotelCode}`, currency);
                 localStorage.setItem("shopCurrency", currency);
                 window.dispatchEvent(new Event("currencyChanged"));
             }

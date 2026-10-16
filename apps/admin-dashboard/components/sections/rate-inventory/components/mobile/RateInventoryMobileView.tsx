@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import s from "./RateInventoryMobileView.module.css";
 import { toast } from "sonner";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface RateInventoryMobileViewProps {
     hotelName?: string;
@@ -49,6 +50,7 @@ export function RateInventoryMobileView({
     canChangeInventory,
     channelFilter
 }: RateInventoryMobileViewProps) {
+    const { currencyCode, formatCurrency, config: currConfig } = useCurrency();
     // Current selected date inside the mobile strip
     const [selectedDate, setSelectedDate] = useState<string>(() => dateList[0] || startDate);
     
@@ -82,7 +84,9 @@ export function RateInventoryMobileView({
 
     const handleSavePriceModal = () => {
         if (!priceModalData) return;
-        const val = parseInt(priceInputValue.replace(/\D/g, ""), 10);
+        const val = currConfig.decimals === 0
+            ? parseInt(priceInputValue.replace(/\D/g, ""), 10)
+            : parseFloat(priceInputValue.replace(/[^0-9.]/g, ""));
         if (isNaN(val) || val < 0) {
             toast.error("Please enter a valid price amount");
             return;
@@ -92,7 +96,7 @@ export function RateInventoryMobileView({
             : `rate_${priceModalData.ratePlanId}_${priceModalData.dateStr}`;
         stageEdit(key, val);
         setPriceModalData(null);
-        toast.success(`Rate updated to Rp ${val.toLocaleString("id-ID")}`);
+        toast.success(`Rate updated to ${currConfig.code} ${formatCurrency(val)}`);
     };
 
     // Format selected date header in standard English
@@ -305,7 +309,7 @@ export function RateInventoryMobileView({
                                                 </div>
                                                 <div className={s.ratePriceBox}>
                                                     <span className={s.priceTag3D}>
-                                                        Rp {currentPrice.toLocaleString("id-ID")}
+                                                        {currConfig.code} {formatCurrency(currentPrice)}
                                                     </span>
                                                     <button
                                                         type="button"
@@ -403,23 +407,23 @@ export function RateInventoryMobileView({
                             className={s.sheetInput}
                             value={priceInputValue}
                             onChange={(e) => setPriceInputValue(e.target.value)}
-                            placeholder="Rp 0"
+                            placeholder={`${currConfig.code} 0`}
                             autoFocus
                         />
 
                         {/* Quick increment pills */}
                         <div className={s.sheetQuickPills}>
-                            {[50000, 100000, 200000].map((inc) => (
+                            {(currConfig.decimals === 0 ? [50000, 100000, 200000] : [10, 25, 50]).map((inc) => (
                                 <button
                                     key={inc}
                                     type="button"
                                     onClick={() => {
-                                        const cur = parseInt(priceInputValue.replace(/\D/g, ""), 10) || 0;
+                                        const cur = parseFloat(priceInputValue.replace(/[^0-9.]/g, "")) || 0;
                                         setPriceInputValue(String(cur + inc));
                                     }}
                                     className={s.quickPillBtn}
                                 >
-                                    +Rp {inc.toLocaleString("id-ID")}
+                                    +{currConfig.symbol}{currConfig.decimals === 0 ? inc.toLocaleString("en-US") : inc.toFixed(currConfig.decimals)}
                                 </button>
                             ))}
                         </div>

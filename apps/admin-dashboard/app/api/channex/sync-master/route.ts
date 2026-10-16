@@ -108,9 +108,11 @@ export async function POST(req: NextRequest) {
         const targetCurrency = (requestedCurrency || hotelData?.currency || hotelData?.channelManager?.currency || "IDR").toUpperCase().trim();
 
         // Save currency to hotel doc if updated
-        if (hotelData?.currency !== targetCurrency) {
+        if (hotelData?.currency !== targetCurrency || hotelData?.channelManager?.currency !== targetCurrency) {
             await adminDb.collection("hotels").doc(hotelCode).set({
                 currency: targetCurrency,
+                baseCurrency: targetCurrency,
+                "settings.currency": targetCurrency,
                 "channelManager.currency": targetCurrency
             }, { merge: true });
         }

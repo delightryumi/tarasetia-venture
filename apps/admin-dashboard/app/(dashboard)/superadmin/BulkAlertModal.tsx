@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import styles from "./superadmin.module.css";
 
 interface BulkAlertModalProps {
@@ -35,7 +35,7 @@ export const BulkAlertModal: React.FC<BulkAlertModalProps> = ({
     <div className={styles.modal} style={{ maxWidth: "520px" }}>
       <header className={styles.modalHeader}>
         <h3 className={styles.modalTitle}>Kelola Alert Kustom secara Massal (Bulk)</h3>
-        <button onClick={onClose} className={styles.modalCloseBtn}>&times;</button>
+        <button type="button" onClick={onClose} className={styles.modalCloseBtn} title="Tutup" aria-label="Tutup"><X size={18} /></button>
       </header>
 
       <div className={styles.modalBody}>

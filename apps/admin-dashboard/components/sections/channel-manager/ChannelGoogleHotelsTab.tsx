@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { GoogleHotelConfig } from "@/lib/channex/types";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency-utils";
 import styles from "./ChannelGoogleHotels.module.css";
 
 interface Props {
@@ -37,6 +38,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     const data = snap.data();
+                    const hotelCurr = (data?.currency || data?.channelManager?.currency || data?.baseCurrency || "IDR").toUpperCase().trim();
                     const googleCfg = data?.channelManager?.googleHotelConfig;
                     if (googleCfg) {
                         setConfig({
@@ -44,7 +46,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                             googleHotelCenterId: googleCfg.googleHotelCenterId || "",
                             status: googleCfg.status || "DISCONNECTED",
                             landingPageUrl: googleCfg.landingPageUrl || `https://setara.my.id/booking?hotel=${hotelCode}`,
-                            currency: googleCfg.currency || "IDR",
+                            currency: googleCfg.currency || hotelCurr,
                             taxPolicy: googleCfg.taxPolicy || "inclusive",
                             lastSyncAt: googleCfg.lastSyncAt,
                             totalDirectClicks: Number(googleCfg.totalDirectClicks || 0)
@@ -53,6 +55,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                         // Default real initial state
                         setConfig(prev => ({
                             ...prev,
+                            currency: hotelCurr,
                             landingPageUrl: `https://setara.my.id/booking?hotel=${hotelCode}`
                         }));
                     }
@@ -283,10 +286,13 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                             onChange={e => setConfig(prev => ({ ...prev, currency: e.target.value }))}
                             className={styles.select}
                         >
-                            <option value="IDR">Indonesian Rupiah (IDR)</option>
-                            <option value="USD">US Dollar (USD)</option>
-                            <option value="SGD">Singapore Dollar (SGD)</option>
+                            {SUPPORTED_CURRENCIES.map(c => (
+                                <option key={c.code} value={c.code}>
+                                    {c.flag} {c.code} — {c.name} ({c.symbol})
+                                </option>
+                            ))}
                         </select>
+                        <span className={styles.hint}>Mata uang transmisi feed Google Hotel. Inline dengan Base Currency properti.</span>
                     </div>
                 </div>
             </form>

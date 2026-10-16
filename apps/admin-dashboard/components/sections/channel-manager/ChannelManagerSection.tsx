@@ -72,9 +72,9 @@ import { PaymentGatewayTab } from "./PaymentGatewayTab";
 import { ChannelTutorialTab } from "./ChannelTutorialTab";
 import { TravelAgentTab } from "./TravelAgentTab";
 import { ChannelGroupsTab } from "./ChannelGroupsTab";
-import { SUPPORTED_CURRENCIES } from "@/lib/currency-utils";
+import { SUPPORTED_CURRENCIES, formatCurrencyAmount, DEFAULT_CURRENCY } from "@/lib/currency-utils";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, setDoc, deleteField } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, deleteField, onSnapshot } from "firebase/firestore";
 import { toast } from "sonner";
 
 import { ChannelSeparationMode } from "@/lib/channex/types";
@@ -378,6 +378,7 @@ export function ChannelManagerSection() {
     const [isUnlinkModalOpen, setIsUnlinkModalOpen] = useState<boolean>(false);
     const [unlinkingProperty, setUnlinkingProperty] = useState<boolean>(false);
     const [hotelCurrency, setHotelCurrency] = useState<string>("IDR");
+    const [savingCurrency, setSavingCurrency] = useState<boolean>(false);
     const [webhookRegistrationStatus, setWebhookRegistrationStatus] = useState<{
         isRegistered: boolean;
         webhookId?: string;
@@ -528,7 +529,7 @@ export function ChannelManagerSection() {
                     const resolvedPropId = data.channexPropertyId || cm.channexPropertyId || cm.propertyId || "";
                     setChannexPropertyId(resolvedPropId);
                     setChannexWebhookSecret(cm.webhookSecret || "");
-                    const resolvedCurrency = data.currency || cm.currency || "IDR";
+                    const resolvedCurrency = data.currency || cm.currency || data.baseCurrency || "IDR";
                     setHotelCurrency(resolvedCurrency);
                     if (typeof window !== "undefined") {
                         localStorage.setItem(`hotel_currency_${activeHotelCode}`, resolvedCurrency);
@@ -579,6 +580,43 @@ export function ChannelManagerSection() {
         };
 
         loadSettings();
+
+        // Real-time synchronization for currency across modules (Profile <-> Channel Manager 2-way)
+        const hotelDocRef = doc(db, "hotels", activeHotelCode);
+        const unsubHotel = onSnapshot(hotelDocRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                const cm = data.channelManager || {};
+                const resolvedCurr = (data.currency || cm.currency || data.baseCurrency || data.settings?.currency || "IDR").toUpperCase().trim();
+                setHotelCurrency(prev => {
+                    if (prev !== resolvedCurr) {
+                        return resolvedCurr;
+                    }
+                    return prev;
+                });
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(`hotel_currency_${activeHotelCode}`, resolvedCurr);
+                    localStorage.setItem("shopCurrency", resolvedCurr);
+                }
+            }
+        }, (err) => {
+            console.warn("Currency real-time listener note:", err);
+        });
+
+        const handleCurrencyChangedEvent = () => {
+            if (typeof window !== "undefined") {
+                const cached = localStorage.getItem(`hotel_currency_${activeHotelCode}`) || localStorage.getItem("shopCurrency");
+                if (cached) {
+                    setHotelCurrency(cached);
+                }
+            }
+        };
+        window.addEventListener("currencyChanged", handleCurrencyChangedEvent);
+
+        return () => {
+            unsubHotel();
+            window.removeEventListener("currencyChanged", handleCurrencyChangedEvent);
+        };
     }, [activeHotelCode]);
 
     useEffect(() => {
@@ -757,6 +795,8 @@ export function ChannelManagerSection() {
             await updateDoc(docRef, {
                 channexPropertyId,
                 currency: hotelCurrency,
+                baseCurrency: hotelCurrency,
+                "settings.currency": hotelCurrency,
                 channelManager: {
                     env: channexEnv,
                     apiKey: channexApiKey,
@@ -822,6 +862,33 @@ export function ChannelManagerSection() {
             toast.error("Failed to save channel configuration.");
         } finally {
             setSavingSettings(false);
+        }
+    };
+
+    // Helper: Save Hotel Distribution Currency Directly (2-Way Immediate Synchronization)
+    const handleSaveCurrencyOnly = async (overrideCurr?: string) => {
+        if (!activeHotelCode || activeHotelCode === "0") return;
+        const targetCurr = (overrideCurr || hotelCurrency || DEFAULT_CURRENCY).toUpperCase().trim();
+        setSavingCurrency(true);
+        try {
+            const docRef = doc(db, "hotels", activeHotelCode);
+            await updateDoc(docRef, {
+                currency: targetCurr,
+                baseCurrency: targetCurr,
+                "settings.currency": targetCurr,
+                "channelManager.currency": targetCurr
+            });
+            if (typeof window !== "undefined") {
+                localStorage.setItem(`hotel_currency_${activeHotelCode}`, targetCurr);
+                localStorage.setItem("shopCurrency", targetCurr);
+                window.dispatchEvent(new Event("currencyChanged"));
+            }
+            toast.success(`Mata uang properti berhasil disimpan: ${targetCurr} & inline dengan seluruh sistem.`);
+        } catch (err: any) {
+            console.error("Error saving currency:", err);
+            toast.error("Gagal menyimpan mata uang properti.");
+        } finally {
+            setSavingCurrency(false);
         }
     };
 
@@ -1250,11 +1317,7 @@ export function ChannelManagerSection() {
     };
 
     const formatMatrixPrice = (val: number) => {
-        const isUSD = hotelCurrency?.toUpperCase() === "USD";
-        if (isUSD) {
-            return `$ ${Number(val || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-        }
-        return `Rp ${Number(val || 0).toLocaleString("id-ID")}`;
+        return formatCurrencyAmount(Number(val || 0), hotelCurrency);
     };
 
     // Load Iframe SSO URL
@@ -3535,6 +3598,21 @@ export function ChannelManagerSection() {
                                 Manage API keys, webhook endpoints, and toggle between Sandbox (Testing) and Production (Live 68+ OTA) modes.
                             </p>
                         </div>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    handleSaveAll().catch(err => console.error("Error saving:", err));
+                                }}
+                                disabled={savingSettings}
+                                className={styles.btnActionPrimary}
+                                id="save-golive-toolbar-btn"
+                                title="Simpan seluruh kredensial API & mata uang distribusi"
+                            >
+                                <Save size={13} className={savingSettings ? "animate-spin" : ""} />
+                                <span>{savingSettings ? "Saving..." : "Save Channel Configuration"}</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div className={styles.goliveContainer}>
@@ -3623,19 +3701,37 @@ export function ChannelManagerSection() {
                                     Hotel Distribution Base Currency <span className={styles.requiredAsterisk}>*</span>
                                 </label>
                                 <p className={styles.fieldHelpMuted}>
-                                    Mata uang hotel untuk distribusi harga ke Channex &amp; OTA. Pilih <strong>USD</strong> untuk properti sertifikasi uji coba, atau <strong>IDR</strong> untuk hotel komersial Indonesia.
+                                    Mata uang hotel untuk distribusi harga ke Channex &amp; OTA. Inline 2-arah dengan CPanel Profile, Rate &amp; Inventory, dan POS Kasir.
                                 </p>
-                                <select
-                                    value={hotelCurrency}
-                                    onChange={e => setHotelCurrency(e.target.value)}
-                                    className={styles.currencySelect}
-                                >
-                                    {SUPPORTED_CURRENCIES.map(c => (
-                                        <option key={c.code} value={c.code}>
-                                            {c.flag} {c.code} — {c.name} ({c.symbol})
-                                        </option>
-                                    ))}
-                                </select>
+                                <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", maxWidth: "600px" }}>
+                                    <select
+                                        value={hotelCurrency}
+                                        onChange={async (e) => {
+                                            const nextVal = e.target.value;
+                                            setHotelCurrency(nextVal);
+                                            await handleSaveCurrencyOnly(nextVal);
+                                        }}
+                                        className={styles.currencySelect}
+                                        style={{ flex: 1, minWidth: "260px" }}
+                                    >
+                                        {SUPPORTED_CURRENCIES.map(c => (
+                                            <option key={c.code} value={c.code}>
+                                                {c.flag} {c.code} — {c.name} ({c.symbol})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSaveCurrencyOnly()}
+                                        disabled={savingCurrency}
+                                        className={styles.btnActionPrimary}
+                                        style={{ height: "38px", padding: "0 16px", whiteSpace: "nowrap" }}
+                                        title="Simpan mata uang properti ini & sinkronkan seketika ke seluruh modul"
+                                    >
+                                        <Save size={13} className={savingCurrency ? "animate-spin" : ""} />
+                                        <span>{savingCurrency ? "Menyimpan..." : "Simpan Currency"}</span>
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Field C: Real Property Distribution Identity & Registration Hub */}

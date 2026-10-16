@@ -2,12 +2,111 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getCurrencyConfig, formatCurrencyAmount, DEFAULT_CURRENCY, CurrencyConfig } from '@/lib/currency-utils';
 import { useAuth } from '@/context/AuthContext';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export function getCurrencySymbol(code: string): string {
   const config = getCurrencyConfig(code);
   return config.symbol + (config.symbol.endsWith('$') || config.symbol.endsWith('¥') || config.symbol.endsWith('£') || config.symbol.endsWith('€') ? '' : ' ');
+}
+
+export async function syncHotelCurrencyToAll(hotelCode: string, currency: string) {
+  if (!hotelCode || hotelCode === '0') return;
+  const clean = (currency || DEFAULT_CURRENCY).toUpperCase().trim();
+  const hotelRef = doc(db, 'hotels', hotelCode);
+  await updateDoc(hotelRef, {
+    currency: clean,
+    baseCurrency: clean,
+    'settings.currency': clean,
+    'channelManager.currency': clean
+  });
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(`hotel_currency_${hotelCode}`, clean);
+    localStorage.setItem('shopCurrency', clean);
+    window.dispatchEvent(new Event('currencyChanged'));
+  }
+}
+
+// ── Shared In-Memory Listener Pool (Low-Cost Firebase Pattern) ──────────
+// Ensures only 1 Firestore onSnapshot listener is open per hotel across
+// all rows, cards, subtabs, and modals on the screen.
+interface HotelCurrencySubscription {
+  callbacks: Set<(curr: string) => void>;
+  unsub: () => void;
+  cachedValue: string;
+}
+
+const activeSubscriptions = new Map<string, HotelCurrencySubscription>();
+
+function subscribeToHotelCurrency(hotelCode: string, callback: (curr: string) => void): () => void {
+  if (!hotelCode || hotelCode === '0') return () => {};
+
+  let sub = activeSubscriptions.get(hotelCode);
+  if (!sub) {
+    const callbacks = new Set<(curr: string) => void>();
+
+    let initialValue = DEFAULT_CURRENCY;
+    if (typeof window !== 'undefined') {
+      initialValue = localStorage.getItem(`hotel_currency_${hotelCode}`) || localStorage.getItem('shopCurrency') || DEFAULT_CURRENCY;
+    }
+
+    const hotelRef = doc(db, 'hotels', hotelCode);
+    const firestoreUnsub = onSnapshot(hotelRef, (snap) => {
+      let hotelCurrency = DEFAULT_CURRENCY;
+      if (snap.exists()) {
+        const data = snap.data();
+        hotelCurrency = (
+          data.currency ||
+          data.channelManager?.currency ||
+          data.baseCurrency ||
+          data.settings?.currency ||
+          data.cm?.currency ||
+          DEFAULT_CURRENCY
+        ).toUpperCase().trim();
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('shopCurrency', hotelCurrency);
+        localStorage.setItem(`hotel_currency_${hotelCode}`, hotelCurrency);
+        window.dispatchEvent(new Event('currencyChanged'));
+      }
+
+      const activeSub = activeSubscriptions.get(hotelCode);
+      if (activeSub) {
+        activeSub.cachedValue = hotelCurrency;
+        activeSub.callbacks.forEach(cb => {
+          try {
+            cb(hotelCurrency);
+          } catch (e) {
+            console.error('Error notifying currency subscriber:', e);
+          }
+        });
+      }
+    }, (err) => {
+      console.warn('Error reading hotel currency:', err);
+    });
+
+    sub = {
+      callbacks,
+      unsub: firestoreUnsub,
+      cachedValue: initialValue
+    };
+    activeSubscriptions.set(hotelCode, sub);
+  }
+
+  sub.callbacks.add(callback);
+  // Send latest cached value immediately to avoid UI flicker
+  callback(sub.cachedValue);
+
+  return () => {
+    const currentSub = activeSubscriptions.get(hotelCode);
+    if (!currentSub) return;
+    currentSub.callbacks.delete(callback);
+    if (currentSub.callbacks.size === 0) {
+      currentSub.unsub();
+      activeSubscriptions.delete(hotelCode);
+    }
+  };
 }
 
 export function useCurrency(hotelCodeOverride?: string) {
@@ -26,63 +125,22 @@ export function useCurrency(hotelCodeOverride?: string) {
     return DEFAULT_CURRENCY;
   });
 
-  // 1. Real-time sync with active hotel document in Firestore
+  // 1. Shared single onSnapshot listener per hotelCode (Ref-counted, low-cost)
   useEffect(() => {
     if (!effectiveHotelCode || effectiveHotelCode === '0') return;
-
-    // Check if there's already a cached hotel currency for this property
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem(`hotel_currency_${effectiveHotelCode}`);
-      if (cached && cached !== currencyCode) {
-        setCurrencyCode(cached);
-      }
-    }
-
-    const hotelRef = doc(db, 'hotels', effectiveHotelCode);
-    const unsub = onSnapshot(hotelRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        const hotelCurrency = (
-          data.channelManager?.currency ||
-          data.currency ||
-          data.cm?.currency ||
-          data.settings?.currency ||
-          data.baseCurrency ||
-          DEFAULT_CURRENCY
-        ).toUpperCase().trim();
-
-        if (hotelCurrency && hotelCurrency !== currencyCode) {
-          setCurrencyCode(hotelCurrency);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('shopCurrency', hotelCurrency);
-            localStorage.setItem(`hotel_currency_${effectiveHotelCode}`, hotelCurrency);
-            window.dispatchEvent(new Event('currencyChanged'));
-          }
-        }
-      } else {
-        if (currencyCode !== DEFAULT_CURRENCY) {
-          setCurrencyCode(DEFAULT_CURRENCY);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('shopCurrency', DEFAULT_CURRENCY);
-            localStorage.setItem(`hotel_currency_${effectiveHotelCode}`, DEFAULT_CURRENCY);
-            window.dispatchEvent(new Event('currencyChanged'));
-          }
-        }
-      }
-    }, (err) => {
-      console.warn('Error reading hotel currency:', err);
+    const unsub = subscribeToHotelCurrency(effectiveHotelCode, (curr) => {
+      setCurrencyCode(curr);
     });
-
     return () => unsub();
   }, [effectiveHotelCode]);
 
-  // 2. Listen to local currencyChanged events
+  // 2. Listen to local currencyChanged events (instant 2-way sync across tabs/components)
   useEffect(() => {
     const handleCurrencyChanged = () => {
       if (typeof window !== 'undefined') {
         const hCode = effectiveHotelCode || localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode');
         const saved = (hCode ? localStorage.getItem(`hotel_currency_${hCode}`) : null) || localStorage.getItem('shopCurrency') || DEFAULT_CURRENCY;
-        setCurrencyCode(saved);
+        if (saved) setCurrencyCode(saved);
       }
     };
 

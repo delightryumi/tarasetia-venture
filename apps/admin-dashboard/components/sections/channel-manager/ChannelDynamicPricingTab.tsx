@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { DynamicPricingConfig } from "@/lib/channex/types";
+import { useCurrency } from "@/hooks/useCurrency";
 import styles from "./ChannelDynamicPricing.module.css";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function ChannelDynamicPricingTab({ hotelCode }: Props) {
+    const { currencyCode, symbol, config: currConfig } = useCurrency(hotelCode);
     const [loading, setLoading] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);
     const [syncing, setSyncing] = useState<boolean>(false);
@@ -244,29 +246,29 @@ export function ChannelDynamicPricingTab({ hotelCode }: Props) {
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Minimum Rate (Rate Floor Guardrail)</label>
+                        <label className={styles.label}>Minimum Rate (Rate Floor Guardrail) ({symbol.trim()})</label>
                         <input
                             type="number"
-                            min={50000}
-                            step={10000}
+                            min={0}
+                            step={currConfig.step}
                             value={config.minRateGuardrail || ""}
                             onChange={e => setConfig(prev => ({ ...prev, minRateGuardrail: Number(e.target.value) || 0 }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>Rates will never drop below this threshold regardless of dynamic pricing models.</span>
+                        <span className={styles.hint}>Rates will never drop below this threshold ({currencyCode}) regardless of dynamic pricing models.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Maximum Rate (Rate Ceiling Guardrail)</label>
+                        <label className={styles.label}>Maximum Rate (Rate Ceiling Guardrail) ({symbol.trim()})</label>
                         <input
                             type="number"
-                            min={100000}
-                            step={50000}
+                            min={0}
+                            step={currConfig.step}
                             value={config.maxRateGuardrail || ""}
                             onChange={e => setConfig(prev => ({ ...prev, maxRateGuardrail: Number(e.target.value) || 0 }))}
                             className={styles.input}
                         />
-                        <span className={styles.hint}>Maximum allowable rate to prevent overpricing during peak occupancy dates.</span>
+                        <span className={styles.hint}>Maximum allowable rate in {currencyCode} ({symbol.trim()}) to prevent overpricing during peak occupancy dates.</span>
                     </div>
 
                     <div className={styles.formGroup}>

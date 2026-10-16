@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { X } from "lucide-react";
 import styles from "./superadmin.module.css";
 import { HotelMasterDoc } from "./types";
 
@@ -33,7 +34,7 @@ export const AddPaymentModal: React.FC<AddPaymentModalProps> = ({
     <div className={styles.modal} style={{ maxWidth: "540px" }}>
       <header className={styles.modalHeader}>
         <h3 className={styles.modalTitle}>Catat Pembayaran Baru: {hotel.name}</h3>
-        <button onClick={onClose} className={styles.modalCloseBtn}>&times;</button>
+        <button type="button" onClick={onClose} className={styles.modalCloseBtn} title="Tutup" aria-label="Tutup"><X size={18} /></button>
       </header>
 
       <form onSubmit={onSubmit} className={styles.modalBody}>

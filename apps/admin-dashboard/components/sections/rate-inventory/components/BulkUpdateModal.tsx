@@ -348,26 +348,31 @@ export function BulkUpdateModal({
                                 </select>
 
                                 {rateAction !== "none" && (
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        step={rateAction.includes("percent") ? "1" : currConfig.step}
-                                        value={rateValue}
-                                        onChange={e => {
-                                            const parsed = parseFloat(e.target.value);
-                                            const isPercent = rateAction.includes("percent");
-                                            if (isNaN(parsed) || parsed < 0) {
-                                                setRateValue(0);
-                                            } else if (isPercent || currConfig.decimals === 0) {
-                                                setRateValue(Math.round(parsed));
-                                            } else {
-                                                setRateValue(Math.round((parsed + Number.EPSILON) * 100) / 100);
-                                            }
-                                        }}
-                                        onWheel={e => e.currentTarget.blur()}
-                                        className={`${styles.inputField} ${styles.rateValueInput}`}
-                                        placeholder={rateAction.includes("percent") ? "%" : currConfig.code}
-                                    />
+                                    <>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            step={rateAction.includes("percent") ? "1" : currConfig.step}
+                                            value={rateValue}
+                                            onChange={e => {
+                                                const parsed = parseFloat(e.target.value);
+                                                const isPercent = rateAction.includes("percent");
+                                                if (isNaN(parsed) || parsed < 0) {
+                                                    setRateValue(0);
+                                                } else if (isPercent || currConfig.decimals === 0) {
+                                                    setRateValue(Math.round(parsed));
+                                                } else {
+                                                    setRateValue(Math.round((parsed + Number.EPSILON) * 100) / 100);
+                                                }
+                                            }}
+                                            onWheel={e => e.currentTarget.blur()}
+                                            className={`${styles.inputField} ${styles.rateValueInput}`}
+                                            placeholder={rateAction.includes("percent") ? "%" : currConfig.code}
+                                        />
+                                        <span className={styles.unitLabel}>
+                                            {rateAction.includes("percent") ? "%" : `${currConfig.code} (${currConfig.symbol})`}
+                                        </span>
+                                    </>
                                 )}
                             </div>
                         </div>

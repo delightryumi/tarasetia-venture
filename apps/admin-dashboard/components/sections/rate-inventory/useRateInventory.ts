@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { MyTaraRatePlan, RoomTypeInfo } from "@/lib/channex/types";
 import { toast } from "sonner";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
     RateInventoryTab,
     DayInventoryStatus,
@@ -29,6 +30,7 @@ import {
 
 export const useRateInventory = () => {
     const { activeHotelCode, activeHotelName, user } = useAuth();
+    const { currencyCode: hotelCurrencyCode } = useCurrency(activeHotelCode);
 
     // Returns identity info for audit logs.
     // Prefers the AuthContext user, falls back to Firebase auth.currentUser
@@ -228,7 +230,7 @@ export const useRateInventory = () => {
                     name: data.name || "Standard Rate",
                     code: data.code || docSnap.id,
                     baseRate: Number(data.baseRate ?? data.rate ?? 0),
-                    currency: data.currency || "IDR",
+                    currency: (data.currency && data.currency !== "IDR") ? data.currency : (hotelCurrencyCode || data.currency || "IDR"),
                     mealsIncluded: !!data.mealsIncluded,
                     cancellationPolicy: data.cancellationPolicy || "FREE",
                     minStay: Number(data.minStay ?? 1),
@@ -692,7 +694,7 @@ export const useRateInventory = () => {
                     roomTypeId: rt.id,
                     roomTypeName: rt.name,
                     mealsIncluded: !!rp.mealsIncluded,
-                    currency: rp.currency || "IDR",
+                    currency: (rp.currency && rp.currency !== "IDR") ? rp.currency : (hotelCurrencyCode || rp.currency || "IDR"),
                     baseRate: Number(rp.roomRates?.[rt.id] ?? rp.baseRate ?? rt.basePrice ?? 0),
                     days: rpDaysStatus
                 };
@@ -708,7 +710,7 @@ export const useRateInventory = () => {
                 ratePlans: ratePlanRows
             };
         });
-    }, [roomTypes, ratePlans, dailyRevenueMap, ariOverridesMap, stagedUpdates, dateList, taxInclusive, activeHotelCode, channelFilter, channelConfigs]);
+    }, [roomTypes, ratePlans, dailyRevenueMap, ariOverridesMap, stagedUpdates, dateList, taxInclusive, activeHotelCode, channelFilter, channelConfigs, hotelCurrencyCode]);
 
     // Filter matrix by selected room type
     const filteredMatrix = useMemo(() => {

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ShieldCheck, Lock, Eye, EyeOff, Copy, X, CreditCard, AlertTriangle, CheckCircle2, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrencyAmount } from "@/lib/currency-utils";
 import styles from "./ChannelVccViewer.module.css";
 
 interface OtaBookingSummary {
@@ -284,7 +285,7 @@ export function ChannelVccViewerModal({
                             <div className={styles.balanceNotice}>
                                 <div>
                                     <div style={{ fontWeight: 700, fontSize: "13px", fontFamily: "var(--font-geist-mono, monospace)" }}>
-                                        Available Settlement Balance: Rp {Number(cardData?.current_balance || currentBooking?.totalAmount || 0).toLocaleString("en-US")}
+                                        Available Settlement Balance: {formatCurrencyAmount(Number(cardData?.current_balance || currentBooking?.totalAmount || 0), cardData?.currency || cardData?.virtual_card_currency_code || "IDR")}
                                     </div>
                                     <div style={{ fontSize: "11px", color: "#71717a" }}>
                                         Active from {cardData?.activation_date || "-"} to {cardData?.expiration_date || "-"}
