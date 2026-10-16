@@ -568,170 +568,174 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
 
             {/* Table matching Channex */}
             <div className={styles.tableCard}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th className={`${styles.th} ${styles.thWithSort}`}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                    <span>Action</span>
-                                    <ArrowUpDown size={11} color="#94a3b8" />
-                                </div>
-                            </th>
-                            <th className={styles.th}>Task ID</th>
-                            <th className={styles.th}>Channel</th>
-                            <th className={styles.th}>User</th>
-                            <th className={styles.th}>Started At</th>
-                            <th className={styles.th}>Execution Time (ms)</th>
-                            <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedLogs.map(item => {
-                            const isSuccess = item.result.toLowerCase() === "success";
-                            const isFailed = item.result.toLowerCase() === "failed";
+                <div className={styles.tableResponsive}>
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th className={`${styles.th} ${styles.thWithSort}`}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                        <span>Action</span>
+                                        <ArrowUpDown size={11} color="#94a3b8" />
+                                    </div>
+                                </th>
+                                <th className={styles.th}>Task ID (Channel Manager)</th>
+                                <th className={styles.th}>Channel</th>
+                                <th className={styles.th}>User</th>
+                                <th className={styles.th}>Started At</th>
+                                <th className={styles.th}>Execution Time</th>
+                                <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {paginatedLogs.map(item => {
+                                const isSuccess = item.result.toLowerCase() === "success";
+                                const isFailed = item.result.toLowerCase() === "failed";
 
-                            return (
-                                <tr key={item.id} className={styles.tr}>
-                                    <td className={styles.td}>
-                                        <div className={styles.actionCell}>
-                                            <span 
-                                                className={
-                                                    isSuccess ? styles.statusRingSuccess : 
-                                                    isFailed ? styles.statusRingError : 
-                                                    styles.statusRingWarning
-                                                } 
-                                            />
-                                            <span>{item.action}</span>
-                                        </div>
-                                    </td>
-                                    <td className={styles.td}>
-                                        {(() => {
-                                            const ids = (item.task_ids && item.task_ids.length > 0)
-                                                ? item.task_ids
-                                                : (item.task_id ? [item.task_id] : [item.id]);
+                                return (
+                                    <tr key={item.id} className={styles.tr}>
+                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
+                                            <div className={styles.actionCell}>
+                                                <span 
+                                                    className={
+                                                        isSuccess ? styles.statusRingSuccess : 
+                                                        isFailed ? styles.statusRingError : 
+                                                        styles.statusRingWarning
+                                                    } 
+                                                />
+                                                <span style={{ fontWeight: 600, color: "#09090b", fontSize: "12.5px" }}>{item.action}</span>
+                                            </div>
+                                        </td>
+                                        <td className={styles.td}>
+                                            {(() => {
+                                                const ids = (item.task_ids && item.task_ids.length > 0)
+                                                    ? item.task_ids
+                                                    : (item.task_id ? [item.task_id] : [item.id]);
 
-                                            const isMulti = ids.length > 1;
+                                                const isMulti = ids.length > 1;
 
-                                            return (
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                                                    {ids.map((tid, idx) => {
-                                                        const label = isMulti 
-                                                            ? (idx === 0 ? "Call 1 (Availability)" : idx === 1 ? "Call 2 (Rates/Restrictions)" : `Task ${idx + 1}`)
-                                                            : null;
-                                                        return (
-                                                            <div key={tid || idx} style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px" }}>
-                                                                {label && (
-                                                                    <span style={{ fontSize: "9.5px", fontWeight: 700, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                                                                        {label}:
-                                                                    </span>
-                                                                )}
+                                                if (isMulti) {
+                                                    return (
+                                                        <div className={styles.multiTaskGroup}>
+                                                            <div className={styles.multiTaskHeader}>
+                                                                <span className={styles.multiTaskCount}>
+                                                                    {ids.length} Task IDs (Full Sync)
+                                                                </span>
                                                                 <button
                                                                     type="button"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        handleCopy(tid, `task-${item.id}-${idx}`);
+                                                                        handleCopy(ids.join("\n"), `task-all-${item.id}`);
                                                                     }}
-                                                                    className={styles.taskIdChip}
-                                                                    title={`Klik untuk menyalin Task ID: ${tid}`}
+                                                                    className={styles.btnCopyAllTasks}
+                                                                    title="Salin 2 Task ID sekaligus (format 1 ID per baris untuk Form Sertifikasi Test #1)"
                                                                 >
-                                                                    <span className={styles.taskIdMono}>
-                                                                        {tid}
-                                                                    </span>
-                                                                    {copiedField === `task-${item.id}-${idx}` ? (
-                                                                        <Check size={11} color="#09090b" />
-                                                                    ) : (
-                                                                        <Copy size={11} className={styles.taskIdCopyIcon} />
-                                                                    )}
+                                                                    {copiedField === `task-all-${item.id}` ? <Check size={10} color="#34d399" /> : <Copy size={10} />}
+                                                                    <span>{copiedField === `task-all-${item.id}` ? "Tersalin (2 Baris)" : "Salin Keduanya"}</span>
                                                                 </button>
                                                             </div>
-                                                        );
-                                                    })}
-                                                    {isMulti && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleCopy(ids.join("\n"), `task-all-${item.id}`);
-                                                            }}
-                                                            style={{
-                                                                display: "inline-flex",
-                                                                alignItems: "center",
-                                                                gap: "5px",
-                                                                background: "#f4f4f5",
-                                                                border: "1px solid #d4d4d8",
-                                                                borderRadius: "4px",
-                                                                padding: "3px 8px",
-                                                                fontSize: "10px",
-                                                                fontWeight: 600,
-                                                                color: "#18181b",
-                                                                cursor: "pointer",
-                                                                width: "fit-content",
-                                                                marginTop: "2px",
-                                                                transition: "all 0.15s ease"
-                                                            }}
-                                                            title="Salin 2 Task ID sekaligus (format 1 ID per baris untuk Form Sertifikasi Test #1)"
-                                                        >
-                                                            {copiedField === `task-all-${item.id}` ? <Check size={10} color="#09090b" /> : <Copy size={10} />}
-                                                            <span>{copiedField === `task-all-${item.id}` ? "Tersalin (2 Baris)" : "Salin Keduanya (1 ID per baris)"}</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            );
-                                        })()}
-                                    </td>
-                                    <td className={styles.td}>
-                                        <span style={{ fontWeight: 600, color: "#334155" }}>
-                                            {item.channelName}
-                                        </span>
-                                    </td>
-                                    <td className={styles.td}>
-                                        <span style={{ fontSize: "12px", color: "#475569" }}>
-                                            {item.user}
-                                        </span>
-                                    </td>
-                                    <td className={styles.td}>
-                                        <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "12px", color: "#334155" }}>
-                                            {formatTimestamp(item.started_at || item.inserted_at)}
-                                        </span>
-                                    </td>
-                                    <td className={styles.td}>
-                                        <span style={{ fontSize: "12px", color: "#475569" }}>
-                                            {item.execution_time_ms ? `${item.execution_time_ms}` : "-"}
-                                        </span>
-                                    </td>
-                                    <td className={styles.td} style={{ textAlign: "right" }}>
-                                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                                            <button
-                                                type="button"
-                                                onClick={() => setSelectedEvent(item)}
-                                                className={styles.btnView}
-                                            >
-                                                View
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setLogToDelete(item)}
-                                                className={styles.btnDeleteRow}
-                                                title="Hapus baris log ini"
-                                                aria-label={`Hapus log ${item.action}`}
-                                            >
-                                                <Trash2 size={13} />
-                                            </button>
-                                        </div>
+                                                            <div className={styles.multiTaskList}>
+                                                                {ids.map((tid, idx) => {
+                                                                    const label = idx === 0 ? "Call 1: Avail" : idx === 1 ? "Call 2: Rates" : `Task ${idx + 1}`;
+                                                                    return (
+                                                                        <div key={tid || idx} className={styles.multiTaskRow}>
+                                                                            <span className={styles.multiTaskTag}>{label}</span>
+                                                                            <span className={styles.multiTaskUuid} title={tid}>{tid}</span>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleCopy(tid, `task-${item.id}-${idx}`);
+                                                                                }}
+                                                                                className={styles.multiTaskCopyBtn}
+                                                                                title={`Salin ${label}: ${tid}`}
+                                                                            >
+                                                                                {copiedField === `task-${item.id}-${idx}` ? <Check size={10} color="#059669" /> : <Copy size={10} />}
+                                                                            </button>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                const tid = ids[0];
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCopy(tid, `task-${item.id}`);
+                                                        }}
+                                                        className={styles.taskIdChip}
+                                                        title={`Klik untuk menyalin Task ID: ${tid}`}
+                                                    >
+                                                        <span className={styles.taskIdMono}>
+                                                            {tid}
+                                                        </span>
+                                                        {copiedField === `task-${item.id}` ? (
+                                                            <Check size={11} color="#059669" />
+                                                        ) : (
+                                                            <Copy size={11} className={styles.taskIdCopyIcon} />
+                                                        )}
+                                                    </button>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
+                                            <span style={{ fontWeight: 500, color: "#334155", fontSize: "12px" }}>
+                                                {item.channelName}
+                                            </span>
+                                        </td>
+                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
+                                            <span style={{ fontSize: "12px", color: "#64748b" }}>
+                                                {item.user}
+                                            </span>
+                                        </td>
+                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
+                                            <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "11.5px", color: "#334155" }}>
+                                                {formatTimestamp(item.started_at || item.inserted_at)}
+                                            </span>
+                                        </td>
+                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
+                                            <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "11.5px", color: "#64748b" }}>
+                                                {item.execution_time_ms ? `${item.execution_time_ms} ms` : "-"}
+                                            </span>
+                                        </td>
+                                        <td className={styles.td} style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                                            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedEvent(item)}
+                                                    className={styles.btnView}
+                                                >
+                                                    View
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setLogToDelete(item)}
+                                                    className={styles.btnDeleteRow}
+                                                    title="Hapus baris log ini"
+                                                    aria-label={`Hapus log ${item.action}`}
+                                                >
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+
+                            {paginatedLogs.length === 0 && (
+                                <tr>
+                                    <td colSpan={7} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
+                                        {loading ? "Loading channel events..." : "No channel events found matching the selected filter."}
                                     </td>
                                 </tr>
-                            );
-                        })}
-
-                        {paginatedLogs.length === 0 && (
-                            <tr>
-                                <td colSpan={7} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
-                                    {loading ? "Loading channel events..." : "No channel events found matching the selected filter."}
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
                 {/* Pagination */}
                 <div className={styles.paginationRow}>

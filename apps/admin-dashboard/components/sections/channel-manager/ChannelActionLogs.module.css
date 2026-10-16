@@ -134,6 +134,11 @@
     overflow: hidden;
 }
 
+.tableResponsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -570,6 +575,109 @@
 
 .taskIdCopyIcon {
     color: #71717a;
+}
+
+/* ── Multi-Task Group (e.g. Full Sync with 2 Calls) ── */
+.multiTaskGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 8px;
+    min-width: 290px;
+    max-width: 380px;
+}
+
+.multiTaskHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #cbd5e1;
+}
+
+.multiTaskCount {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #475569;
+}
+
+.btnCopyAllTasks {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 9.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.btnCopyAllTasks:hover {
+    opacity: 0.85;
+}
+
+.multiTaskList {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.multiTaskRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+.multiTaskTag {
+    font-size: 9px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: #f1f5f9;
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+.multiTaskUuid {
+    font-family: var(--font-geist-mono, monospace);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #0f172a;
+    word-break: break-all;
+    flex: 1;
+}
+
+.multiTaskCopyBtn {
+    background: none;
+    border: none;
+    padding: 2px;
+    color: #64748b;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+}
+
+.multiTaskCopyBtn:hover {
+    color: #0f172a;
+    background: #f1f5f9;
 }
 
 /* ── Live Sync Button in Drawer ── */
