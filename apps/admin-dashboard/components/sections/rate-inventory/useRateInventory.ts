@@ -233,7 +233,8 @@ export const useRateInventory = () => {
                     cancellationPolicy: data.cancellationPolicy || "FREE",
                     minStay: Number(data.minStay ?? 1),
                     stopSell: !!data.stopSell,
-                    channexRatePlanId: data.channexRatePlanId || undefined
+                    channexRatePlanId: data.channexRatePlanId || undefined,
+                    channexRatePlanIds: data.channexRatePlanIds || undefined
                 });
             });
             setRatePlans(rps);
@@ -1011,7 +1012,20 @@ export const useRateInventory = () => {
                 ]);
 
                 rpIds.forEach(rpId => {
-                    const item: any = { ratePlanId: rpId, date: dStr };
+                    let targetRtId: string | undefined;
+                    let targetRpId = rpId;
+
+                    // If rpId has format `${roomTypeId}_${ratePlanId}`
+                    for (const rt of roomTypes) {
+                        if (rpId.startsWith(`${rt.id}_`)) {
+                            targetRtId = rt.id;
+                            targetRpId = rpId.substring(rt.id.length + 1);
+                            break;
+                        }
+                    }
+
+                    const item: any = { ratePlanId: targetRpId, date: dStr };
+                    if (targetRtId) item.roomTypeId = targetRtId;
                     if (edits.rates?.[rpId] !== undefined) item.rate = edits.rates[rpId];
                     if (edits.stopSell?.[rpId] !== undefined) item.stopSell = edits.stopSell[rpId];
                     if (edits.minStay?.[rpId] !== undefined) item.minStay = edits.minStay[rpId];

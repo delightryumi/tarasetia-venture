@@ -24,22 +24,18 @@ const RateCellInput = React.memo(function RateCellInput({
     const [isFocused, setIsFocused] = useState(false);
     const [rawText, setRawText] = useState("");
 
-    // Display formatted: no trailing .00 if it's an integer!
+    const currConfig = useMemo(() => getCurrencyConfig(currencyCode), [currencyCode]);
+
+    // Format display according to standard hotel industry currency rules:
+    // Decimals are strictly preserved for currencies that use cents (USD, EUR, SGD -> 100.00),
+    // while zero-decimal currencies remain clean (IDR, JPY -> 1,000,000).
     const displayValue = useMemo(() => {
         const num = Number(value) || 0;
-        if (num === 0) return "0";
-        // If it has decimal parts like 456.23:
-        if (num % 1 !== 0) {
-            return num.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-        // If integer like 100 or 1000000:
         return num.toLocaleString("en-US", {
-            maximumFractionDigits: 0
+            minimumFractionDigits: currConfig.decimals,
+            maximumFractionDigits: currConfig.decimals
         });
-    }, [value]);
+    }, [value, currConfig.decimals]);
 
     // Keep local rawText in sync when value changes externally
     React.useEffect(() => {
@@ -74,7 +70,9 @@ const RateCellInput = React.memo(function RateCellInput({
         } else {
             const parsed = parseFloat(safeText);
             if (!isNaN(parsed) && parsed >= 0) {
-                const finalVal = Math.round((parsed + Number.EPSILON) * 100) / 100;
+                const finalVal = currConfig.decimals === 0
+                    ? Math.round(parsed)
+                    : Math.round((parsed + Number.EPSILON) * 100) / 100;
                 onSave(finalVal);
             }
         }
@@ -87,7 +85,11 @@ const RateCellInput = React.memo(function RateCellInput({
             return;
         }
         const parsed = parseFloat(rawText);
-        const finalVal = isNaN(parsed) || parsed < 0 ? 0 : Math.round((parsed + Number.EPSILON) * 100) / 100;
+        const finalVal = isNaN(parsed) || parsed < 0 
+            ? 0 
+            : currConfig.decimals === 0 
+                ? Math.round(parsed) 
+                : Math.round((parsed + Number.EPSILON) * 100) / 100;
         onSave(finalVal);
     };
 
@@ -447,8 +449,8 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
                                 <span>RO</span>
                             </span>
                         )}
-                        <span className={styles.baseRateLabel} title={`Base Rate: IDR ${Number(rp.baseRate || 0).toLocaleString("id-ID")}`}>
-                            Base: IDR {Number(rp.baseRate || 0).toLocaleString("id-ID")}
+                        <span className={styles.baseRateLabel} title={`Base Rate: ${currConfig.code} ${formatCurrency(Number(rp.baseRate || 0))}`}>
+                            Base: {currConfig.code} {formatCurrency(Number(rp.baseRate || 0))}
                         </span>
                         {hasMultipleMetrics && (
                             <span className={`${styles.metricBadge} ${styles.firstMetricBadge}`}>

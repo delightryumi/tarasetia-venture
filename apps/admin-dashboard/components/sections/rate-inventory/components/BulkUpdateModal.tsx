@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { BulkUpdateParams } from "../RateInventoryTypes";
 import { RoomTypeInfo, MyTaraRatePlan } from "@/lib/channex/types";
+import { useCurrency } from "@/hooks/useCurrency";
+import { getCurrencyConfig } from "@/lib/currency-utils";
 import styles from "./BulkUpdateModal.module.css";
 
 interface BulkUpdateModalProps {
@@ -43,6 +45,8 @@ export function BulkUpdateModal({
     canChangeRate = true,
     canChangeInventory = true
 }: BulkUpdateModalProps) {
+    const { currencyCode } = useCurrency();
+    const currConfig = getCurrencyConfig(currencyCode);
     const todayStr = defaultStartDate || new Date().toISOString().split("T")[0];
     const defaultEndStr = (() => {
         const d = new Date(todayStr);
@@ -347,15 +351,22 @@ export function BulkUpdateModal({
                                     <input
                                         type="number"
                                         min={0}
-                                        step="0.01"
+                                        step={rateAction.includes("percent") ? "1" : currConfig.step}
                                         value={rateValue}
                                         onChange={e => {
                                             const parsed = parseFloat(e.target.value);
-                                            setRateValue(isNaN(parsed) ? 0 : Math.max(0, Math.round((parsed + Number.EPSILON) * 100) / 100));
+                                            const isPercent = rateAction.includes("percent");
+                                            if (isNaN(parsed) || parsed < 0) {
+                                                setRateValue(0);
+                                            } else if (isPercent || currConfig.decimals === 0) {
+                                                setRateValue(Math.round(parsed));
+                                            } else {
+                                                setRateValue(Math.round((parsed + Number.EPSILON) * 100) / 100);
+                                            }
                                         }}
                                         onWheel={e => e.currentTarget.blur()}
                                         className={`${styles.inputField} ${styles.rateValueInput}`}
-                                        placeholder="0"
+                                        placeholder={rateAction.includes("percent") ? "%" : currConfig.code}
                                     />
                                 )}
                             </div>

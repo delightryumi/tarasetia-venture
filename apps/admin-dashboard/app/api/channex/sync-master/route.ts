@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
 import { channexClient } from "@/lib/channex/channexClient";
 import { channexSyncService } from "@/lib/channex/syncService";
+import { formatRateForChannex } from "@/lib/currency-utils";
 
 /**
  * Route: POST /api/channex/sync-master
@@ -88,8 +89,12 @@ export async function POST(req: NextRequest) {
 
             const rpSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
             for (const d of rpSnap.docs) {
-                if (d.data()?.channexRatePlanId) {
-                    await d.ref.update({ channexRatePlanId: FieldValue.delete() });
+                const rData = d.data();
+                if (rData?.channexRatePlanId || rData?.channexRatePlanIds) {
+                    await d.ref.update({ 
+                        channexRatePlanId: FieldValue.delete(),
+                        channexRatePlanIds: FieldValue.delete()
+                    });
                 }
             }
 
@@ -254,7 +259,7 @@ export async function POST(req: NextRequest) {
         }
 
         // ==========================================
-        // 5. SYNC LOCAL RATE PLANS TO CHANNEX
+        // 5. SYNC LOCAL RATE PLANS TO CHANNEX (Multi-Room Support)
         // ==========================================
         const ratePlansSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
         const localRatePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -262,61 +267,87 @@ export async function POST(req: NextRequest) {
         let syncedRatePlansCount = 0;
 
         for (const rp of localRatePlans as any[]) {
-            const targetChannexRoomTypeId = roomTypeMapping[rp.roomTypeId] || Object.values(roomTypeMapping)[0];
-            if (!targetChannexRoomTypeId) continue;
-
             const rateTitle = rp.name || rp.ratePlanName || "Best Available Rate";
-            const baseRate = Number(rp.baseRate || rp.basePrice || rp.rate || (targetCurrency === "IDR" ? 500000 : 100));
+            
+            // Determine all local room types linked to this rate plan
+            let targetLocalRtIds: string[] = [];
+            if (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.length > 0) {
+                targetLocalRtIds = rp.roomTypeIds;
+            } else if (rp.roomTypeId) {
+                targetLocalRtIds = [rp.roomTypeId];
+            } else {
+                targetLocalRtIds = Object.keys(roomTypeMapping);
+            }
 
-            const existingRate = existingChannexRates.find((cr: any) => 
-                cr.id === rp.channexRatePlanId || 
-                (cr.attributes?.title?.toLowerCase() === rateTitle.toLowerCase() && cr.attributes?.room_type_id === targetChannexRoomTypeId)
-            );
+            const updatedPlanChannexRateIds: Record<string, string> = { ...(rp.channexRatePlanIds || {}) };
 
-            let assignedChannexRateId = existingRate?.id;
+            for (const localRtId of targetLocalRtIds) {
+                const targetChannexRoomTypeId = roomTypeMapping[localRtId];
+                if (!targetChannexRoomTypeId) continue;
 
-            if (!assignedChannexRateId) {
-                try {
-                    const createdPlan = await channexClient.createRatePlan({
-                        property_id: channexPropertyId,
-                        room_type_id: targetChannexRoomTypeId,
-                        title: rateTitle,
-                        currency: targetCurrency,
-                        options: [
-                            {
-                                occupancy: 2,
-                                rate: baseRate,
-                                is_primary: true
-                            }
-                        ]
-                    }, customApiKey, env);
+                const localRt = localRoomTypes.find((r: any) => r.id === localRtId);
+                const baseRate = Number(
+                    rp.roomRates?.[localRtId] ?? 
+                    rp.baseRate ?? 
+                    rp.basePrice ?? 
+                    rp.rate ?? 
+                    (targetCurrency === "IDR" ? 500000 : 100)
+                );
+                const capacity = Math.max(1, Number(localRt?.capacity || localRt?.occAdults || 2));
 
-                    assignedChannexRateId = createdPlan?.data?.id;
-                    syncedRatePlansCount++;
-                } catch (rateErr: any) {
-                    console.error(`[SyncMaster] Error creating rate plan ${rateTitle} on Channex:`, rateErr);
+                const existingRate = existingChannexRates.find((cr: any) => 
+                    (cr.attributes?.room_type_id === targetChannexRoomTypeId && cr.attributes?.title?.toLowerCase() === rateTitle.toLowerCase()) ||
+                    cr.id === updatedPlanChannexRateIds[localRtId] ||
+                    (cr.id === rp.channexRatePlanId && cr.attributes?.room_type_id === targetChannexRoomTypeId)
+                );
+
+                let assignedChannexRateId = existingRate?.id;
+
+                if (!assignedChannexRateId) {
+                    try {
+                        const createdPlan = await channexClient.createRatePlan({
+                            property_id: channexPropertyId,
+                            room_type_id: targetChannexRoomTypeId,
+                            title: rateTitle,
+                            currency: targetCurrency,
+                            options: [
+                                {
+                                    occupancy: capacity,
+                                    rate: formatRateForChannex(baseRate, targetCurrency),
+                                    is_primary: true
+                                }
+                            ]
+                        }, customApiKey, env);
+
+                        assignedChannexRateId = createdPlan?.data?.id;
+                        syncedRatePlansCount++;
+                    } catch (rateErr: any) {
+                        console.error(`[SyncMaster] Error creating rate plan ${rateTitle} for room type ${targetChannexRoomTypeId} on Channex:`, rateErr);
+                    }
+                }
+
+                if (assignedChannexRateId) {
+                    updatedPlanChannexRateIds[localRtId] = assignedChannexRateId;
                 }
             }
 
-            if (assignedChannexRateId && rp.channexRatePlanId !== assignedChannexRateId) {
+            const primaryChannexRateId = updatedPlanChannexRateIds[rp.roomTypeId] || Object.values(updatedPlanChannexRateIds)[0] || rp.channexRatePlanId;
+            if (primaryChannexRateId || Object.keys(updatedPlanChannexRateIds).length > 0) {
                 await adminDb.collection(`hotels/${hotelCode}/ratePlans`).doc(rp.id).update({
-                    channexRatePlanId: assignedChannexRateId
+                    channexRatePlanIds: updatedPlanChannexRateIds,
+                    channexRatePlanId: primaryChannexRateId || FieldValue.delete()
                 });
             }
         }
 
         // ==========================================
-        // 6. INITIAL ARI AVAILABILITY SEED (30 DAYS)
+        // 6. INITIAL FULL PROPERTY ARI SEED (60 DAYS)
         // ==========================================
-        const start = new Date().toISOString().split("T")[0];
-        const endD = new Date();
-        endD.setDate(endD.getDate() + 30);
-        const end = endD.toISOString().split("T")[0];
-
         try {
-            await channexSyncService.recalculateAndPushAvailability(hotelCode, start, end);
+            await channexSyncService.fullPropertySync(hotelCode, 60);
+            console.log(`[SyncMaster] Initial 60-day ARI (Availability & Restrictions) pushed successfully.`);
         } catch (ariErr) {
-            console.warn("[SyncMaster] Warning pushing initial availability:", ariErr);
+            console.warn("[SyncMaster] Warning pushing initial full property ARI:", ariErr);
         }
 
         return NextResponse.json({

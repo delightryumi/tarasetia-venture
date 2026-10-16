@@ -38,7 +38,7 @@ export interface ChannexRatePlan {
     parent_rate_plan_id?: string;
     options?: Array<{
         occupancy: number;
-        rate: number;
+        rate: number | string;
         is_primary?: boolean;
     }>;
     meals?: {

@@ -120,3 +120,17 @@ export function formatCurrencyAmount(
         return `${config.symbol} ${num.toFixed(config.decimals)}`;
     }
 }
+
+/**
+ * Formats rate for Channex API payload (/restrictions, /rate_plans).
+ * Channex Standard: Decimal value converted into a string (e.g. "100.00" for USD, "1000000" for IDR).
+ * This prevents Channex from treating integer numbers as minor currency units (cents).
+ */
+export function formatRateForChannex(rate: number, currencyCode?: string): string {
+    const config = getCurrencyConfig(currencyCode);
+    const num = Number(rate) || 0;
+    if (config.decimals === 0) {
+        return Math.round(num).toString();
+    }
+    return num.toFixed(config.decimals);
+}

@@ -548,9 +548,11 @@ export async function POST(req: NextRequest) {
                 const channexRates = cc.attributes?.rate_plans || [];
                 const extractedRateMappings: Record<string, string> = {};
                 channexRates.forEach((cr: any) => {
-                    const channexRatePlanId = cr.rate_plan_id;
-                    const otaRatePlanCode = cr.settings?.rate_plan_code || channexRatePlanId;
-                    const matchedRp = localRatePlans.find((r: any) => r.channexRatePlanId === channexRatePlanId || r.id === channexRatePlanId);
+                    const matchedRp = localRatePlans.find((r: any) => 
+                        r.channexRatePlanId === channexRatePlanId || 
+                        (r.channexRatePlanIds && typeof r.channexRatePlanIds === "object" && Object.values(r.channexRatePlanIds).includes(channexRatePlanId)) ||
+                        r.id === channexRatePlanId
+                    );
                     const targetKey = matchedRp ? matchedRp.id : channexRatePlanId;
                     extractedRateMappings[targetKey] = otaRatePlanCode;
                 });

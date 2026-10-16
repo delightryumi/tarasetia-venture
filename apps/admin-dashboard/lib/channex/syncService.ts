@@ -5,6 +5,7 @@
 
 import { adminDb } from "@/lib/firebaseAdmin";
 import { channexClient } from "./channexClient";
+import { formatRateForChannex } from "@/lib/currency-utils";
 import {
     ChannexWebhookPayload,
     ChannexBooking,
@@ -527,6 +528,7 @@ export class ChannexSyncService {
                 const bookedRatePlan = hotelRatePlans.find((rp: any) => 
                     rp.id === bookedRoom.rate_plan_id || 
                     rp.channexRatePlanId === bookedRoom.rate_plan_id ||
+                    (rp.channexRatePlanIds && typeof rp.channexRatePlanIds === "object" && Object.values(rp.channexRatePlanIds).includes(bookedRoom.rate_plan_id)) ||
                     rp.code === bookedRoom.rate_plan_id
                 );
 
@@ -919,9 +921,11 @@ export class ChannexSyncService {
      */
     async pushRateUpdate(hotelCode: string, ratePlanId: string, dateFrom: string, dateTo: string, rate: number, restrictions?: any): Promise<any> {
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
-        const channexPropertyId = hotelDoc.data()?.channexPropertyId || hotelDoc.data()?.channelManager?.channexPropertyId;
-        const customApiKey = hotelDoc.data()?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
-        const env = hotelDoc.data()?.channelManager?.environment || hotelDoc.data()?.channelManager?.env || (process.env.CHANNEX_ENV as any) || "staging";
+        const hotelData = hotelDoc.data();
+        const channexPropertyId = hotelData?.channexPropertyId || hotelData?.channelManager?.channexPropertyId;
+        const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
+        const env = hotelData?.channelManager?.environment || hotelData?.channelManager?.env || (process.env.CHANNEX_ENV as any) || "staging";
+        const hotelCurrency = (hotelData?.currency || hotelData?.channelManager?.currency || "IDR").toUpperCase();
 
         if (!channexPropertyId) {
             console.log(`[ChannexSync] Hotel ${hotelCode} has no channexPropertyId configured. Skipping rate push.`);
@@ -942,7 +946,7 @@ export class ChannexSyncService {
                     rate_plan_id: ratePlanId,
                     date_from: effectiveDateFrom,
                     date_to: dateTo,
-                    rate: Math.round((Number(rate) + Number.EPSILON) * 100) / 100,
+                    rate: formatRateForChannex(Number(rate), hotelCurrency),
                     min_stay_arrival: restrictions?.minStayArrival || restrictions?.minStay || 1,
                     min_stay_through: restrictions?.minStayThrough || restrictions?.minStay || 1,
                     ...(restrictions?.maxStay !== undefined && restrictions?.maxStay !== null ? { max_stay: Number(restrictions.maxStay) } : {}),
@@ -953,7 +957,7 @@ export class ChannexSyncService {
             ]
         };
 
-        console.log(`[ChannexSync] Pushing Rate update to Channex for Rate Plan ${ratePlanId} (${effectiveDateFrom} - ${dateTo}): Rp ${rate}`);
+        console.log(`[ChannexSync] Pushing Rate update to Channex for Rate Plan ${ratePlanId} (${effectiveDateFrom} - ${dateTo}): ${hotelCurrency} ${rate}`);
         const result = await channexClient.pushRestrictions(payload, customApiKey, env);
         const taskId = result?.data?.[0]?.id || result?.data?.id;
         return { ...result, taskId };
@@ -967,6 +971,7 @@ export class ChannexSyncService {
     async pushDeltaBatch(hotelCode: string, deltaPayload: {
         rates?: Array<{
             ratePlanId: string;
+            roomTypeId?: string;
             date?: string;
             dateFrom?: string;
             dateTo?: string;
@@ -1020,13 +1025,37 @@ export class ChannexSyncService {
         let restrictionsTaskId: string | undefined;
         let availabilityTaskId: string | undefined;
 
+        const hotelCurrency = (hotelData?.currency || hotelData?.channelManager?.currency || "IDR").toUpperCase();
+
         // 1. Process Restrictions & Rates Batch
         const rateItems = deltaPayload.rates || [];
         if (rateItems.length > 0) {
             const restrictionValues: any[] = [];
             for (const r of rateItems) {
-                const rp: any = ratePlans.find((p: any) => p.id === r.ratePlanId || (p as any).channexRatePlanId === r.ratePlanId);
-                const channexRatePlanId = rp?.channexRatePlanId || r.ratePlanId;
+                let rp: any = ratePlans.find((p: any) => p.id === r.ratePlanId || (p as any).channexRatePlanId === r.ratePlanId);
+                let channexRatePlanId: string | undefined;
+
+                if (rp) {
+                    if (r.roomTypeId && rp.channexRatePlanIds?.[r.roomTypeId]) {
+                        channexRatePlanId = rp.channexRatePlanIds[r.roomTypeId];
+                    } else {
+                        channexRatePlanId = rp.channexRatePlanId;
+                    }
+                } else {
+                    // Check if r.ratePlanId is compound key: `${roomTypeId}_${actualRpId}`
+                    for (const p of ratePlans as any[]) {
+                        if (r.ratePlanId.endsWith(`_${p.id}`)) {
+                            const rtId = r.ratePlanId.substring(0, r.ratePlanId.length - p.id.length - 1);
+                            rp = p;
+                            channexRatePlanId = p.channexRatePlanIds?.[rtId] || p.channexRatePlanId;
+                            break;
+                        }
+                    }
+                }
+
+                if (!channexRatePlanId) {
+                    channexRatePlanId = r.ratePlanId;
+                }
 
                 const valObj: any = {
                     property_id: channexPropertyId,
@@ -1040,7 +1069,9 @@ export class ChannexSyncService {
                     valObj.date_to = r.dateTo;
                 }
 
-                if (r.rate !== undefined && r.rate !== null) valObj.rate = Math.round((Number(r.rate) + Number.EPSILON) * 100) / 100;
+                if (r.rate !== undefined && r.rate !== null) {
+                    valObj.rate = formatRateForChannex(Number(r.rate), hotelCurrency);
+                }
                 
                 // Min Stay Arrival
                 if (r.minStayArrival !== undefined && r.minStayArrival !== null) {
@@ -1237,72 +1268,109 @@ export class ChannexSyncService {
             availabilityValues.push(...compressed);
         }
 
+        const hotelCurrency = (hotelData?.currency || hotelData?.channelManager?.currency || "IDR").toUpperCase();
+
         // 4. Build Restrictions / Rates Payload (Call 2)
         const restrictionValues: any[] = [];
         for (const rp of ratePlans as any[]) {
-            const channexRatePlanId = rp.channexRatePlanId || rp.id;
-            const basePrice = Number(rp.baseRate || rp.basePrice || rp.rate || 500000);
             const minStay = Number(rp.minStay || 1);
             const stopSell = !!rp.stopSell;
             const closedToArrival = !!rp.closedToArrival;
             const closedToDeparture = !!rp.closedToDeparture;
 
-            // Base broad range across the year
-            restrictionValues.push({
-                property_id: channexPropertyId,
-                rate_plan_id: channexRatePlanId,
-                date_from: startDateStr,
-                date_to: endDateStr,
-                rate: Math.round((Number(basePrice) + Number.EPSILON) * 100) / 100,
-                min_stay_arrival: minStay,
-                min_stay_through: minStay,
-                stop_sell: stopSell,
-                closed_to_arrival: closedToArrival,
-                closed_to_departure: closedToDeparture
-            });
-
-            // Specific day overrides from Tara PMS ari_overrides
-            Object.entries(overridesMap).forEach(([overrideDate, oData]) => {
-                const hasRateOverride = oData.rates && oData.rates[rp.id] !== undefined;
-                const hasStopSellOverride = oData.stopSell && oData.stopSell[rp.id] !== undefined;
-                const hasMinStayArrOverride = oData.minStayArrival && oData.minStayArrival[rp.id] !== undefined;
-                const hasMinStayThruOverride = oData.minStayThrough && oData.minStayThrough[rp.id] !== undefined;
-                const hasMinStayLegacyOverride = oData.minStay && oData.minStay[rp.id] !== undefined;
-                const hasMaxStayOverride = oData.maxStay && oData.maxStay[rp.id] !== undefined;
-                const hasCtaOverride = oData.cta && oData.cta[rp.id] !== undefined;
-                const hasCtdOverride = oData.ctd && oData.ctd[rp.id] !== undefined;
-
-                if (hasRateOverride || hasStopSellOverride || hasMinStayArrOverride || hasMinStayThruOverride || hasMinStayLegacyOverride || hasMaxStayOverride || hasCtaOverride || hasCtdOverride) {
-                    const customRate = hasRateOverride ? Number(oData.rates[rp.id]) : basePrice;
-                    const customStopSell = hasStopSellOverride ? !!oData.stopSell[rp.id] : stopSell;
-                    const customMinStayArr = hasMinStayArrOverride 
-                        ? Number(oData.minStayArrival[rp.id]) 
-                        : (hasMinStayLegacyOverride ? Number(oData.minStay[rp.id]) : minStay);
-                    const customMinStayThru = hasMinStayThruOverride 
-                        ? Number(oData.minStayThrough[rp.id]) 
-                        : (hasMinStayLegacyOverride ? Number(oData.minStay[rp.id]) : minStay);
-                    const customMaxStay = hasMaxStayOverride ? Number(oData.maxStay[rp.id]) : undefined;
-                    const customCta = hasCtaOverride ? !!oData.cta[rp.id] : closedToArrival;
-                    const customCtd = hasCtdOverride ? !!oData.ctd[rp.id] : closedToDeparture;
-
-                    const overrideRestObj: any = {
-                        property_id: channexPropertyId,
-                        rate_plan_id: channexRatePlanId,
-                        date: overrideDate,
-                        rate: Math.round((Number(customRate) + Number.EPSILON) * 100) / 100,
-                        min_stay_arrival: customMinStayArr,
-                        min_stay_through: customMinStayThru,
-                        stop_sell: customStopSell,
-                        closed_to_arrival: customCta,
-                        closed_to_departure: customCtd
-                    };
-                    if (customMaxStay !== undefined && customMaxStay !== null) {
-                        overrideRestObj.max_stay = customMaxStay;
-                    }
-
-                    restrictionValues.push(overrideRestObj);
+            // Determine all room-type targets for this rate plan
+            const planTargets: Array<{ roomTypeId?: string; channexRateId: string }> = [];
+            if (rp.channexRatePlanIds && typeof rp.channexRatePlanIds === "object" && Object.keys(rp.channexRatePlanIds).length > 0) {
+                for (const [rtId, cId] of Object.entries(rp.channexRatePlanIds)) {
+                    if (cId) planTargets.push({ roomTypeId: rtId, channexRateId: cId as string });
                 }
-            });
+            } else if (rp.channexRatePlanId) {
+                planTargets.push({ roomTypeId: rp.roomTypeId, channexRateId: rp.channexRatePlanId });
+            }
+
+            for (const target of planTargets) {
+                const targetChannexRateId = target.channexRateId;
+                const targetRoomTypeId = target.roomTypeId;
+                const basePrice = Number(
+                    rp.roomRates?.[targetRoomTypeId || ""] ?? 
+                    rp.baseRate ?? 
+                    rp.basePrice ?? 
+                    rp.rate ?? 
+                    (hotelCurrency === "IDR" ? 500000 : 100)
+                );
+                const formattedBaseRate = formatRateForChannex(basePrice, hotelCurrency);
+
+                // Base broad range across the sync window
+                restrictionValues.push({
+                    property_id: channexPropertyId,
+                    rate_plan_id: targetChannexRateId,
+                    date_from: startDateStr,
+                    date_to: endDateStr,
+                    rate: formattedBaseRate,
+                    min_stay_arrival: minStay,
+                    min_stay_through: minStay,
+                    stop_sell: stopSell,
+                    closed_to_arrival: closedToArrival,
+                    closed_to_departure: closedToDeparture
+                });
+
+                // Specific day overrides from Tara PMS ari_overrides
+                Object.entries(overridesMap).forEach(([overrideDate, oData]) => {
+                    const compoundKey = targetRoomTypeId ? `${targetRoomTypeId}_${rp.id}` : rp.id;
+
+                    const hasRateOverride = oData.rates && (oData.rates[compoundKey] !== undefined || oData.rates[rp.id] !== undefined);
+                    const hasStopSellOverride = oData.stopSell && (oData.stopSell[compoundKey] !== undefined || oData.stopSell[rp.id] !== undefined);
+                    const hasMinStayArrOverride = oData.minStayArrival && (oData.minStayArrival[compoundKey] !== undefined || oData.minStayArrival[rp.id] !== undefined);
+                    const hasMinStayThruOverride = oData.minStayThrough && (oData.minStayThrough[compoundKey] !== undefined || oData.minStayThrough[rp.id] !== undefined);
+                    const hasMinStayLegacyOverride = oData.minStay && (oData.minStay[compoundKey] !== undefined || oData.minStay[rp.id] !== undefined);
+                    const hasMaxStayOverride = oData.maxStay && (oData.maxStay[compoundKey] !== undefined || oData.maxStay[rp.id] !== undefined);
+                    const hasCtaOverride = oData.cta && (oData.cta[compoundKey] !== undefined || oData.cta[rp.id] !== undefined);
+                    const hasCtdOverride = oData.ctd && (oData.ctd[compoundKey] !== undefined || oData.ctd[rp.id] !== undefined);
+
+                    if (hasRateOverride || hasStopSellOverride || hasMinStayArrOverride || hasMinStayThruOverride || hasMinStayLegacyOverride || hasMaxStayOverride || hasCtaOverride || hasCtdOverride) {
+                        const rawRate = hasRateOverride 
+                            ? Number(oData.rates[compoundKey] !== undefined ? oData.rates[compoundKey] : oData.rates[rp.id]) 
+                            : basePrice;
+                        const customRateStr = formatRateForChannex(rawRate, hotelCurrency);
+
+                        const customStopSell = hasStopSellOverride 
+                            ? Boolean(oData.stopSell[compoundKey] !== undefined ? oData.stopSell[compoundKey] : oData.stopSell[rp.id]) 
+                            : stopSell;
+                        const customMinStayArr = hasMinStayArrOverride 
+                            ? Number(oData.minStayArrival[compoundKey] !== undefined ? oData.minStayArrival[compoundKey] : oData.minStayArrival[rp.id]) 
+                            : (hasMinStayLegacyOverride ? Number(oData.minStay[compoundKey] !== undefined ? oData.minStay[compoundKey] : oData.minStay[rp.id]) : minStay);
+                        const customMinStayThru = hasMinStayThruOverride 
+                            ? Number(oData.minStayThrough[compoundKey] !== undefined ? oData.minStayThrough[compoundKey] : oData.minStayThrough[rp.id]) 
+                            : (hasMinStayLegacyOverride ? Number(oData.minStay[compoundKey] !== undefined ? oData.minStay[compoundKey] : oData.minStay[rp.id]) : minStay);
+                        const customMaxStay = hasMaxStayOverride 
+                            ? Number(oData.maxStay[compoundKey] !== undefined ? oData.maxStay[compoundKey] : oData.maxStay[rp.id]) 
+                            : undefined;
+                        const customCta = hasCtaOverride 
+                            ? Boolean(oData.cta[compoundKey] !== undefined ? oData.cta[compoundKey] : oData.cta[rp.id]) 
+                            : closedToArrival;
+                        const customCtd = hasCtdOverride 
+                            ? Boolean(oData.ctd[compoundKey] !== undefined ? oData.ctd[compoundKey] : oData.ctd[rp.id]) 
+                            : closedToDeparture;
+
+                        const overrideRestObj: any = {
+                            property_id: channexPropertyId,
+                            rate_plan_id: targetChannexRateId,
+                            date: overrideDate,
+                            rate: customRateStr,
+                            min_stay_arrival: customMinStayArr,
+                            min_stay_through: customMinStayThru,
+                            stop_sell: customStopSell,
+                            closed_to_arrival: customCta,
+                            closed_to_departure: customCtd
+                        };
+                        if (customMaxStay !== undefined && customMaxStay !== null) {
+                            overrideRestObj.max_stay = customMaxStay;
+                        }
+
+                        restrictionValues.push(overrideRestObj);
+                    }
+                });
+            }
         }
 
         const taskIds: string[] = [];
@@ -1380,7 +1448,9 @@ export class ChannexSyncService {
         for (const item of values) {
             const channexRatePlanId = item.rate_plan_id;
             const mappedRatePlan = ratePlans.find((rp: any) => 
-                rp.channexRatePlanId === channexRatePlanId || rp.id === channexRatePlanId
+                rp.channexRatePlanId === channexRatePlanId || 
+                (rp.channexRatePlanIds && typeof rp.channexRatePlanIds === "object" && Object.values(rp.channexRatePlanIds).includes(channexRatePlanId)) ||
+                rp.id === channexRatePlanId
             );
 
             if (!mappedRatePlan) continue;
