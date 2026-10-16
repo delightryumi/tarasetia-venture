@@ -76,22 +76,21 @@ export async function POST(req: NextRequest) {
 
             await adminDb.collection("hotels").doc(hotelCode).update({
                 channexPropertyId: FieldValue.delete(),
-                "channelManager.channexPropertyId": FieldValue.delete(),
-                "channelManager.propertyId": FieldValue.delete(),
-                "channelManager.openChannelHotelCode": FieldValue.delete(),
-                "channelManager.isSyncActive": false,
-                "channelManager.lastSyncAt": null,
                 channelManager: updatedCm
             });
 
             const rtSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
             for (const d of rtSnap.docs) {
-                await d.ref.update({ channexRoomTypeId: FieldValue.delete() });
+                if (d.data()?.channexRoomTypeId) {
+                    await d.ref.update({ channexRoomTypeId: FieldValue.delete() });
+                }
             }
 
             const rpSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
             for (const d of rpSnap.docs) {
-                await d.ref.update({ channexRatePlanId: FieldValue.delete() });
+                if (d.data()?.channexRatePlanId) {
+                    await d.ref.update({ channexRatePlanId: FieldValue.delete() });
+                }
             }
 
             return NextResponse.json({

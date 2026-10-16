@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
 import { ChannexClient } from "@/lib/channex/channexClient";
 
 const channex = new ChannexClient();
@@ -159,7 +159,30 @@ export async function GET(req: NextRequest) {
             }
         });
 
-        // 5. Merge Hotels / Properties
+        // 5. Auto-Prune severed / deleted Channex properties from local hotels
+        if (apiKey && Array.isArray(channexProperties)) {
+            const liveCxPropIds = new Set(channexProperties.map((cp) => cp.id));
+            for (const h of localHotels) {
+                // If hotel was linked to Channex in this environment, but Channex server no longer has it
+                if (h.channexPropertyId && (!h.channexEnvironment || h.channexEnvironment === env) && !liveCxPropIds.has(h.channexPropertyId)) {
+                    try {
+                        await updateDoc(doc(db, "hotels", h.hotelCode), {
+                            channexPropertyId: deleteField(),
+                            "channelManager.channexPropertyId": deleteField(),
+                            "channelManager.propertyId": deleteField(),
+                            "channelManager.openChannelHotelCode": deleteField(),
+                            "channelManager.isSyncActive": false
+                        });
+                        console.log(`[Groups Auto-Prune] Cleaned severed Channex property ID ${h.channexPropertyId} for hotel ${h.hotelCode}`);
+                        h.channexPropertyId = "";
+                    } catch (pErr: any) {
+                        console.warn(`[Groups Auto-Prune Warning] Hotel ${h.hotelCode}:`, pErr.message);
+                    }
+                }
+            }
+        }
+
+        // 6. Merge Hotels / Properties
         const combinedHotels: any[] = [...localHotels];
 
         // For each Channex property, match with local hotel or add as imported property

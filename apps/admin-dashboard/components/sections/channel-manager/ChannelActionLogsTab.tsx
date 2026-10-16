@@ -8,6 +8,7 @@ import {
     ChevronRight, 
     ArrowUpDown,
     Trash2,
+    AlertTriangle,
     ShieldCheck,
     Copy,
     Check,
@@ -74,6 +75,25 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
     const [activeDetailTab, setActiveDetailTab] = useState<"diff" | "payload" | "ota" | "response">("diff");
     const [fetchingLiveTask, setFetchingLiveTask] = useState<boolean>(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    // Custom CSS Modals for Purge & Single Delete
+    const [isPurgeModalOpen, setIsPurgeModalOpen] = useState<boolean>(false);
+    const [purgeMode, setPurgeMode] = useState<"all" | "obsolete">("all");
+    const [logToDelete, setLogToDelete] = useState<ChannelTaskLog | null>(null);
+    const [deletingSingleLog, setDeletingSingleLog] = useState<boolean>(false);
+
+    // Keyboard accessibility: Close modals on Escape key (antislop R-32)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                if (isPurgeModalOpen && !cleaningLogs) setIsPurgeModalOpen(false);
+                if (logToDelete && !deletingSingleLog) setLogToDelete(null);
+                if (selectedEvent) setSelectedEvent(null);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isPurgeModalOpen, cleaningLogs, logToDelete, deletingSingleLog, selectedEvent]);
 
     const handleCopy = (text: string, label: string) => {
         if (!text) return;
@@ -156,28 +176,55 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
         }
     };
 
-    // Manual Purge of Old Logs
-    const handleManualPurge = async () => {
-        if (!confirm(`Purge all task logs older than ${retentionDays} days (~${Math.round(retentionDays / 30)} months)?`)) {
-            return;
-        }
-
+    // Execute Purge (Obsolete or All) via CSS Modal
+    const handleExecutePurge = async () => {
         setCleaningLogs(true);
+        const toastId = toast.loading(purgeMode === "all" ? "Membersihkan seluruh riwayat log..." : `Membersihkan log lebih dari ${retentionDays} hari...`);
         try {
-            const res = await fetch(`/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}&retentionDays=${retentionDays}`, {
+            const url = purgeMode === "all" 
+                ? `/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}&purgeAll=true`
+                : `/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}&retentionDays=${retentionDays}`;
+
+            const res = await fetch(url, { method: "DELETE" });
+            const data = await res.json();
+            if (data.success) {
+                toast.success(data.message || "Log berhasil dibersihkan.", { id: toastId });
+                setIsPurgeModalOpen(false);
+                await fetchLogs();
+            } else {
+                toast.error(data.error || "Gagal membersihkan log", { id: toastId });
+            }
+        } catch (err: any) {
+            toast.error(`Error: ${err.message}`, { id: toastId });
+        } finally {
+            setCleaningLogs(false);
+        }
+    };
+
+    // Execute Single Log Deletion via CSS Modal
+    const handleExecuteDeleteSingle = async () => {
+        if (!logToDelete) return;
+        setDeletingSingleLog(true);
+        const toastId = toast.loading("Menghapus log event...");
+        try {
+            const res = await fetch(`/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}&logId=${encodeURIComponent(logToDelete.id)}`, {
                 method: "DELETE"
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(data.message || `Successfully purged ${data.deletedCount} obsolete logs.`);
-                fetchLogs();
+                toast.success(data.message || "Log event berhasil dihapus.", { id: toastId });
+                if (selectedEvent?.id === logToDelete.id) {
+                    setSelectedEvent(null);
+                }
+                setLogToDelete(null);
+                await fetchLogs();
             } else {
-                toast.error(data.error || "Failed to purge obsolete logs");
+                toast.error(data.error || "Gagal menghapus log", { id: toastId });
             }
         } catch (err: any) {
-            toast.error(`Error: ${err.message}`);
+            toast.error(`Error: ${err.message}`, { id: toastId });
         } finally {
-            setCleaningLogs(false);
+            setDeletingSingleLog(false);
         }
     };
 
@@ -419,13 +466,13 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
 
                 <button
                     type="button"
-                    onClick={handleManualPurge}
+                    onClick={() => setIsPurgeModalOpen(true)}
                     disabled={cleaningLogs}
                     className={styles.btnCleanLogs}
-                    title="Purge obsolete logs immediately"
+                    title="Buka panel pembersihan log"
                 >
                     <Trash2 size={13} className={cleaningLogs ? "animate-spin" : ""} />
-                    <span>{cleaningLogs ? "Purging..." : "Purge Obsolete Logs Now"}</span>
+                    <span>{cleaningLogs ? "Membersihkan..." : "Purge / Hapus Log"}</span>
                 </button>
             </div>
 
@@ -603,13 +650,24 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                         </span>
                                     </td>
                                     <td className={styles.td} style={{ textAlign: "right" }}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedEvent(item)}
-                                            className={styles.btnView}
-                                        >
-                                            View
-                                        </button>
+                                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedEvent(item)}
+                                                className={styles.btnView}
+                                            >
+                                                View
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setLogToDelete(item)}
+                                                className={styles.btnDeleteRow}
+                                                title="Hapus baris log ini"
+                                                aria-label={`Hapus log ${item.action}`}
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             );
@@ -691,18 +749,30 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                 </button>
                                 <span>Channel Action View</span>
                             </div>
-                            {(selectedEvent.task_id || selectedEvent.id) && (
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                {(selectedEvent.task_id || selectedEvent.id) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleFetchLiveTask(selectedEvent.task_id || selectedEvent.id)}
+                                        disabled={fetchingLiveTask}
+                                        className={styles.liveSyncBtn}
+                                        title="Sync live status and OTA responses directly from Channex API"
+                                    >
+                                        <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
+                                        <span>{fetchingLiveTask ? "Syncing Channex..." : "Sync Live Status"}</span>
+                                    </button>
+                                )}
                                 <button
                                     type="button"
-                                    onClick={() => handleFetchLiveTask(selectedEvent.task_id || selectedEvent.id)}
-                                    disabled={fetchingLiveTask}
-                                    className={styles.liveSyncBtn}
-                                    title="Sync live status and OTA responses directly from Channex API"
+                                    onClick={() => setLogToDelete(selectedEvent)}
+                                    className={styles.btnCleanLogs}
+                                    style={{ padding: "4px 10px", fontSize: "11px", color: "#be123c", borderColor: "#fecdd3" }}
+                                    title="Hapus log ini"
                                 >
-                                    <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
-                                    <span>{fetchingLiveTask ? "Syncing Channex..." : "Sync Live Status"}</span>
+                                    <Trash2 size={12} />
+                                    <span>Hapus Log</span>
                                 </button>
-                            )}
+                            </div>
                         </div>
 
                         <div className={styles.modalBody}>
@@ -926,6 +996,182 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                     </pre>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom CSS Confirmation Modal: Purge Logs */}
+            {isPurgeModalOpen && (
+                <div 
+                    className={styles.confirmModalOverlay} 
+                    onClick={() => !cleaningLogs && setIsPurgeModalOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="purge-dialog-title"
+                >
+                    <div className={styles.confirmModalCard} onClick={e => e.stopPropagation()}>
+                        <div className={styles.confirmModalHeader}>
+                            <div className={`${styles.confirmModalIcon} ${styles.confirmModalIconWarning}`}>
+                                <AlertTriangle size={20} />
+                            </div>
+                            <div>
+                                <h3 id="purge-dialog-title" className={styles.confirmModalTitle}>
+                                    Pembersihan Log Channel Events
+                                </h3>
+                                <p className={styles.confirmModalSubtitle}>
+                                    Pilih opsi pembersihan data riwayat audit untuk mengoptimalkan kuota dan performa.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className={styles.confirmModalBody}>
+                            <div 
+                                className={`${styles.confirmOptionCard} ${purgeMode === "all" ? styles.confirmOptionCardActive : ""}`}
+                                onClick={() => setPurgeMode("all")}
+                            >
+                                <input 
+                                    type="radio" 
+                                    name="purgeOption" 
+                                    checked={purgeMode === "all"} 
+                                    onChange={() => setPurgeMode("all")}
+                                    className={styles.confirmOptionRadio}
+                                />
+                                <div>
+                                    <div className={styles.confirmOptionTitle}>
+                                        Hapus Seluruh Log (Reset Tabel Bersih)
+                                    </div>
+                                    <div className={styles.confirmOptionDesc}>
+                                        Menghapus semua catatan event lokal dan menyembunyikan riwayat cloud yang ada saat ini. Daftar log akan langsung kosong.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div 
+                                className={`${styles.confirmOptionCard} ${purgeMode === "obsolete" ? styles.confirmOptionCardActive : ""}`}
+                                onClick={() => setPurgeMode("obsolete")}
+                            >
+                                <input 
+                                    type="radio" 
+                                    name="purgeOption" 
+                                    checked={purgeMode === "obsolete"} 
+                                    onChange={() => setPurgeMode("obsolete")}
+                                    className={styles.confirmOptionRadio}
+                                />
+                                <div>
+                                    <div className={styles.confirmOptionTitle}>
+                                        Purge Log Kedaluwarsa (&gt; {retentionDays} Hari)
+                                    </div>
+                                    <div className={styles.confirmOptionDesc}>
+                                        Hanya menghapus berkas audit yang lebih tua dari batas retensi {retentionDays} hari (~{Math.round(retentionDays / 30)} bulan).
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={styles.confirmModalNotice}>
+                                <strong>Catatan Keamanan:</strong> Tindakan pembersihan ini murni membersihkan catatan audit log, dan tidak mengubah ketersediaan kamar (allotment) atau reservasi tamu yang sedang berjalan.
+                            </div>
+                        </div>
+
+                        <div className={styles.confirmModalFooter}>
+                            <button
+                                type="button"
+                                onClick={() => setIsPurgeModalOpen(false)}
+                                disabled={cleaningLogs}
+                                className={styles.btnCancelModal}
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleExecutePurge}
+                                disabled={cleaningLogs}
+                                className={styles.btnDangerModal}
+                            >
+                                {cleaningLogs ? (
+                                    <>
+                                        <RefreshCw size={13} className="animate-spin" />
+                                        <span>Membersihkan...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 size={13} />
+                                        <span>{purgeMode === "all" ? "Hapus Semua Sekarang" : "Purge Log Kedaluwarsa"}</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom CSS Confirmation Modal: Single Log Delete */}
+            {logToDelete && (
+                <div 
+                    className={styles.confirmModalOverlay} 
+                    onClick={() => !deletingSingleLog && setLogToDelete(null)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-single-title"
+                >
+                    <div className={styles.confirmModalCard} onClick={e => e.stopPropagation()}>
+                        <div className={styles.confirmModalHeader}>
+                            <div className={styles.confirmModalIcon}>
+                                <Trash2 size={20} />
+                            </div>
+                            <div>
+                                <h3 id="delete-single-title" className={styles.confirmModalTitle}>
+                                    Hapus Log Channel Event
+                                </h3>
+                                <p className={styles.confirmModalSubtitle}>
+                                    Log ini akan dihapus secara permanen dari daftar riwayat audit.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className={styles.confirmModalBody}>
+                            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                                <div style={{ fontSize: "13px" }}><strong>Aksi:</strong> {logToDelete.action}</div>
+                                <div style={{ fontSize: "12.5px" }}><strong>Channel:</strong> {logToDelete.channelName}</div>
+                                <div style={{ fontSize: "12px", color: "#64748b" }}>
+                                    <strong>Waktu:</strong> {formatTimestamp(logToDelete.started_at || logToDelete.inserted_at)}
+                                </div>
+                                <div style={{ fontSize: "11px", color: "#64748b", fontFamily: "var(--font-mono-jb, monospace)" }}>
+                                    <strong>Task ID:</strong> {logToDelete.task_id || logToDelete.id}
+                                </div>
+                            </div>
+                            <p style={{ margin: 0, fontSize: "12.5px", color: "#475569" }}>
+                                Apakah Anda yakin ingin menghapus baris log ini?
+                            </p>
+                        </div>
+
+                        <div className={styles.confirmModalFooter}>
+                            <button
+                                type="button"
+                                onClick={() => setLogToDelete(null)}
+                                disabled={deletingSingleLog}
+                                className={styles.btnCancelModal}
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleExecuteDeleteSingle}
+                                disabled={deletingSingleLog}
+                                className={styles.btnDangerModal}
+                            >
+                                {deletingSingleLog ? (
+                                    <>
+                                        <RefreshCw size={13} className="animate-spin" />
+                                        <span>Menghapus...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 size={13} />
+                                        <span>Hapus Log Ini</span>
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

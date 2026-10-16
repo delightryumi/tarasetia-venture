@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 import { channexClient } from "@/lib/channex/channexClient";
 
 function normalizeActionName(rawAction?: string): string {
@@ -16,15 +17,32 @@ function normalizeActionName(rawAction?: string): string {
 }
 
 /**
- * Auto-delete logs older than retentionDays (e.g. 60 days = 2 months, 90 days = 3 months)
- * to keep Firebase database footprint light and prevent quota saturation.
+ * Delete or auto-prune logs to keep database footprint light.
+ * If purgeAll is true, removes all logs in batch.
+ * Otherwise, removes logs older than retentionDays.
  */
-async function autoPruneOldLogs(hotelCode: string, retentionDays: number = 60): Promise<number> {
+async function pruneOrPurgeLogs(hotelCode: string, retentionDays: number = 60, purgeAll: boolean = false): Promise<number> {
     try {
+        const logsRef = adminDb.collection(`hotels/${hotelCode}/channex_task_logs`);
+        let totalDeleted = 0;
+
+        if (purgeAll || retentionDays <= 0) {
+            while (true) {
+                const snapshot = await logsRef.limit(400).get();
+                if (snapshot.empty) break;
+                const batch = adminDb.batch();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                totalDeleted += snapshot.size;
+                if (snapshot.size < 400) break;
+            }
+            console.log(`[Log Retention] Purged all ${totalDeleted} logs for hotel ${hotelCode}`);
+            return totalDeleted;
+        }
+
         const cutoffMs = Date.now() - (retentionDays * 24 * 60 * 60 * 1000);
         const cutoffIso = new Date(cutoffMs).toISOString();
 
-        const logsRef = adminDb.collection(`hotels/${hotelCode}/channex_task_logs`);
         const snapshot = await logsRef
             .where("inserted_at", "<", cutoffIso)
             .limit(500)
@@ -40,9 +58,13 @@ async function autoPruneOldLogs(hotelCode: string, retentionDays: number = 60): 
         console.log(`[Log Retention] Auto-purged ${snapshot.size} logs older than ${retentionDays} days (< ${cutoffIso}) for hotel ${hotelCode}`);
         return snapshot.size;
     } catch (err: any) {
-        console.warn("[Log Retention] Auto-purge warning:", err.message);
+        console.warn("[Log Retention] Prune warning:", err.message);
         return 0;
     }
+}
+
+async function autoPruneOldLogs(hotelCode: string, retentionDays: number = 60): Promise<number> {
+    return pruneOrPurgeLogs(hotelCode, retentionDays, false);
 }
 
 export async function GET(req: NextRequest) {
@@ -254,11 +276,28 @@ export async function GET(req: NextRequest) {
         }
 
         // Merge both sources and sort by newest first
-        const allLogs = [...localTasks, ...taskLogs].sort((a, b) => {
+        let allLogs = [...localTasks, ...taskLogs].sort((a, b) => {
             const timeA = new Date(a.inserted_at || a.started_at || 0).getTime();
             const timeB = new Date(b.inserted_at || b.started_at || 0).getTime();
             return timeB - timeA;
         });
+
+        // Exclude logs before manual purge timestamp if set
+        const logsPurgedBefore = hotelData?.channelManager?.logsPurgedBefore;
+        if (logsPurgedBefore) {
+            const purgeTime = new Date(logsPurgedBefore).getTime();
+            allLogs = allLogs.filter(l => {
+                const logTime = new Date(l.inserted_at || l.started_at || 0).getTime();
+                return logTime > purgeTime;
+            });
+        }
+
+        // Exclude individually dismissed/deleted log IDs
+        const dismissedLogIds = hotelData?.channelManager?.dismissedLogIds;
+        if (Array.isArray(dismissedLogIds) && dismissedLogIds.length > 0) {
+            const dismissedSet = new Set(dismissedLogIds);
+            allLogs = allLogs.filter(l => !dismissedSet.has(l.id) && !dismissedSet.has(l.task_id));
+        }
 
         return NextResponse.json({ 
             success: true, 
@@ -351,28 +390,75 @@ export async function POST(req: NextRequest) {
  * DELETE endpoint for manual or scheduled auto-purge of old logs:
  * Query params:
  * - hotelCode (required)
- * - retentionDays (optional, defaults to 60 days = 2 months, or 90 days = 3 months)
+ * - retentionDays (optional, defaults to 60 days)
+ * - purgeAll (optional, boolean - cleans all logs)
+ * - logId (optional, deletes specific log)
  */
 export async function DELETE(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const hotelCode = searchParams.get("hotelCode");
         const daysParam = searchParams.get("retentionDays");
-        const retentionDays = daysParam ? parseInt(daysParam, 10) : 60;
+        const purgeAll = searchParams.get("purgeAll") === "true" || searchParams.get("all") === "true";
+        const logId = searchParams.get("logId");
 
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
 
-        const deletedCount = await autoPruneOldLogs(hotelCode, retentionDays);
+        // 1. Delete single log
+        if (logId) {
+            const docRef = adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).doc(logId);
+            const docSnap = await docRef.get();
+            if (docSnap.exists) {
+                await docRef.delete();
+            }
+
+            await adminDb.collection("hotels").doc(hotelCode).set({
+                channelManager: {
+                    dismissedLogIds: FieldValue.arrayUnion(logId)
+                }
+            }, { merge: true });
+
+            return NextResponse.json({
+                success: true,
+                message: "Log channel event berhasil dihapus."
+            });
+        }
+
+        // 2. Purge All Logs
+        if (purgeAll || daysParam === "0") {
+            const nowIso = new Date().toISOString();
+            const deletedCount = await pruneOrPurgeLogs(hotelCode, 0, true);
+
+            await adminDb.collection("hotels").doc(hotelCode).set({
+                channelManager: {
+                    logsPurgedBefore: nowIso
+                }
+            }, { merge: true });
+
+            return NextResponse.json({
+                success: true,
+                deletedCount,
+                message: `Berhasil membersihkan seluruh riwayat log (${deletedCount} log dihapus).`
+            });
+        }
+
+        // 3. Purge Obsolete Logs by retention days
+        const retentionDays = daysParam ? parseInt(daysParam, 10) : 60;
+        const deletedCount = await pruneOrPurgeLogs(hotelCode, retentionDays, false);
         const cutoffDate = new Date(Date.now() - (retentionDays * 24 * 60 * 60 * 1000)).toISOString();
+
+        const message = deletedCount > 0
+            ? `Berhasil membersihkan ${deletedCount} log yang berusia lebih dari ${retentionDays} hari (sebelum ${cutoffDate.slice(0, 10)}).`
+            : `Tidak ada log yang lebih lama dari ${retentionDays} hari. Semua log yang ada saat ini masih aktif dalam periode retensi.`;
 
         return NextResponse.json({
             success: true,
             deletedCount,
             retentionDays,
             cutoffDate,
-            message: `Berhasil membersihkan ${deletedCount} log yang berusia lebih dari ${retentionDays} hari (sebelum ${cutoffDate.slice(0, 10)}).`
+            message
         });
     } catch (err: any) {
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
