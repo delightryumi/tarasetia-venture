@@ -5,28 +5,31 @@
     width: 100%;
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 16px;
+    border-radius: 12px;
+    padding: 10px 18px;
     gap: 8px;
     box-sizing: border-box;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 :global(.dark) .stepperContainer {
     background-color: #1e293b;
     border-color: #334155;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .stepItem {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
     padding: 6px 10px;
-    border-radius: 6px;
+    border-radius: 8px;
     background: transparent;
     border: none;
     cursor: pointer;
-    transition: all 0.15s ease-in-out;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
+    text-align: left;
 }
 
 .stepItem:hover:not(:disabled) {
@@ -37,25 +40,33 @@
     background-color: #0f172a;
 }
 
+.stepItemActive {
+    background-color: #fdf2f4 !important;
+}
+
+:global(.dark) .stepItemActive {
+    background-color: #27141c !important;
+}
+
 .stepItem:disabled {
     cursor: not-allowed;
-    opacity: 0.45;
+    opacity: 0.5;
 }
 
 .stepBadge {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
     background-color: #f1f5f9;
     color: #64748b;
     border: 1.5px solid #cbd5e1;
     flex-shrink: 0;
-    transition: all 0.15s ease-in-out;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :global(.dark) .stepBadge {
@@ -68,13 +79,14 @@
     background-color: #72263d !important;
     color: #ffffff !important;
     border-color: #72263d !important;
-    box-shadow: 0 0 0 3px rgba(114, 38, 61, 0.15);
+    box-shadow: 0 0 0 3px rgba(114, 38, 61, 0.18);
+    transform: scale(1.05);
 }
 
 :global(.dark) .stepBadgeActive {
     background-color: #9f3653 !important;
     border-color: #9f3653 !important;
-    box-shadow: 0 0 0 3px rgba(159, 54, 83, 0.25);
+    box-shadow: 0 0 0 3px rgba(159, 54, 83, 0.3);
 }
 
 .stepBadgeCompleted {
@@ -83,11 +95,18 @@
     border-color: #10b981 !important;
 }
 
+.stepInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
 .stepTitle {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 600;
     color: #64748b;
     transition: color 0.15s;
+    line-height: 1.25;
 }
 
 :global(.dark) .stepTitle {
@@ -95,7 +114,7 @@
 }
 
 .stepTitleActive {
-    font-weight: 700;
+    font-weight: 800;
     color: #72263d;
 }
 
@@ -103,12 +122,24 @@
     color: #f497ab;
 }
 
+.stepSubtitle {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #94a3b8;
+    line-height: 1.2;
+}
+
+:global(.dark) .stepSubtitle {
+    color: #64748b;
+}
+
 .stepLine {
     flex: 1;
     height: 2px;
     background-color: #e2e8f0;
     border-radius: 1px;
-    min-width: 20px;
+    min-width: 14px;
+    transition: background-color 0.2s ease;
 }
 
 :global(.dark) .stepLine {
@@ -119,8 +150,17 @@
     background-color: #10b981;
 }
 
-@media (max-width: 768px) {
-    .stepTitle {
+@media (max-width: 1024px) {
+    .stepSubtitle {
         display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .stepInfo {
+        display: none;
+    }
+    .stepperContainer {
+        padding: 8px 12px;
     }
 }

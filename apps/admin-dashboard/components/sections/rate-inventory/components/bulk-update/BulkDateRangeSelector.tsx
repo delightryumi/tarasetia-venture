@@ -7,10 +7,11 @@ import styles from "./BulkDateRangeSelector.module.css";
 interface BulkDateRangeSelectorProps {
     dateFrom: string;
     dateTo: string;
-    daysOfWeek: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+    daysOfWeek?: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
     onDateFromChange: (val: string) => void;
     onDateToChange: (val: string) => void;
-    onDaysOfWeekChange: (days: number[]) => void;
+    onDaysOfWeekChange?: (days: number[]) => void;
+    showDays?: boolean;
 }
 
 const DAYS_ORDER = [
@@ -26,10 +27,11 @@ const DAYS_ORDER = [
 export function BulkDateRangeSelector({
     dateFrom,
     dateTo,
-    daysOfWeek,
+    daysOfWeek = [0, 1, 2, 3, 4, 5, 6],
     onDateFromChange,
     onDateToChange,
-    onDaysOfWeekChange
+    onDaysOfWeekChange,
+    showDays = false
 }: BulkDateRangeSelectorProps) {
     const today = new Date();
     const todayStr = today.toISOString().split("T")[0];
@@ -181,66 +183,70 @@ export function BulkDateRangeSelector({
                 </button>
             </div>
 
-            <div className={styles.divider} />
+            {showDays && onDaysOfWeekChange && (
+                <>
+                    <div className={styles.divider} />
 
-            {/* 3. Days of the Week Selector (Clean, NO concatenated text) */}
-            <div className={styles.daysSection}>
-                <div className={styles.daysHeader}>
-                    <span className={styles.fieldLabel}>
-                        <Clock size={13} />
-                        Hari yang Berlaku dalam Seminggu
-                    </span>
-                    <div className={styles.presetBar}>
-                        <button
-                            type="button"
-                            onClick={() => onDaysOfWeekChange([0, 1, 2, 3, 4, 5, 6])}
-                            className={styles.presetChip}
-                        >
-                            Semua Hari (7 Hari)
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onDaysOfWeekChange([1, 2, 3, 4, 5])}
-                            className={styles.presetChip}
-                        >
-                            Hari Kerja (Sen-Jum)
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onDaysOfWeekChange([0, 6])}
-                            className={styles.presetChip}
-                        >
-                            Akhir Pekan (Sab-Min)
-                        </button>
+                    {/* 3. Days of the Week Selector */}
+                    <div className={styles.daysSection}>
+                        <div className={styles.daysHeader}>
+                            <span className={styles.fieldLabel}>
+                                <Clock size={13} />
+                                Hari yang Berlaku dalam Seminggu
+                            </span>
+                            <div className={styles.presetBar}>
+                                <button
+                                    type="button"
+                                    onClick={() => onDaysOfWeekChange([0, 1, 2, 3, 4, 5, 6])}
+                                    className={styles.presetChip}
+                                >
+                                    Semua Hari (7 Hari)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onDaysOfWeekChange([1, 2, 3, 4, 5])}
+                                    className={styles.presetChip}
+                                >
+                                    Hari Kerja (Sen-Jum)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onDaysOfWeekChange([0, 6])}
+                                    className={styles.presetChip}
+                                >
+                                    Akhir Pekan (Sab-Min)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className={styles.daysTogglesRow}>
+                            {DAYS_ORDER.map(day => {
+                                const isSelected = daysOfWeek.includes(day.idx);
+                                return (
+                                    <button
+                                        key={day.idx}
+                                        type="button"
+                                        onClick={() => toggleDay(day.idx)}
+                                        className={`${styles.dayPill} ${
+                                            isSelected ? styles.dayPillActive : ""
+                                        }`}
+                                        title={day.full}
+                                    >
+                                        {day.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className={styles.affectedNotice}>
+                            <Info size={14} style={{ flexShrink: 0 }} />
+                            <span>
+                                Total <strong>{affectedDays} tanggal kalender</strong> akan diperbarui pada jadwal ini.
+                            </span>
+                        </div>
                     </div>
-                </div>
-
-                <div className={styles.daysTogglesRow}>
-                    {DAYS_ORDER.map(day => {
-                        const isSelected = daysOfWeek.includes(day.idx);
-                        return (
-                            <button
-                                key={day.idx}
-                                type="button"
-                                onClick={() => toggleDay(day.idx)}
-                                className={`${styles.dayPill} ${
-                                    isSelected ? styles.dayPillActive : ""
-                                }`}
-                                title={day.full}
-                            >
-                                {day.label}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                <div className={styles.affectedNotice}>
-                    <Info size={14} style={{ flexShrink: 0 }} />
-                    <span>
-                        Total <strong>{affectedDays} tanggal kalender</strong> akan diperbarui pada jadwal ini.
-                    </span>
-                </div>
-            </div>
+                </>
+            )}
         </div>
     );
 }

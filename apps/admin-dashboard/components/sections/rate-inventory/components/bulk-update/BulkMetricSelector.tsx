@@ -1,25 +1,24 @@
 "use client";
 
-import React from "react";
-import {
-    DollarSign,
-    Bed,
-    Ban,
-    Clock,
-    LogIn,
-    LogOut,
-    Calendar,
-    Check,
-    AlertCircle
-} from "lucide-react";
+import { Check, AlertCircle } from "lucide-react";
 import { BulkUpdateMetricType, MetricDefinition } from "./types";
+import {
+    Rate3DIcon,
+    Inventory3DIcon,
+    MinStayThrough3DIcon,
+    MinStayArrival3DIcon,
+    StopSell3DIcon,
+    MaxStay3DIcon,
+    Cta3DIcon,
+    Ctd3DIcon
+} from "./Bulk3DIcons";
 import styles from "./BulkMetricSelector.module.css";
 
 export const METRIC_DEFINITIONS: MetricDefinition[] = [
     {
         id: "rate",
         label: "Rates (Harga)",
-        description: "Ubah harga kamar master atau rate plan",
+        description: "Ubah harga kamar master atau rate plan turunan",
         category: "price",
         requiresRatePlan: true,
         requiresRoomType: true,
@@ -28,25 +27,16 @@ export const METRIC_DEFINITIONS: MetricDefinition[] = [
     {
         id: "inventory",
         label: "Inventory (Allotment)",
-        description: "Ubah jumlah fisik ketersediaan unit kamar",
+        description: "Atur jumlah fisik ketersediaan unit kamar",
         category: "inventory",
         requiresRatePlan: false,
         requiresRoomType: true,
         icon: "inventory"
     },
     {
-        id: "stopsell",
-        label: "Stop Sell",
-        description: "Buka atau tutup penjualan",
-        category: "restriction",
-        requiresRatePlan: true,
-        requiresRoomType: true,
-        icon: "stopsell"
-    },
-    {
         id: "minstay_through",
         label: "Min Stay Through",
-        description: "Minimal durasi malam menginap",
+        description: "Minimal durasi malam inap yang melintasi tanggal",
         category: "restriction",
         requiresRatePlan: true,
         requiresRoomType: true,
@@ -55,16 +45,25 @@ export const METRIC_DEFINITIONS: MetricDefinition[] = [
     {
         id: "minstay_arrival",
         label: "Min Stay Arrival",
-        description: "Minimal malam jika check-in",
+        description: "Minimal malam jika tamu check-in di tanggal ini",
         category: "restriction",
         requiresRatePlan: true,
         requiresRoomType: true,
         icon: "minstay_arrival"
     },
     {
+        id: "stopsell",
+        label: "Stop Sell",
+        description: "Buka atau tutup penjualan kamar secara menyeluruh",
+        category: "restriction",
+        requiresRatePlan: true,
+        requiresRoomType: true,
+        icon: "stopsell"
+    },
+    {
         id: "maxstay",
         label: "Maximum Stay",
-        description: "Batas maksimal malam menginap",
+        description: "Batas maksimal durasi malam pemesanan",
         category: "restriction",
         requiresRatePlan: true,
         requiresRoomType: true,
@@ -73,7 +72,7 @@ export const METRIC_DEFINITIONS: MetricDefinition[] = [
     {
         id: "cta",
         label: "Closed to Arrival (COA)",
-        description: "Larang check-in pada hari tersebut",
+        description: "Kunci larangan tamu check-in pada tanggal ini",
         category: "restriction",
         requiresRatePlan: true,
         requiresRoomType: true,
@@ -82,7 +81,7 @@ export const METRIC_DEFINITIONS: MetricDefinition[] = [
     {
         id: "ctd",
         label: "Closed to Departure (COD)",
-        description: "Larang check-out pada hari tersebut",
+        description: "Kunci larangan tamu check-out pada tanggal ini",
         category: "restriction",
         requiresRatePlan: true,
         requiresRoomType: true,
@@ -138,20 +137,21 @@ export function BulkMetricSelector({
     const renderIcon = (type: BulkUpdateMetricType) => {
         switch (type) {
             case "rate":
-                return <DollarSign size={14} />;
+                return <Rate3DIcon size={42} />;
             case "inventory":
-                return <Bed size={14} />;
-            case "stopsell":
-                return <Ban size={14} />;
+                return <Inventory3DIcon size={42} />;
             case "minstay_through":
+                return <MinStayThrough3DIcon size={42} />;
             case "minstay_arrival":
-                return <Clock size={14} />;
+                return <MinStayArrival3DIcon size={42} />;
+            case "stopsell":
+                return <StopSell3DIcon size={42} />;
             case "maxstay":
-                return <Calendar size={14} />;
+                return <MaxStay3DIcon size={42} />;
             case "cta":
-                return <LogIn size={14} />;
+                return <Cta3DIcon size={42} />;
             case "ctd":
-                return <LogOut size={14} />;
+                return <Ctd3DIcon size={42} />;
             default:
                 return null;
         }
@@ -160,9 +160,14 @@ export function BulkMetricSelector({
     return (
         <div className={styles.container}>
             <div className={styles.sectionHeader}>
-                <h4 className={styles.sectionTitle}>
-                    Pilih Komponen yang Ingin Diperbarui
-                </h4>
+                <div>
+                    <h4 className={styles.sectionTitle}>
+                        Pilih Komponen yang Ingin Diperbarui
+                    </h4>
+                    <p className={styles.sectionSubtitle}>
+                        Klik satu atau beberapa metrik di bawah untuk menentukan target pembaruan massal.
+                    </p>
+                </div>
 
                 <div className={styles.quickSelectButtons}>
                     <button
@@ -170,7 +175,7 @@ export function BulkMetricSelector({
                         onClick={handleSelectAll}
                         className={styles.quickBtn}
                     >
-                        Semua
+                        Pilih Semua
                     </button>
                     <button
                         type="button"
@@ -196,17 +201,18 @@ export function BulkMetricSelector({
                     <button
                         type="button"
                         onClick={() => onChange([])}
-                        className={styles.quickBtn}
+                        className={`${styles.quickBtn} ${styles.quickBtnReset}`}
+                        title="Kosongkan semua pilihan"
                     >
-                        Reset
+                        Kosongkan
                     </button>
                 </div>
             </div>
 
             {selectedMetrics.length === 0 && (
-                <div className={styles.errorBanner} role="alert">
-                    <AlertCircle size={14} />
-                    <span>Pilih minimal 1 komponen metrik untuk melanjutkan.</span>
+                <div className={styles.infoBanner}>
+                    <AlertCircle size={15} />
+                    <span>Belum ada komponen yang dipilih. Silakan klik salah satu kartu di bawah untuk memulai.</span>
                 </div>
             )}
 
@@ -245,24 +251,31 @@ export function BulkMetricSelector({
                                 isSelected ? styles.metricCardActive : ""
                             } ${isDisabled ? styles.metricCardDisabled : ""}`}
                         >
-                            <div
-                                className={`${styles.checkboxVisual} ${
-                                    isSelected ? styles.checkboxChecked : ""
-                                }`}
-                            >
-                                {isSelected && <Check size={12} strokeWidth={3} />}
+                            <div className={styles.cardTopRow}>
+                                <div className={`${styles.iconBadge} ${styles[`iconBadge_${metric.id}`] || ""}`}>
+                                    {renderIcon(metric.id)}
+                                </div>
+                                <div
+                                    className={`${styles.checkboxCircle} ${
+                                        isSelected ? styles.checkboxCircleActive : ""
+                                    }`}
+                                >
+                                    {isSelected && <Check size={11} strokeWidth={3.5} />}
+                                </div>
                             </div>
 
-                            <div className={styles.metricIcon}>
-                                {renderIcon(metric.id)}
+                            <div className={styles.cardBody}>
+                                <div
+                                    className={`${styles.metricTitle} ${
+                                        isSelected ? styles.metricTitleActive : ""
+                                    }`}
+                                >
+                                    {metric.label}
+                                </div>
+                                <div className={styles.metricDesc}>
+                                    {metric.description}
+                                </div>
                             </div>
-                            <span
-                                className={`${styles.metricLabel} ${
-                                    isSelected ? styles.metricLabelActive : ""
-                                }`}
-                            >
-                                {metric.label}
-                            </span>
                         </div>
                     );
                 })}

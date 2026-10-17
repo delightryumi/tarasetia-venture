@@ -17,6 +17,7 @@ interface BulkTargetSelectorProps {
     onRoomTypesChange: (ids: string[]) => void;
     onRatePlansChange: (ids: string[]) => void;
     onChannelChange: (channelId: string) => void;
+    showChannel?: boolean;
 }
 
 export function BulkTargetSelector({
@@ -29,7 +30,8 @@ export function BulkTargetSelector({
     channelId,
     onRoomTypesChange,
     onRatePlansChange,
-    onChannelChange
+    onChannelChange,
+    showChannel = true
 }: BulkTargetSelectorProps) {
     const hasRate = selectedMetrics.includes("rate");
     const hasInventory = selectedMetrics.includes("inventory");
@@ -242,7 +244,7 @@ export function BulkTargetSelector({
             </div>
 
             {/* 3. Optional Channel Manager Selection */}
-            {activeChannels.length > 0 && hasRate && (
+            {showChannel && activeChannels.length > 0 && hasRate && (
                 <div className={styles.channelSelectWrapper}>
                     <label htmlFor="bulk-channel-select" className={styles.channelSelectLabel}>
                         <Globe size={13} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} />

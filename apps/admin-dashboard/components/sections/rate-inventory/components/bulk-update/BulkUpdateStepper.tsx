@@ -7,31 +7,38 @@ import styles from "./BulkUpdateStepper.module.css";
 
 export const BULK_STEPS: BulkStepConfig[] = [
     {
-        id: "metrics_targets",
+        id: "metrics_select",
         stepNumber: 1,
-        title: "1. Komponen & Target",
-        subtitle: "",
-        shortLabel: "Target"
+        title: "1. Pilih Komponen",
+        subtitle: "Metrik update",
+        shortLabel: "Komponen"
     },
     {
-        id: "dates_days",
+        id: "targets_values",
         stepNumber: 2,
-        title: "2. Periode & Hari",
-        subtitle: "",
-        shortLabel: "Periode"
+        title: "2. Target & Nilai",
+        subtitle: "Kamar, rate plan & angka",
+        shortLabel: "Target & Nilai"
     },
     {
-        id: "values_actions",
+        id: "date_ranges",
         stepNumber: 3,
-        title: "3. Atur Perubahan",
-        subtitle: "",
-        shortLabel: "Perubahan"
+        title: "3. Rentang Tanggal",
+        subtitle: "Kalender periode",
+        shortLabel: "Tanggal"
+    },
+    {
+        id: "days_channels",
+        stepNumber: 4,
+        title: "4. Hari & Saluran",
+        subtitle: "Hari aktif & OTA",
+        shortLabel: "Hari & Saluran"
     },
     {
         id: "review_apply",
-        stepNumber: 4,
-        title: "4. Review & Simpan",
-        subtitle: "",
+        stepNumber: 5,
+        title: "5. Review & Simpan",
+        subtitle: "Konfirmasi eksekusi",
         shortLabel: "Simpan"
     }
 ];
@@ -63,7 +70,7 @@ export function BulkUpdateStepper({
                             type="button"
                             onClick={() => onStepClick(step.id)}
                             disabled={!isClickable}
-                            className={styles.stepItem}
+                            className={`${styles.stepItem} ${isActive ? styles.stepItemActive : ""}`}
                             aria-current={isActive ? "step" : undefined}
                         >
                             <div
@@ -76,19 +83,28 @@ export function BulkUpdateStepper({
                                 }`}
                             >
                                 {isCompleted ? (
-                                    <Check size={13} strokeWidth={3} />
+                                    <Check size={13} strokeWidth={3.5} />
                                 ) : (
                                     <span>{step.stepNumber}</span>
                                 )}
                             </div>
-                            <span
-                                className={`${styles.stepTitle} ${
-                                    isActive ? styles.stepTitleActive : ""
-                                }`}
-                            >
-                                {step.title}
-                            </span>
+
+                            <div className={styles.stepInfo}>
+                                <span
+                                    className={`${styles.stepTitle} ${
+                                        isActive ? styles.stepTitleActive : ""
+                                    }`}
+                                >
+                                    {step.title}
+                                </span>
+                                {step.subtitle && (
+                                    <span className={styles.stepSubtitle}>
+                                        {step.subtitle}
+                                    </span>
+                                )}
+                            </div>
                         </button>
+
                         {idx < BULK_STEPS.length - 1 && (
                             <div
                                 className={`${styles.stepLine} ${

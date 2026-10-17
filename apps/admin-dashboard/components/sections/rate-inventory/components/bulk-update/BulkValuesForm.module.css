@@ -1,85 +1,97 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 8px;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-}
-
-:global(.dark) .container {
-    background-color: #1e293b;
-    border-color: #334155;
+    gap: 10px;
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
 .rowItem {
-    display: grid;
-    grid-template-columns: 180px 1fr;
+    display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 6px;
-    border-bottom: 1px solid #f1f5f9;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background-color: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    transition: all 0.15s ease-in-out;
+}
+
+.rowItem:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
 :global(.dark) .rowItem {
-    border-bottom-color: #273549;
-}
-
-.rowItem:last-child {
-    border-bottom: none;
+    background-color: #0f172a;
+    border-color: #334155;
 }
 
 .rowLabelCol {
     display: flex;
     align-items: center;
-    gap: 8px;
-}
-
-.metricIcon {
-    display: flex;
-    align-items: center;
-    color: #72263d;
-    flex-shrink: 0;
-}
-
-:global(.dark) .metricIcon {
-    color: #f497ab;
+    gap: 12px;
 }
 
 .metricName {
-    font-size: 12.5px;
-    font-weight: 700;
+    display: block;
+    font-size: 13.5px;
+    font-weight: 800;
     color: #0f172a;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 :global(.dark) .metricName {
     color: #f8fafc;
 }
 
+.metricSub {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+:global(.dark) .metricSub {
+    color: #94a3b8;
+}
+
 .rowInputsCol {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
 }
 
 .selectInput {
-    padding: 5px 8px;
-    border-radius: 6px;
+    padding: 7px 12px;
+    border-radius: 8px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     background-color: #f8fafc;
     border: 1px solid #cbd5e1;
     color: #1e293b;
     outline: none;
     cursor: pointer;
-    min-width: 140px;
+    min-width: 170px;
+    transition: all 0.15s ease;
+}
+
+.selectInput:hover {
+    border-color: #94a3b8;
+}
+
+.selectInput:focus {
+    border-color: #72263d;
+    background-color: #ffffff;
 }
 
 :global(.dark) .selectInput {
-    background-color: #0f172a;
+    background-color: #1e293b;
     border-color: #334155;
     color: #f8fafc;
 }
@@ -87,30 +99,39 @@
 .currencyInputWrapper {
     display: flex;
     align-items: center;
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: #f8fafc;
     border: 1px solid #cbd5e1;
     overflow: hidden;
-    max-width: 170px;
+    min-width: 150px;
+    max-width: 200px;
+    transition: all 0.15s ease;
+}
+
+.currencyInputWrapper:focus-within {
+    border-color: #72263d;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(114, 38, 61, 0.1);
 }
 
 :global(.dark) .currencyInputWrapper {
-    background-color: #0f172a;
+    background-color: #1e293b;
     border-color: #334155;
 }
 
 .currencySymbol {
-    padding: 5px 8px;
-    font-size: 11.5px;
-    font-weight: 700;
-    background-color: #e2e8f0;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 800;
+    background-color: #f1f5f9;
     color: #475569;
     border-right: 1px solid #cbd5e1;
     flex-shrink: 0;
+    user-select: none;
 }
 
 :global(.dark) .currencySymbol {
-    background-color: #1e293b;
+    background-color: #0f172a;
     color: #94a3b8;
     border-right-color: #334155;
 }
@@ -118,9 +139,9 @@
 .numberInput {
     flex: 1;
     min-width: 0;
-    padding: 5px 8px;
-    font-size: 12px;
-    font-weight: 700;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    font-weight: 800;
     background: transparent;
     border: none;
     color: #0f172a;
@@ -133,20 +154,89 @@
     color: #f8fafc;
 }
 
+.unitInputWrapper {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    overflow: hidden;
+    padding-right: 10px;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+
+.unitInputWrapper:focus-within {
+    border-color: #72263d;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(114, 38, 61, 0.1);
+}
+
+:global(.dark) .unitInputWrapper {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.compactNumberInput {
+    width: 70px;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-weight: 800;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #0f172a;
+    text-align: center;
+    font-family: inherit;
+}
+
+:global(.dark) .compactNumberInput {
+    color: #f8fafc;
+}
+
+.unitLabel {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    user-select: none;
+}
+
+:global(.dark) .unitLabel {
+    color: #94a3b8;
+}
+
+.badgeRemoved {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px dashed #cbd5e1;
+}
+
+:global(.dark) .badgeRemoved {
+    background-color: #0f172a;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
 .toggleButtonGroup {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .toggleBtn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 5px 12px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
     background-color: #f8fafc;
     border: 1px solid #cbd5e1;
     color: #475569;
@@ -155,7 +245,7 @@
 }
 
 .toggleBtn:hover {
-    background-color: #e2e8f0;
+    background-color: #f1f5f9;
 }
 
 :global(.dark) .toggleBtn {
@@ -168,7 +258,8 @@
     background-color: #ecfdf5 !important;
     border-color: #10b981 !important;
     color: #065f46 !important;
-    font-weight: 700;
+    font-weight: 800;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
 }
 
 :global(.dark) .toggleBtnOpen {
@@ -181,7 +272,8 @@
     background-color: #fff1f2 !important;
     border-color: #e11d48 !important;
     color: #9f1239 !important;
-    font-weight: 700;
+    font-weight: 800;
+    box-shadow: 0 1px 3px rgba(225, 29, 72, 0.2);
 }
 
 :global(.dark) .toggleBtnClose {
@@ -194,14 +286,15 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px;
-    font-size: 12px;
+    padding: 14px;
+    font-size: 12.5px;
     color: #64748b;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 768px) {
     .rowItem {
-        grid-template-columns: 1fr;
-        gap: 6px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
 }

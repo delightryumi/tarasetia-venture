@@ -2,18 +2,21 @@
 
 import React from "react";
 import {
-    DollarSign,
-    Bed,
-    Ban,
-    Clock,
-    LogIn,
-    LogOut,
-    Calendar,
     Check,
     X,
     AlertCircle
 } from "lucide-react";
 import { BulkRuleState } from "./types";
+import {
+    Rate3DIcon,
+    Inventory3DIcon,
+    MinStayThrough3DIcon,
+    MinStayArrival3DIcon,
+    StopSell3DIcon,
+    MaxStay3DIcon,
+    Cta3DIcon,
+    Ctd3DIcon
+} from "./Bulk3DIcons";
 import { useCurrency } from "@/hooks/useCurrency";
 import styles from "./BulkValuesForm.module.css";
 
@@ -41,8 +44,11 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
             {metrics.includes("rate") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
-                        <DollarSign size={14} className={styles.metricIcon} />
-                        <span className={styles.metricName}>Rates (Harga)</span>
+                        <Rate3DIcon size={38} />
+                        <div>
+                            <span className={styles.metricName}>Rates (Harga)</span>
+                            <span className={styles.metricSub}>Tentukan nominal atau persentase perubahan</span>
+                        </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <select
@@ -63,7 +69,7 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
 
                         <div className={styles.currencyInputWrapper}>
                             <span className={styles.currencySymbol}>
-                                {rule.rateAction.includes("percent") ? "%" : currConfig.symbol}
+                                {rule.rateAction.includes("percent") ? "%" : (currConfig.symbol || "Rp")}
                             </span>
                             <input
                                 type="number"
@@ -88,23 +94,29 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
             {metrics.includes("inventory") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
-                        <Bed size={14} className={styles.metricIcon} />
-                        <span className={styles.metricName}>Inventory (Allotment)</span>
+                        <Inventory3DIcon size={38} />
+                        <div>
+                            <span className={styles.metricName}>Inventory (Allotment)</span>
+                            <span className={styles.metricSub}>Atur jumlah unit fisik kamar yang dijual</span>
+                        </div>
                     </div>
                     <div className={styles.rowInputsCol}>
-                        <span style={{ fontSize: 11.5, color: "#64748b" }}>Setel kuota kamar:</span>
-                        <input
-                            type="number"
-                            placeholder="5"
-                            value={rule.inventoryValue}
-                            onChange={e =>
-                                onChange({ inventoryValue: parseInt(e.target.value, 10) || 0 })
-                            }
-                            className={styles.selectInput}
-                            style={{ maxWidth: 90 }}
-                            min="0"
-                        />
-                        <span style={{ fontSize: 11.5, color: "#64748b" }}>unit</span>
+                        <div className={styles.unitInputWrapper}>
+                            <input
+                                type="number"
+                                placeholder="5"
+                                value={rule.inventoryValue ?? 0}
+                                onChange={e =>
+                                    onChange({
+                                        inventoryAction: "set",
+                                        inventoryValue: Math.max(0, parseInt(e.target.value, 10) || 0)
+                                    })
+                                }
+                                className={styles.compactNumberInput}
+                                min="0"
+                            />
+                            <span className={styles.unitLabel}>unit kamar</span>
+                        </div>
                     </div>
                 </div>
             )}
@@ -113,8 +125,11 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
             {metrics.includes("stopsell") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
-                        <Ban size={14} className={styles.metricIcon} />
-                        <span className={styles.metricName}>Stop Sell</span>
+                        <StopSell3DIcon size={38} />
+                        <div>
+                            <span className={styles.metricName}>Stop Sell</span>
+                            <span className={styles.metricSub}>Buka atau tutup seluruh penjualan</span>
+                        </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <div className={styles.toggleButtonGroup}>
@@ -147,35 +162,43 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
             {metrics.includes("minstay_through") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
-                        <Clock size={14} className={styles.metricIcon} />
-                        <span className={styles.metricName}>Min Stay Through</span>
+                        <MinStayThrough3DIcon size={38} />
+                        <div>
+                            <span className={styles.metricName}>Min Stay Through</span>
+                            <span className={styles.metricSub}>Minimal malam menginap melintasi tanggal</span>
+                        </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <select
-                            value={rule.minStayThroughAction}
+                            value={rule.minStayThroughAction === "remove" ? "remove" : "set"}
                             onChange={e =>
                                 onChange({
-                                    minStayThroughAction: e.target.value as "none" | "set" | "remove"
+                                    minStayThroughAction: e.target.value as "set" | "remove"
                                 })
                             }
                             className={styles.selectInput}
                         >
                             <option value="set">Tetapkan Minimal Malam</option>
-                            <option value="remove">Hapus Batasan</option>
+                            <option value="remove">Hapus Batasan (Bebas)</option>
                         </select>
-                        {rule.minStayThroughAction === "set" && (
-                            <input
-                                type="number"
-                                value={rule.minStayThroughValue}
-                                onChange={e =>
-                                    onChange({
-                                        minStayThroughValue: Math.max(1, parseInt(e.target.value, 10) || 1)
-                                    })
-                                }
-                                className={styles.selectInput}
-                                style={{ maxWidth: 80 }}
-                                min="1"
-                            />
+                        {rule.minStayThroughAction !== "remove" ? (
+                            <div className={styles.unitInputWrapper}>
+                                <input
+                                    type="number"
+                                    value={rule.minStayThroughValue || 1}
+                                    onChange={e =>
+                                        onChange({
+                                            minStayThroughAction: "set",
+                                            minStayThroughValue: Math.max(1, parseInt(e.target.value, 10) || 1)
+                                        })
+                                    }
+                                    className={styles.compactNumberInput}
+                                    min="1"
+                                />
+                                <span className={styles.unitLabel}>malam</span>
+                            </div>
+                        ) : (
+                            <span className={styles.badgeRemoved}>Batasan Dihapus</span>
                         )}
                     </div>
                 </div>
@@ -185,35 +208,43 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
             {metrics.includes("minstay_arrival") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
-                        <Clock size={14} className={styles.metricIcon} />
-                        <span className={styles.metricName}>Min Stay Arrival</span>
+                        <MinStayArrival3DIcon size={38} />
+                        <div>
+                            <span className={styles.metricName}>Min Stay Arrival</span>
+                            <span className={styles.metricSub}>Minimal malam khusus tamu check-in tanggal ini</span>
+                        </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <select
-                            value={rule.minStayArrivalAction}
+                            value={rule.minStayArrivalAction === "remove" ? "remove" : "set"}
                             onChange={e =>
                                 onChange({
-                                    minStayArrivalAction: e.target.value as "none" | "set" | "remove"
+                                    minStayArrivalAction: e.target.value as "set" | "remove"
                                 })
                             }
                             className={styles.selectInput}
                         >
                             <option value="set">Tetapkan Min Malam Check-in</option>
-                            <option value="remove">Hapus Batasan</option>
+                            <option value="remove">Hapus Batasan (Bebas)</option>
                         </select>
-                        {rule.minStayArrivalAction === "set" && (
-                            <input
-                                type="number"
-                                value={rule.minStayArrivalValue}
-                                onChange={e =>
-                                    onChange({
-                                        minStayArrivalValue: Math.max(1, parseInt(e.target.value, 10) || 1)
-                                    })
-                                }
-                                className={styles.selectInput}
-                                style={{ maxWidth: 80 }}
-                                min="1"
-                            />
+                        {rule.minStayArrivalAction !== "remove" ? (
+                            <div className={styles.unitInputWrapper}>
+                                <input
+                                    type="number"
+                                    value={rule.minStayArrivalValue || 1}
+                                    onChange={e =>
+                                        onChange({
+                                            minStayArrivalAction: "set",
+                                            minStayArrivalValue: Math.max(1, parseInt(e.target.value, 10) || 1)
+                                        })
+                                    }
+                                    className={styles.compactNumberInput}
+                                    min="1"
+                                />
+                                <span className={styles.unitLabel}>malam</span>
+                            </div>
+                        ) : (
+                            <span className={styles.badgeRemoved}>Batasan Check-in Dihapus</span>
                         )}
                     </div>
                 </div>
@@ -223,35 +254,43 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
             {metrics.includes("maxstay") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
-                        <Calendar size={14} className={styles.metricIcon} />
-                        <span className={styles.metricName}>Maximum Stay</span>
+                        <MaxStay3DIcon size={38} />
+                        <div>
+                            <span className={styles.metricName}>Maximum Stay</span>
+                            <span className={styles.metricSub}>Batas maksimal malam menginap</span>
+                        </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <select
-                            value={rule.maxStayAction}
+                            value={rule.maxStayAction === "remove" ? "remove" : "set"}
                             onChange={e =>
                                 onChange({
-                                    maxStayAction: e.target.value as "none" | "set" | "remove"
+                                    maxStayAction: e.target.value as "set" | "remove"
                                 })
                             }
                             className={styles.selectInput}
                         >
                             <option value="set">Tetapkan Batas Maksimal</option>
-                            <option value="remove">Hapus Batasan</option>
+                            <option value="remove">Hapus Batasan (Bebas)</option>
                         </select>
-                        {rule.maxStayAction === "set" && (
-                            <input
-                                type="number"
-                                value={rule.maxStayValue}
-                                onChange={e =>
-                                    onChange({
-                                        maxStayValue: Math.max(1, parseInt(e.target.value, 10) || 1)
-                                    })
-                                }
-                                className={styles.selectInput}
-                                style={{ maxWidth: 80 }}
-                                min="1"
-                            />
+                        {rule.maxStayAction !== "remove" ? (
+                            <div className={styles.unitInputWrapper}>
+                                <input
+                                    type="number"
+                                    value={rule.maxStayValue || 30}
+                                    onChange={e =>
+                                        onChange({
+                                            maxStayAction: "set",
+                                            maxStayValue: Math.max(1, parseInt(e.target.value, 10) || 1)
+                                        })
+                                    }
+                                    className={styles.compactNumberInput}
+                                    min="1"
+                                />
+                                <span className={styles.unitLabel}>malam</span>
+                            </div>
+                        ) : (
+                            <span className={styles.badgeRemoved}>Batasan Maksimal Dihapus</span>
                         )}
                     </div>
                 </div>
@@ -261,8 +300,11 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
             {metrics.includes("cta") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
-                        <LogIn size={14} className={styles.metricIcon} />
-                        <span className={styles.metricName}>Closed to Arrival (COA)</span>
+                        <Cta3DIcon size={38} />
+                        <div>
+                            <span className={styles.metricName}>Closed to Arrival (COA)</span>
+                            <span className={styles.metricSub}>Kunci check-in pada hari tersebut</span>
+                        </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <div className={styles.toggleButtonGroup}>
@@ -295,8 +337,11 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
             {metrics.includes("ctd") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
-                        <LogOut size={14} className={styles.metricIcon} />
-                        <span className={styles.metricName}>Closed to Departure (COD)</span>
+                        <Ctd3DIcon size={38} />
+                        <div>
+                            <span className={styles.metricName}>Closed to Departure (COD)</span>
+                            <span className={styles.metricSub}>Kunci check-out pada hari tersebut</span>
+                        </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <div className={styles.toggleButtonGroup}>

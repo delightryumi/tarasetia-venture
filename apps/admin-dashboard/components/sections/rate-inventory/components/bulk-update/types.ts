@@ -58,7 +58,12 @@ export interface BulkRuleState {
     ctdAction: "none" | "open" | "close";
 }
 
-export type BulkStepId = "metrics_targets" | "dates_days" | "values_actions" | "review_apply";
+export type BulkStepId =
+    | "metrics_select"
+    | "targets_values"
+    | "date_ranges"
+    | "days_channels"
+    | "review_apply";
 
 export interface BulkStepConfig {
     id: BulkStepId;

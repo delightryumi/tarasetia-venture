@@ -1,0 +1,168 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 14px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+:global(.dark) .container {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fieldLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+:global(.dark) .fieldLabel {
+    color: #f8fafc;
+}
+
+.presetBar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.presetChip {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.presetChip:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+:global(.dark) .presetChip {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.daysTogglesRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.dayPill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    background-color: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    user-select: none;
+}
+
+.dayPill:hover {
+    border-color: #94a3b8;
+    background-color: #f1f5f9;
+}
+
+:global(.dark) .dayPill {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+.dayPillActive {
+    background-color: #72263d !important;
+    border-color: #72263d !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(114, 38, 61, 0.2);
+}
+
+:global(.dark) .dayPillActive {
+    background-color: #9f3653 !important;
+    border-color: #9f3653 !important;
+    color: #ffffff !important;
+}
+
+.divider {
+    height: 1px;
+    background-color: #f1f5f9;
+    margin: 2px 0;
+}
+
+:global(.dark) .divider {
+    background-color: #334155;
+}
+
+.channelRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.channelSelect {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+    outline: none;
+    cursor: pointer;
+    min-width: 220px;
+}
+
+:global(.dark) .channelSelect {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+.affectedNotice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: #0369a1;
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+:global(.dark) .affectedNotice {
+    background-color: #082f49;
+    border-color: #075985;
+    color: #7dd3fc;
+}

@@ -1,17 +1,24 @@
 .ruleCard {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: 12px;
     background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    transition: border-color 0.15s ease-in-out;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ruleCard:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
 :global(.dark) .ruleCard {
     background-color: #1e293b;
     border-color: #334155;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .ruleCardHeader {
@@ -19,8 +26,8 @@
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 8px;
-    padding-bottom: 8px;
+    gap: 10px;
+    padding-bottom: 12px;
     border-bottom: 1px solid #f1f5f9;
 }
 
@@ -31,20 +38,20 @@
 .ruleHeaderLeft {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex: 1;
-    min-width: 160px;
+    min-width: 180px;
 }
 
 .ruleNumberBadge {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 11.5px;
+    font-weight: 800;
     background-color: #72263d;
     color: #ffffff;
     flex-shrink: 0;
@@ -55,45 +62,52 @@
 }
 
 .ruleTitleInput {
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
     color: #0f172a;
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     outline: none;
-    padding: 2px 4px;
-    border-radius: 4px;
-    transition: background-color 0.15s;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
     width: 100%;
-    max-width: 260px;
+    max-width: 280px;
+}
+
+.ruleTitleInput:hover {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
 }
 
 .ruleTitleInput:focus {
-    background-color: #f1f5f9;
+    background-color: #ffffff;
+    border-color: #72263d;
+    box-shadow: 0 0 0 2px rgba(114, 38, 61, 0.1);
 }
 
 :global(.dark) .ruleTitleInput {
     color: #f8fafc;
 }
 
-:global(.dark) .ruleTitleInput:focus {
+:global(.dark) .ruleTitleInput:hover {
     background-color: #0f172a;
 }
 
 .ruleHeaderRight {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .iconBtn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
     background-color: #f8fafc;
     border: 1px solid #cbd5e1;
     color: #475569;
@@ -102,8 +116,9 @@
 }
 
 .iconBtn:hover {
-    background-color: #e2e8f0;
+    background-color: #f1f5f9;
     color: #0f172a;
+    border-color: #94a3b8;
 }
 
 :global(.dark) .iconBtn {
@@ -134,5 +149,35 @@
 .stepSection {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
+}
+
+.targetSectionWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.valuesSectionWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sectionHeaderLine {
+    display: flex;
+    align-items: center;
+    padding: 2px 0;
+}
+
+.sectionHeaderTitle {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+}
+
+:global(.dark) .sectionHeaderTitle {
+    color: #94a3b8;
 }
