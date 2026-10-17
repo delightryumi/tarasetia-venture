@@ -4602,6 +4602,19 @@
     background-color: #1e293b;
 }
 
+.mappingInputRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.mappingActionCell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 
 
 
