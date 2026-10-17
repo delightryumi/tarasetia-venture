@@ -1,0 +1,434 @@
+.pageContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: calc(100vh - 140px);
+    gap: 10px;
+    padding-bottom: 70px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.headerBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+:global(.dark) .headerBar {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.headerIcon {
+    color: #72263d;
+}
+
+:global(.dark) .headerIcon {
+    color: #f497ab;
+}
+
+.headerTitle {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+:global(.dark) .headerTitle {
+    color: #f8fafc;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hotelBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background-color: #fdf2f4;
+    color: #72263d;
+    border: 1px solid #f9ccd5;
+}
+
+:global(.dark) .hotelBadge {
+    background-color: #2c141d;
+    color: #f497ab;
+    border-color: #72263d;
+}
+
+.btnSmall {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.btnSmall:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+:global(.dark) .btnSmall {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.btnSmallDanger {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background-color: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #e11d48;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.btnSmallDanger:hover {
+    background-color: #ffe4e6;
+}
+
+:global(.dark) .btnSmallDanger {
+    background-color: #3b1219;
+    border-color: #881337;
+    color: #fda4af;
+}
+
+.contentArea {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rulesList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Quick Sync Schedule Bar for Step 2 when multiple rules exist */
+.syncScheduleBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+
+:global(.dark) .syncScheduleBar {
+    background-color: #064e3b;
+    border-color: #059669;
+}
+
+.syncText {
+    font-size: 12px;
+    color: #166534;
+}
+
+:global(.dark) .syncText {
+    color: #a7f3d0;
+}
+
+.btnSync {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background-color: #ffffff;
+    border: 1px solid #86efac;
+    color: #15803d;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.btnSync:hover {
+    background-color: #dcfce7;
+    border-color: #4ade80;
+}
+
+:global(.dark) .btnSync {
+    background-color: #042f2e;
+    border-color: #10b981;
+    color: #6ee7b7;
+}
+
+:global(.dark) .btnSync:hover {
+    background-color: #134e4a;
+}
+
+/* Rule Step Card for Multi-Rule views on Step 2 & 3 */
+.ruleStepCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    border: 1.5px solid #e2e8f0;
+}
+
+:global(.dark) .ruleStepCard {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.ruleStepHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+:global(.dark) .ruleStepHeader {
+    border-bottom-color: #273549;
+}
+
+.ruleStepBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    background-color: #72263d;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+:global(.dark) .ruleStepBadge {
+    background-color: #9f3653;
+}
+
+.ruleStepTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+:global(.dark) .ruleStepTitle {
+    color: #f8fafc;
+}
+
+.ruleStepTargets {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+:global(.dark) .ruleStepTargets {
+    color: #94a3b8;
+}
+
+.addRuleWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 0;
+}
+
+.btnAddRule {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    background-color: #ffffff;
+    border: 1.5px dashed #cbd5e1;
+    color: #72263d;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    width: 100%;
+    max-width: 360px;
+}
+
+.btnAddRule:hover {
+    background-color: #fdf2f4;
+    border-color: #72263d;
+}
+
+:global(.dark) .btnAddRule {
+    background-color: #1e293b;
+    border-color: #475569;
+    color: #f497ab;
+}
+
+/* Compact Sticky Bottom Action Navigation Bar */
+.bottomNavFixed {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    z-index: 50;
+    box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.06);
+}
+
+:global(.dark) .bottomNavFixed {
+    background-color: #0f172a;
+    border-top-color: #1e293b;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.bottomNavLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btnNavSecondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.btnNavSecondary:hover:not(:disabled) {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+.btnNavSecondary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+:global(.dark) .btnNavSecondary {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.btnNavCancel {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.btnNavCancel:hover {
+    color: #e11d48;
+}
+
+.stepIndicatorText {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+:global(.dark) .stepIndicatorText {
+    color: #94a3b8;
+}
+
+.btnNavPrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    background-color: #72263d;
+    border: 1px solid #72263d;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.btnNavPrimary:hover:not(:disabled) {
+    background-color: #5d1f31;
+}
+
+.btnNavPrimary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+:global(.dark) .btnNavPrimary {
+    background-color: #9f3653;
+    border-color: #9f3653;
+}
+
+.spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+    .stepIndicatorText {
+        display: none;
+    }
+}

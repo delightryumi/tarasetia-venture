@@ -1,0 +1,138 @@
+.ruleCard {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.15s ease-in-out;
+}
+
+:global(.dark) .ruleCard {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.ruleCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+:global(.dark) .ruleCardHeader {
+    border-bottom-color: #273549;
+}
+
+.ruleHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 160px;
+}
+
+.ruleNumberBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    background-color: #72263d;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+:global(.dark) .ruleNumberBadge {
+    background-color: #9f3653;
+}
+
+.ruleTitleInput {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background-color 0.15s;
+    width: 100%;
+    max-width: 260px;
+}
+
+.ruleTitleInput:focus {
+    background-color: #f1f5f9;
+}
+
+:global(.dark) .ruleTitleInput {
+    color: #f8fafc;
+}
+
+:global(.dark) .ruleTitleInput:focus {
+    background-color: #0f172a;
+}
+
+.ruleHeaderRight {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.iconBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.iconBtn:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+:global(.dark) .iconBtn {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+:global(.dark) .iconBtn:hover {
+    background-color: #1e293b;
+    color: #f8fafc;
+}
+
+.iconBtnDanger {
+    color: #e11d48 !important;
+}
+
+.iconBtnDanger:hover {
+    background-color: #fff1f2 !important;
+    border-color: #fecdd3 !important;
+}
+
+:global(.dark) .iconBtnDanger:hover {
+    background-color: #3b1219 !important;
+    border-color: #881337 !important;
+}
+
+.stepSection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}

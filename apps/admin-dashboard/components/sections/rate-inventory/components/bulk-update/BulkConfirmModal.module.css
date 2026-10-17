@@ -1,0 +1,161 @@
+.backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modalCard {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    overflow: hidden;
+    animation: scaleIn 0.15s ease-out;
+}
+
+:global(.dark) .modalCard {
+    background-color: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+:global(.dark) .modalHeader {
+    border-bottom-color: #273549;
+}
+
+.warningIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: #fef2f2;
+    color: #ef4444;
+    flex-shrink: 0;
+}
+
+:global(.dark) .warningIconWrapper {
+    background-color: #450a0a;
+    color: #f87171;
+}
+
+.modalTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+:global(.dark) .modalTitle {
+    color: #f8fafc;
+}
+
+.modalBody {
+    padding: 14px 16px;
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+:global(.dark) .modalBody {
+    color: #94a3b8;
+}
+
+.modalFooter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    background-color: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+}
+
+:global(.dark) .modalFooter {
+    background-color: #172033;
+    border-top-color: #273549;
+}
+
+.btnCancel {
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.btnCancel:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+:global(.dark) .btnCancel {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+:global(.dark) .btnCancel:hover {
+    background-color: #273549;
+    color: #f8fafc;
+}
+
+.btnConfirm {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    background-color: #72263d;
+    border: 1px solid #72263d;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.btnConfirm:hover {
+    background-color: #5d1f31;
+}
+
+:global(.dark) .btnConfirm {
+    background-color: #9f3653;
+    border-color: #9f3653;
+}
+
+:global(.dark) .btnConfirm:hover {
+    background-color: #b84364;
+}

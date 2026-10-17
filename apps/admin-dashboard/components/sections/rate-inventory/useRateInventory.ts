@@ -25,7 +25,8 @@ import {
     DayInventoryStatus,
     RatePlanGridRow,
     RoomTypeInventoryRow,
-    BulkUpdateParams
+    BulkUpdateParams,
+    BulkUpdateItem
 } from "./RateInventoryTypes";
 
 export const useRateInventory = () => {

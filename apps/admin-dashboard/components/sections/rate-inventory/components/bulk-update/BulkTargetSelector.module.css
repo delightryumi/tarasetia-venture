@@ -1,0 +1,213 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .container {
+    background-color: #172033;
+    border-color: #2e3e56;
+}
+
+.selectorGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+}
+
+.targetCard {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .targetCard {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.targetCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.targetTitleGroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.targetIcon {
+    display: flex;
+    align-items: center;
+    color: #72263d;
+}
+
+:global(.dark) .targetIcon {
+    color: #f497ab;
+}
+
+.targetTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+:global(.dark) .targetTitle {
+    color: #f8fafc;
+}
+
+.targetSubtitle {
+    font-size: 10.5px;
+    color: #64748b;
+}
+
+:global(.dark) .targetSubtitle {
+    color: #94a3b8;
+}
+
+.quickToggleGroup {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.quickToggleBtn {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.quickToggleBtn:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+:global(.dark) .quickToggleBtn {
+    background-color: #0f172a;
+    border-color: #475569;
+    color: #cbd5e1;
+}
+
+.chipsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 1px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    user-select: none;
+}
+
+.chip:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+:global(.dark) .chip {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+:global(.dark) .chip:hover {
+    border-color: #64748b;
+    background-color: #1e293b;
+}
+
+.chipSelected {
+    background-color: #72263d !important;
+    border-color: #72263d !important;
+    color: #ffffff !important;
+}
+
+:global(.dark) .chipSelected {
+    background-color: #9f3653 !important;
+    border-color: #9f3653 !important;
+    color: #ffffff !important;
+}
+
+.channelSelectWrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+}
+
+.channelSelectLabel {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+
+:global(.dark) .channelSelectLabel {
+    color: #cbd5e1;
+}
+
+.selectInput {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+    outline: none;
+    cursor: pointer;
+}
+
+:global(.dark) .selectInput {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+.infoNote {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #64748b;
+    padding: 6px 8px;
+    background-color: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .infoNote {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}

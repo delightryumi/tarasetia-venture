@@ -146,6 +146,16 @@ export function RateInventorySubTabs({
                         <span>Export</span>
                     </button>
 
+                    <button
+                        type="button"
+                        onClick={() => onOpenBulkModal()}
+                        className={styles.actionBtnSecondary}
+                        title="Buka Stepper Pembaruan Massal (Bulk Update)"
+                    >
+                        <SlidersHorizontal size={13} />
+                        <span>Bulk Update</span>
+                    </button>
+
                     {/* 3-Line Menu with 8 Feature Toggles Popover */}
                     <div className={styles.menuWrapper} ref={menuRef}>
                         <button
