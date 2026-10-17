@@ -59,7 +59,8 @@ interface Props {
 
 export function RateInventoryLogsTab({ hotelCode }: Props) {
     const { user } = useAuth();
-    const isSuperadmin = user?.role?.toLowerCase() === "superadmin" || user?.role?.toLowerCase() === "admin";
+    const userRole = (user?.role || "").toLowerCase();
+    const isAuthorized = !user?.role || ["superadmin", "admin", "hotel_owner", "owner", "general_manager", "manager"].includes(userRole);
 
     const [logs, setLogs] = useState<RateInventoryTaskLog[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -113,7 +114,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
 
     // Low-Cost Firebase Read: 3-minute session cache + on-demand fetch (No real-time onSnapshot)
     const fetchLogs = async (force: boolean = false) => {
-        if (!hotelCode || !isSuperadmin) return;
+        if (!hotelCode || !isAuthorized) return;
 
         // 1. Read from 3-minute session cache unless force refresh is requested
         if (!force && typeof window !== "undefined") {
@@ -154,7 +155,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
 
     useEffect(() => {
         fetchLogs(false);
-    }, [hotelCode, isSuperadmin]);
+    }, [hotelCode, isAuthorized]);
 
     const handleCopy = (text: string, label: string) => {
         if (!text) return;

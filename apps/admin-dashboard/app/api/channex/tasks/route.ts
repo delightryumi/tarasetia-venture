@@ -4,16 +4,115 @@ import { FieldValue } from "firebase-admin/firestore";
 import { channexClient } from "@/lib/channex/channexClient";
 
 function normalizeActionName(rawAction?: string): string {
-    if (!rawAction) return "Sync";
+    if (!rawAction) return "Sync Rate & Inventory (ARI)";
     const lower = rawAction.toLowerCase();
-    if (lower.includes("full_sync") || lower.includes("full sync")) return "Full Sync";
-    if (lower.includes("push booking") || lower.includes("booking_new") || lower.includes("new booking")) return "Push Booking";
+    if (lower.includes("full_sync") || lower.includes("full sync")) return "Full Property Sync";
+    if (lower.includes("push booking") || lower.includes("booking_new") || lower.includes("new booking") || lower.includes("ota new booking")) return "OTA New Booking";
+    if (lower.includes("cancellation") || lower.includes("booking_cancellation")) return "OTA Cancellation";
+    if (lower.includes("modification") || lower.includes("booking_modification")) return "OTA Modification";
     if (lower.includes("deactivate") || lower.includes("disconnect")) return "Deactivate Channel";
     if (lower.includes("activate") || lower.includes("connect")) return "Activate Channel";
     if (lower.includes("mapping")) return "Mapping Updated";
     if (lower.includes("settings") || lower.includes("configuration")) return "Channel Settings Updated";
-    if (lower.includes("availability") || lower.includes("sync-ari") || lower.includes("ari_push")) return "Sync";
+    if (lower.includes("rate plan") || lower.includes("/rates")) return "Push Rate Plan";
+    if (lower.includes("availability") || lower.includes("allotment")) return "Push Availability Allotment";
+    if (lower.includes("delta") || lower.includes("ari") || lower.includes("inventory_change") || lower.includes("grid edit")) return "Sync Rate & Inventory (ARI)";
     return rawAction;
+}
+
+/**
+ * Smart Deduplication & Consolidation Engine
+ * Merges redundant sub-actions (e.g. INVENTORY_CHANGE + delta_sync + ari-delta) into single, complete, powerful audit records.
+ */
+function consolidateLogs(rawLogs: any[]): any[] {
+    const result: any[] = [];
+    const seenTaskIds = new Set<string>();
+
+    const sorted = [...rawLogs].sort((a, b) => {
+        const timeA = new Date(a.inserted_at || a.started_at || 0).getTime();
+        const timeB = new Date(b.inserted_at || b.started_at || 0).getTime();
+        return timeB - timeA;
+    });
+
+    for (const log of sorted) {
+        const taskId = log.task_id || (Array.isArray(log.task_ids) ? log.task_ids[0] : null);
+        const logTime = new Date(log.inserted_at || log.started_at || 0).getTime();
+        const normAction = normalizeActionName(log.action || log.task_type);
+
+        // 1. Exact Task ID deduplication: Merge richer local details (diff, user) with remote task status
+        if (taskId && seenTaskIds.has(taskId)) {
+            const existing = result.find(r => r.task_id === taskId || (Array.isArray(r.task_ids) && r.task_ids.includes(taskId)));
+            if (existing) {
+                if (!existing.diff && log.diff) existing.diff = log.diff;
+                if ((!existing.user || existing.user.includes("Engine")) && log.user && !log.user.includes("Engine")) {
+                    existing.user = log.user;
+                    existing.user_label = log.user_label || log.user;
+                    existing.user_name = log.user_name;
+                    existing.user_email = log.user_email;
+                    existing.user_role = log.user_role;
+                }
+                if (!existing.ota_responses?.length && log.ota_responses?.length) {
+                    existing.ota_responses = log.ota_responses;
+                }
+            }
+            continue;
+        }
+
+        // 2. Clustered duplicate detection for ARI updates within 3.5s window
+        const isAriAction = normAction.includes("ARI") || normAction.includes("Rate & Inventory");
+        if (isAriAction) {
+            const clusterMatch = result.find(r => {
+                const rAction = normalizeActionName(r.action || r.task_type);
+                const isR_Ari = rAction.includes("ARI") || rAction.includes("Rate & Inventory");
+                if (!isR_Ari) return false;
+                const rTime = new Date(r.inserted_at || r.started_at || 0).getTime();
+                return Math.abs(rTime - logTime) < 3500;
+            });
+
+            if (clusterMatch) {
+                if (taskId) {
+                    seenTaskIds.add(taskId);
+                    if (!clusterMatch.task_ids) clusterMatch.task_ids = [];
+                    if (!clusterMatch.task_ids.includes(taskId)) clusterMatch.task_ids.push(taskId);
+                    if (!clusterMatch.task_id || clusterMatch.task_id.startsWith("ari-") || clusterMatch.task_id.startsWith("delta-")) {
+                        clusterMatch.task_id = taskId;
+                    }
+                }
+                if (!clusterMatch.diff && log.diff) clusterMatch.diff = log.diff;
+                if ((!clusterMatch.user || clusterMatch.user.includes("Engine")) && log.user && !log.user.includes("Engine")) {
+                    clusterMatch.user = log.user;
+                    clusterMatch.user_label = log.user_label || log.user;
+                    clusterMatch.user_name = log.user_name;
+                    clusterMatch.user_email = log.user_email;
+                    clusterMatch.user_role = log.user_role;
+                }
+                continue;
+            }
+        }
+
+        // 3. Mapping Updated duplicates (e.g. rapid double clicks within 2s)
+        if (normAction === "Mapping Updated") {
+            const recentMapping = result.find(r => {
+                const rAction = normalizeActionName(r.action || r.task_type);
+                if (rAction !== "Mapping Updated") return false;
+                const rTime = new Date(r.inserted_at || r.started_at || 0).getTime();
+                return Math.abs(rTime - logTime) < 2000;
+            });
+            if (recentMapping) continue;
+        }
+
+        if (taskId) {
+            seenTaskIds.add(taskId);
+            if (Array.isArray(log.task_ids)) {
+                log.task_ids.forEach((tid: string) => seenTaskIds.add(tid));
+            }
+        }
+
+        log.action = normAction;
+        result.push(log);
+    }
+
+    return result;
 }
 
 /**
@@ -183,7 +282,9 @@ export async function GET(req: NextRequest) {
 
             // Extract candidate email & name from log data
             let candidateEmail = (data.user_email || data.email || "").toLowerCase().trim();
-            let rawUserStr = typeof data.user === "string" ? data.user : (data.user_label || "");
+            let rawUserStr = typeof data.user === "string" 
+                ? data.user 
+                : (data.user?.name || data.user?.displayName || data.user?.email || data.user_label || "");
 
             if (!candidateEmail && rawUserStr) {
                 const match = rawUserStr.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
@@ -299,9 +400,12 @@ export async function GET(req: NextRequest) {
             allLogs = allLogs.filter(l => !dismissedSet.has(l.id) && !dismissedSet.has(l.task_id));
         }
 
+        // Consolidate & deduplicate clustered logs (Smart Deduplication Engine)
+        const consolidatedLogs = consolidateLogs(allLogs);
+
         return NextResponse.json({ 
             success: true, 
-            logs: allLogs,
+            logs: consolidatedLogs,
             retentionDays: configuredRetentionDays
         });
     } catch (err: any) {
