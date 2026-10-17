@@ -1224,14 +1224,23 @@ export const useRateInventory = () => {
                             });
                         }
 
-                        if (item.stopSellAction === "close") {
+                        const isStopSellActive = item.stopSell === true || item.stopSellAction === "close" || item.stopSellAction === "true";
+                        const isStopSellInactive = item.stopSell === false || item.stopSellAction === "open" || item.stopSellAction === "false";
+
+                        const isCtaActive = item.closedToArrival === true || item.ctaAction === "close" || item.ctaAction === "true";
+                        const isCtaInactive = item.closedToArrival === false || item.ctaAction === "open" || item.ctaAction === "false";
+
+                        const isCtdActive = item.closedToDeparture === true || item.ctdAction === "close" || item.ctdAction === "true";
+                        const isCtdInactive = item.closedToDeparture === false || item.ctdAction === "open" || item.ctdAction === "false";
+
+                        if (isStopSellActive) {
                             targetRoomTypes.forEach(rt => {
                                 targetRatePlans.forEach(rp => {
                                     const cKey = `${rt.id}_${rp.id}`;
                                     chRates[cKey] = { ...(chRates[cKey] || {}), stopSell: true };
                                 });
                             });
-                        } else if (item.stopSellAction === "open") {
+                        } else if (isStopSellInactive) {
                             targetRoomTypes.forEach(rt => {
                                 targetRatePlans.forEach(rp => {
                                     const cKey = `${rt.id}_${rp.id}`;
@@ -1279,13 +1288,16 @@ export const useRateInventory = () => {
                             });
                         }
 
-                        if (item.stopSellAction === "close") {
+                        const isStopSellActive = item.stopSell === true || item.stopSellAction === "close" || item.stopSellAction === "true";
+                        const isStopSellInactive = item.stopSell === false || item.stopSellAction === "open" || item.stopSellAction === "false";
+
+                        if (isStopSellActive) {
                             targetRoomTypes.forEach(rt => {
                                 targetRatePlans.forEach(rp => { 
                                     docData.stopSell[`${rt.id}_${rp.id}`] = true;
                                 });
                             });
-                        } else if (item.stopSellAction === "open") {
+                        } else if (isStopSellInactive) {
                             targetRoomTypes.forEach(rt => {
                                 targetRatePlans.forEach(rp => { 
                                     docData.stopSell[`${rt.id}_${rp.id}`] = false;
@@ -1328,15 +1340,21 @@ export const useRateInventory = () => {
                             });
                         }
 
-                        if (item.ctaAction === "close") {
+                        const isCtaActive = item.closedToArrival === true || item.ctaAction === "close" || item.ctaAction === "true";
+                        const isCtaInactive = item.closedToArrival === false || item.ctaAction === "open" || item.ctaAction === "false";
+
+                        if (isCtaActive) {
                             targetRatePlans.forEach(rp => { docData.cta[rp.id] = true; });
-                        } else if (item.ctaAction === "open") {
+                        } else if (isCtaInactive) {
                             targetRatePlans.forEach(rp => { docData.cta[rp.id] = false; });
                         }
 
-                        if (item.ctdAction === "close") {
+                        const isCtdActive = item.closedToDeparture === true || item.ctdAction === "close" || item.ctdAction === "true";
+                        const isCtdInactive = item.closedToDeparture === false || item.ctdAction === "open" || item.ctdAction === "false";
+
+                        if (isCtdActive) {
                             targetRatePlans.forEach(rp => { docData.ctd[rp.id] = true; });
-                        } else if (item.ctdAction === "open") {
+                        } else if (isCtdInactive) {
                             targetRatePlans.forEach(rp => { docData.ctd[rp.id] = false; });
                         }
 
@@ -1344,69 +1362,98 @@ export const useRateInventory = () => {
                             targetRoomTypes.forEach(rt => { docData.inventoryOverrides[rt.id] = item.inventoryValue!; });
                         }
                     }
-
-                    // Accumulate Delta Payload for Channex Batch
-                    const hasRateChange = item.rateAction && item.rateAction !== "none";
-                    const hasStopSellChange = item.stopSellAction && item.stopSellAction !== "none";
-                    const hasMinStayChange = item.minStayAction && item.minStayAction !== "none";
-                    const hasMinStayArrChange = item.minStayArrivalAction && item.minStayArrivalAction !== "none";
-                    const hasMinStayThruChange = item.minStayThroughAction && item.minStayThroughAction !== "none";
-                    const hasMaxStayChange = item.maxStayAction && item.maxStayAction !== "none";
-                    const hasCtaChange = item.ctaAction && item.ctaAction !== "none";
-                    const hasCtdChange = item.ctdAction && item.ctdAction !== "none";
-
-                    if (hasRateChange || hasStopSellChange || hasMinStayChange || hasMinStayArrChange || hasMinStayThruChange || hasMaxStayChange || hasCtaChange || hasCtdChange) {
-                        targetRoomTypes.forEach(rt => {
-                            targetRatePlans.forEach(rp => {
-                                const deltaKey = `${rp.id}_${rt.id}_${dateStr}`;
-                                if (!deltaRatesMap[deltaKey]) {
-                                    deltaRatesMap[deltaKey] = {
-                                        ratePlanId: rp.id,
-                                        roomTypeId: rt.id,
-                                        date: dateStr
-                                    };
-                                }
-                                const deltaItem = deltaRatesMap[deltaKey];
-
-                                if (hasRateChange) {
-                                    const compoundKey = `${rt.id}_${rp.id}`;
-                                    deltaItem.rate = docData.rates[compoundKey] ?? docData.rates[rp.id];
-                                }
-                                if (item.stopSellAction === "close") deltaItem.stopSell = true;
-                                else if (item.stopSellAction === "open") deltaItem.stopSell = false;
-
-                                if (item.minStayArrivalAction === "set" && item.minStayArrivalValue !== undefined) deltaItem.minStayArrival = item.minStayArrivalValue;
-                                else if (item.minStayArrivalAction === "remove") deltaItem.minStayArrival = null;
-
-                                if (item.minStayThroughAction === "set" && item.minStayThroughValue !== undefined) deltaItem.minStayThrough = item.minStayThroughValue;
-                                else if (item.minStayThroughAction === "remove") deltaItem.minStayThrough = null;
-
-                                if (item.maxStayAction === "set" && item.maxStayValue !== undefined) deltaItem.maxStay = item.maxStayValue;
-                                else if (item.maxStayAction === "remove") deltaItem.maxStay = null;
-
-                                if (item.minStayAction === "set" && item.minStayValue !== undefined) deltaItem.minStay = item.minStayValue;
-                                else if (item.minStayAction === "remove") deltaItem.minStay = null;
-
-                                if (item.ctaAction === "close") deltaItem.closedToArrival = true;
-                                else if (item.ctaAction === "open") deltaItem.closedToArrival = false;
-
-                                if (item.ctdAction === "close") deltaItem.closedToDeparture = true;
-                                else if (item.ctdAction === "open") deltaItem.closedToDeparture = false;
-                            });
-                        });
-                    }
-
-                    if (item.inventoryAction === "set" && item.inventoryValue !== undefined) {
-                        targetRoomTypes.forEach(rt => {
-                            const availKey = `${rt.id}_${dateStr}`;
-                            deltaAvailMap[availKey] = {
-                                roomTypeId: rt.id,
-                                date: dateStr,
-                                qty: item.inventoryValue!
-                            };
-                        });
-                    }
                 });
+
+                // Accumulate Range Payload for Channex Batch (1 Batched API call standard with date_from & date_to)
+                const hasRateChange = item.rateAction && item.rateAction !== "none";
+                const isStopSellActive = item.stopSell === true || item.stopSellAction === "close" || item.stopSellAction === "true";
+                const isStopSellInactive = item.stopSell === false || item.stopSellAction === "open" || item.stopSellAction === "false";
+                const hasStopSellChange = isStopSellActive || isStopSellInactive;
+
+                const hasMinStayChange = item.minStayAction && item.minStayAction !== "none";
+                const hasMinStayArrChange = item.minStayArrivalAction && item.minStayArrivalAction !== "none";
+                const hasMinStayThruChange = item.minStayThroughAction && item.minStayThroughAction !== "none";
+                const hasMaxStayChange = item.maxStayAction && item.maxStayAction !== "none";
+
+                const isCtaActive = item.closedToArrival === true || item.ctaAction === "close" || item.ctaAction === "true";
+                const isCtaInactive = item.closedToArrival === false || item.ctaAction === "open" || item.ctaAction === "false";
+                const hasCtaChange = isCtaActive || isCtaInactive;
+
+                const isCtdActive = item.closedToDeparture === true || item.ctdAction === "close" || item.ctdAction === "true";
+                const isCtdInactive = item.closedToDeparture === false || item.ctdAction === "open" || item.ctdAction === "false";
+                const hasCtdChange = isCtdActive || isCtdInactive;
+
+                if (hasRateChange || hasStopSellChange || hasMinStayChange || hasMinStayArrChange || hasMinStayThruChange || hasMaxStayChange || hasCtaChange || hasCtdChange) {
+                    const dayMap: Record<number, "su" | "mo" | "tu" | "we" | "th" | "fr" | "sa"> = {
+                        0: "su", 1: "mo", 2: "tu", 3: "we", 4: "th", 5: "fr", 6: "sa"
+                    };
+                    const channexDays = item.daysOfWeek && item.daysOfWeek.length < 7
+                        ? item.daysOfWeek.map(d => dayMap[d]).filter(Boolean)
+                        : undefined;
+
+                    targetRoomTypes.forEach(rt => {
+                        targetRatePlans.forEach(rp => {
+                            const rangeKey = `${rp.id}_${rt.id}_${item.dateFrom}_${item.dateTo}`;
+                            if (!deltaRatesMap[rangeKey]) {
+                                deltaRatesMap[rangeKey] = {
+                                    ratePlanId: rp.id,
+                                    roomTypeId: rt.id,
+                                    dateFrom: item.dateFrom,
+                                    dateTo: item.dateTo,
+                                    ...(channexDays ? { days: channexDays } : {})
+                                };
+                            }
+                            const deltaItem = deltaRatesMap[rangeKey];
+
+                            if (hasRateChange) {
+                                const compoundKey = `${rt.id}_${rp.id}`;
+                                const firstDate = itemDates[0];
+                                deltaItem.rate = dateDocsAccumulator[firstDate]?.rates[compoundKey] 
+                                    ?? dateDocsAccumulator[firstDate]?.rates[rp.id]
+                                    ?? (item.rateAction === "set" ? item.rateValue : undefined);
+                            }
+                            if (isStopSellActive) deltaItem.stopSell = true;
+                            else if (isStopSellInactive) deltaItem.stopSell = false;
+
+                            if (item.minStayArrivalAction === "set" && item.minStayArrivalValue !== undefined) deltaItem.minStayArrival = item.minStayArrivalValue;
+                            else if (item.minStayArrivalAction === "remove") deltaItem.minStayArrival = null;
+
+                            if (item.minStayThroughAction === "set" && item.minStayThroughValue !== undefined) deltaItem.minStayThrough = item.minStayThroughValue;
+                            else if (item.minStayThroughAction === "remove") deltaItem.minStayThrough = null;
+
+                            if (item.maxStayAction === "set" && item.maxStayValue !== undefined) deltaItem.maxStay = item.maxStayValue;
+                            else if (item.maxStayAction === "remove") deltaItem.maxStay = null;
+
+                            if (item.minStayAction === "set" && item.minStayValue !== undefined) {
+                                deltaItem.minStay = item.minStayValue;
+                                deltaItem.minStayArrival = item.minStayValue;
+                                deltaItem.minStayThrough = item.minStayValue;
+                            } else if (item.minStayAction === "remove") {
+                                deltaItem.minStay = null;
+                                deltaItem.minStayArrival = null;
+                                deltaItem.minStayThrough = null;
+                            }
+
+                            if (isCtaActive) deltaItem.closedToArrival = true;
+                            else if (isCtaInactive) deltaItem.closedToArrival = false;
+
+                            if (isCtdActive) deltaItem.closedToDeparture = true;
+                            else if (isCtdInactive) deltaItem.closedToDeparture = false;
+                        });
+                    });
+                }
+
+                if (item.inventoryAction === "set" && item.inventoryValue !== undefined) {
+                    targetRoomTypes.forEach(rt => {
+                        const availKey = `${rt.id}_${item.dateFrom}_${item.dateTo}`;
+                        deltaAvailMap[availKey] = {
+                            roomTypeId: rt.id,
+                            dateFrom: item.dateFrom,
+                            dateTo: item.dateTo,
+                            qty: item.inventoryValue!
+                        };
+                    });
+                }
             }
 
             const affectedDateList = Array.from(allAffectedDates);

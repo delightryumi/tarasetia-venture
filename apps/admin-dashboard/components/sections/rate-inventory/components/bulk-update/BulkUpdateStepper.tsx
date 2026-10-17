@@ -7,38 +7,31 @@ import styles from "./BulkUpdateStepper.module.css";
 
 export const BULK_STEPS: BulkStepConfig[] = [
     {
-        id: "metrics_select",
-        stepNumber: 1,
-        title: "1. Pilih Komponen",
-        subtitle: "Metrik update",
-        shortLabel: "Komponen"
-    },
-    {
         id: "targets_values",
-        stepNumber: 2,
-        title: "2. Target & Nilai",
-        subtitle: "Kamar, rate plan & angka",
+        stepNumber: 1,
+        title: "1. Target, Komponen & Nilai",
+        subtitle: "Kamar, metrik & angka",
         shortLabel: "Target & Nilai"
     },
     {
         id: "date_ranges",
-        stepNumber: 3,
-        title: "3. Rentang Tanggal",
+        stepNumber: 2,
+        title: "2. Rentang Tanggal",
         subtitle: "Kalender periode",
         shortLabel: "Tanggal"
     },
     {
         id: "days_channels",
-        stepNumber: 4,
-        title: "4. Hari & Saluran",
+        stepNumber: 3,
+        title: "3. Hari & Saluran",
         subtitle: "Hari aktif & OTA",
         shortLabel: "Hari & Saluran"
     },
     {
         id: "review_apply",
-        stepNumber: 5,
-        title: "5. Review & Simpan",
-        subtitle: "Konfirmasi eksekusi",
+        stepNumber: 4,
+        title: "4. Review & Simpan",
+        subtitle: "Konfirmasi & kirim",
         shortLabel: "Simpan"
     }
 ];
@@ -98,9 +91,7 @@ export function BulkUpdateStepper({
                                     {step.title}
                                 </span>
                                 {step.subtitle && (
-                                    <span className={styles.stepSubtitle}>
-                                        {step.subtitle}
-                                    </span>
+                                    <span className={styles.stepSubtitle}>{step.subtitle}</span>
                                 )}
                             </div>
                         </button>
@@ -108,7 +99,7 @@ export function BulkUpdateStepper({
                         {idx < BULK_STEPS.length - 1 && (
                             <div
                                 className={`${styles.stepLine} ${
-                                    isLineCompleted ? styles.stepLineCompleted : ""
+                                    isLineCompleted ? styles.stepLineActive : ""
                                 }`}
                                 aria-hidden="true"
                             />

@@ -983,6 +983,7 @@ export class ChannexSyncService {
             stopSell?: boolean;
             closedToArrival?: boolean;
             closedToDeparture?: boolean;
+            days?: Array<"mo" | "tu" | "we" | "th" | "fr" | "sa" | "su">;
         }>;
         availability?: Array<{
             roomTypeId: string;
@@ -1067,6 +1068,10 @@ export class ChannexSyncService {
                 } else if (r.dateFrom && r.dateTo) {
                     valObj.date_from = r.dateFrom;
                     valObj.date_to = r.dateTo;
+                }
+
+                if (r.days && Array.isArray(r.days) && r.days.length > 0 && r.days.length < 7) {
+                    valObj.days = r.days;
                 }
 
                 if (r.rate !== undefined && r.rate !== null) {

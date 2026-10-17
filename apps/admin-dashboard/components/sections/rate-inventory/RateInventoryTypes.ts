@@ -96,10 +96,12 @@ export interface BulkUpdateItem {
     dateFrom: string;
     dateTo: string;
     daysOfWeek: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+    days?: Array<"mo" | "tu" | "we" | "th" | "fr" | "sa" | "su">;
     channelId?: string;
     rateAction?: "none" | "set" | "inc_amount" | "dec_amount" | "inc_percent" | "dec_percent";
     rateValue?: number;
-    stopSellAction?: "none" | "open" | "close";
+    stopSellAction?: "none" | "open" | "close" | "true" | "false";
+    stopSell?: boolean;
     inventoryAction?: "none" | "set";
     inventoryValue?: number;
     minStayAction?: "none" | "set" | "remove";
@@ -110,8 +112,10 @@ export interface BulkUpdateItem {
     minStayThroughValue?: number;
     maxStayAction?: "none" | "set" | "remove";
     maxStayValue?: number;
-    ctaAction?: "none" | "open" | "close";
-    ctdAction?: "none" | "open" | "close";
+    ctaAction?: "none" | "open" | "close" | "true" | "false";
+    closedToArrival?: boolean;
+    ctdAction?: "none" | "open" | "close" | "true" | "false";
+    closedToDeparture?: boolean;
 }
 
 export interface BulkUpdateParams {
@@ -125,7 +129,8 @@ export interface BulkUpdateParams {
     channelId?: string;
     rateAction?: "none" | "set" | "inc_amount" | "dec_amount" | "inc_percent" | "dec_percent";
     rateValue?: number;
-    stopSellAction?: "none" | "open" | "close";
+    stopSellAction?: "none" | "open" | "close" | "true" | "false";
+    stopSell?: boolean;
     inventoryAction?: "none" | "set";
     inventoryValue?: number;
     minStayAction?: "none" | "set" | "remove"; // legacy unified
@@ -136,7 +141,9 @@ export interface BulkUpdateParams {
     minStayThroughValue?: number;
     maxStayAction?: "none" | "set" | "remove";
     maxStayValue?: number;
-    ctaAction?: "none" | "open" | "close";
-    ctdAction?: "none" | "open" | "close";
+    ctaAction?: "none" | "open" | "close" | "true" | "false";
+    closedToArrival?: boolean;
+    ctdAction?: "none" | "open" | "close" | "true" | "false";
+    closedToDeparture?: boolean;
 }
 

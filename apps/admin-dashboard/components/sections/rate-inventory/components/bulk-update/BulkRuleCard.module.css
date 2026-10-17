@@ -181,3 +181,103 @@
 :global(.dark) .sectionHeaderTitle {
     color: #94a3b8;
 }
+
+.metricsToggleRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .metricsToggleRow {
+    background-color: #0f172a;
+    border-color: #334155;
+}
+
+.metricChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 6px 4px 11px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background-color: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    user-select: none;
+}
+
+.metricChip:hover {
+    border-color: #94a3b8;
+    background-color: #f8fafc;
+    color: #0f172a;
+}
+
+.metricChipActive {
+    background-color: #fdf2f4;
+    border-color: #72263d;
+    color: #72263d;
+    font-weight: 700;
+}
+
+:global(.dark) .metricChip {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+:global(.dark) .metricChip:hover {
+    background-color: #273549;
+    color: #ffffff;
+}
+
+:global(.dark) .metricChipActive {
+    background-color: #3b1219;
+    border-color: #f497ab;
+    color: #fda4af;
+}
+
+.metricChipLabel {
+    line-height: 1;
+}
+
+/* Bulatan di belakang nama */
+.circleIndicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1.5px solid #cbd5e1;
+    background-color: #ffffff;
+    color: transparent;
+    transition: all 0.15s ease-in-out;
+    flex-shrink: 0;
+}
+
+.circleIndicatorActive {
+    border-color: #72263d;
+    background-color: #72263d;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(114, 38, 61, 0.25);
+}
+
+:global(.dark) .circleIndicator {
+    border-color: #475569;
+    background-color: #0f172a;
+}
+
+:global(.dark) .circleIndicatorActive {
+    border-color: #f497ab;
+    background-color: #9f3653;
+    color: #ffffff;
+}
+

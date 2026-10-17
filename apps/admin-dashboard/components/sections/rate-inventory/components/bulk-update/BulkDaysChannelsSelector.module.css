@@ -1,65 +1,69 @@
-.container {
+.slimWrapper {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 12px 14px;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-:global(.dark) .container {
-    background-color: #1e293b;
-    border-color: #334155;
-}
-
-.sectionHeader {
+.daysRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
+    gap: 10px;
+}
+
+.daysLeftGroup {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
-.fieldLabel {
-    display: flex;
+.groupLabel {
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 5px;
+    font-size: 11px;
     font-weight: 700;
-    color: #1e293b;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    user-select: none;
 }
 
-:global(.dark) .fieldLabel {
-    color: #f8fafc;
+:global(.dark) .groupLabel {
+    color: #94a3b8;
 }
 
 .presetBar {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
     gap: 4px;
 }
 
-.presetChip {
+.slimPresetChip {
     padding: 3px 8px;
-    border-radius: 4px;
+    border-radius: 5px;
     font-size: 11px;
     font-weight: 600;
     background-color: #f1f5f9;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e2e8f0;
     color: #475569;
     cursor: pointer;
     transition: all 0.15s ease-in-out;
+    user-select: none;
 }
 
-.presetChip:hover {
+.slimPresetChip:hover {
     background-color: #e2e8f0;
     color: #0f172a;
+    border-color: #cbd5e1;
 }
 
-:global(.dark) .presetChip {
-    background-color: #0f172a;
+:global(.dark) .slimPresetChip {
+    background-color: #1e293b;
     border-color: #334155;
     color: #cbd5e1;
 }
@@ -67,21 +71,20 @@
 .daysTogglesRow {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
 }
 
 .dayPill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 44px;
-    padding: 7px 12px;
+    min-width: 32px;
+    padding: 4px 7px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     background-color: #f8fafc;
-    border: 1.5px solid #cbd5e1;
+    border: 1px solid #cbd5e1;
     color: #64748b;
     cursor: pointer;
     transition: all 0.15s ease-in-out;
@@ -91,6 +94,14 @@
 .dayPill:hover {
     border-color: #94a3b8;
     background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.dayPillActive {
+    background-color: #72263d !important;
+    border-color: #72263d !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(114, 38, 61, 0.25);
 }
 
 :global(.dark) .dayPill {
@@ -99,70 +110,73 @@
     color: #94a3b8;
 }
 
-.dayPillActive {
-    background-color: #72263d !important;
-    border-color: #72263d !important;
-    color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(114, 38, 61, 0.2);
-}
-
 :global(.dark) .dayPillActive {
     background-color: #9f3653 !important;
     border-color: #9f3653 !important;
     color: #ffffff !important;
 }
 
-.divider {
-    height: 1px;
-    background-color: #f1f5f9;
-    margin: 2px 0;
+.affectedDaysBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    white-space: nowrap;
+    user-select: none;
 }
 
-:global(.dark) .divider {
-    background-color: #334155;
+:global(.dark) .affectedDaysBadge {
+    background-color: #064e3b;
+    border-color: #059669;
+    color: #a7f3d0;
 }
 
 .channelRow {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
 }
 
-.channelSelect {
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
+.channelInputGroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     background-color: #f8fafc;
     border: 1px solid #cbd5e1;
-    color: #1e293b;
-    outline: none;
-    cursor: pointer;
-    min-width: 220px;
+    border-radius: 7px;
+    padding: 3px 10px;
+    transition: all 0.15s ease-in-out;
 }
 
-:global(.dark) .channelSelect {
+.channelInputGroup:focus-within {
+    border-color: #72263d;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(114, 38, 61, 0.1);
+}
+
+:global(.dark) .channelInputGroup {
     background-color: #0f172a;
     border-color: #334155;
+}
+
+.slimChannelSelect {
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 2px 0;
+}
+
+:global(.dark) .slimChannelSelect {
     color: #f8fafc;
-}
-
-.affectedNotice {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11.5px;
-    color: #0369a1;
-    background-color: #f0f9ff;
-    border: 1px solid #bae6fd;
-    padding: 6px 10px;
-    border-radius: 6px;
-}
-
-:global(.dark) .affectedNotice {
-    background-color: #082f49;
-    border-color: #075985;
-    color: #7dd3fc;
 }

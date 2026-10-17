@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, CheckCircle, Calendar, Bed, Tag } from "lucide-react";
+import { AlertCircle, Bed, Tag, Calendar, CheckCircle2 } from "lucide-react";
 import { BulkRuleState } from "./types";
 import { RoomTypeInfo, MyTaraRatePlan } from "@/lib/channex/types";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -13,202 +13,175 @@ interface BulkSummaryStepProps {
     ratePlans: MyTaraRatePlan[];
 }
 
-const DAYS_NAMES = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-
 export function BulkSummaryStep({
     rules,
     roomTypes,
     ratePlans
 }: BulkSummaryStepProps) {
-    const { formatCurrency, config: currConfig } = useCurrency();
+    const { formatCurrency } = useCurrency();
 
-    const getRoomTypesText = (ids: string[]) => {
-        if (ids.includes("all") || ids.length === 0) {
-            return `Semua Tipe Kamar (${roomTypes.length})`;
+    // Helper to format Channex-standard date string
+    const formatDateStr = (dateStr: string) => {
+        if (!dateStr) return "";
+        try {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric"
+            });
+        } catch {
+            return dateStr;
         }
-        return ids
-            .map(id => roomTypes.find(rt => rt.id === id)?.name || id)
-            .join(", ");
     };
 
-    const getRatePlansText = (ids: string[]) => {
-        if (ids.includes("all") || ids.length === 0) {
-            return `Semua Rate Plan (${ratePlans.length})`;
+    // Helper to build Channex restrictions string matching certification screenshots
+    const buildRestrictionsString = (rule: BulkRuleState): string => {
+        const parts: string[] = [];
+
+        // Rate
+        if (rule.selectedMetrics.includes("rate") && rule.rateAction !== "none") {
+            if (rule.rateAction === "set") {
+                parts.push(`rate: ${rule.rateValue}$`);
+            } else if (rule.rateAction === "inc_amount") {
+                parts.push(`rate: +${rule.rateValue}`);
+            } else if (rule.rateAction === "dec_amount") {
+                parts.push(`rate: -${rule.rateValue}`);
+            } else if (rule.rateAction === "inc_percent") {
+                parts.push(`rate: +${rule.rateValue}%`);
+            } else if (rule.rateAction === "dec_percent") {
+                parts.push(`rate: -${rule.rateValue}%`);
+            }
         }
-        return ids
-            .map(id => {
-                const rp = ratePlans.find(r => r.id === id);
-                return rp?.name || rp?.code || id;
-            })
-            .join(", ");
+
+        // Stop Sell
+        const isStopSellActive = rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true";
+        const isStopSellInactive = rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false";
+        if (rule.selectedMetrics.includes("stopsell")) {
+            if (isStopSellActive) parts.push("stop_sell: true");
+            else if (isStopSellInactive) parts.push("stop_sell: false");
+        }
+
+        // Closed to Arrival (COA)
+        const isCtaActive = rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true";
+        const isCtaInactive = rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false";
+        if (rule.selectedMetrics.includes("cta")) {
+            if (isCtaActive) parts.push("closed_to_arrival: true");
+            else if (isCtaInactive) parts.push("closed_to_arrival: false");
+        }
+
+        // Closed to Departure (COD)
+        const isCtdActive = rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true";
+        const isCtdInactive = rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false";
+        if (rule.selectedMetrics.includes("ctd")) {
+            if (isCtdActive) parts.push("closed_to_departure: true");
+            else if (isCtdInactive) parts.push("closed_to_departure: false");
+        }
+
+        // Max Stay
+        if (rule.selectedMetrics.includes("maxstay")) {
+            if (rule.maxStayAction === "set") parts.push(`max_stay: ${rule.maxStayValue}`);
+            else if (rule.maxStayAction === "remove") parts.push("max_stay: null");
+        }
+
+        // Min Stay Through
+        if (rule.selectedMetrics.includes("minstay_through")) {
+            if (rule.minStayThroughAction === "set") parts.push(`min_stay: ${rule.minStayThroughValue}`);
+            else if (rule.minStayThroughAction === "remove") parts.push("min_stay: null");
+        }
+
+        // Min Stay Arrival
+        if (rule.selectedMetrics.includes("minstay_arrival")) {
+            if (rule.minStayArrivalAction === "set") parts.push(`min_stay_arrival: ${rule.minStayArrivalValue}`);
+            else if (rule.minStayArrivalAction === "remove") parts.push("min_stay_arrival: null");
+        }
+
+        // Inventory
+        if (rule.selectedMetrics.includes("inventory") && rule.inventoryAction === "set") {
+            parts.push(`availability: ${rule.inventoryValue}`);
+        }
+
+        return parts.length > 0 ? parts.join(", ") : "Tidak ada restriksi diubah";
     };
 
-    const getDaysText = (days: number[]) => {
-        if (days.length === 7) return "Semua Hari (Senin - Minggu)";
-        if (days.length === 5 && !days.includes(0) && !days.includes(6)) {
-            return "Hari Kerja (Senin - Jumat)";
-        }
-        if (days.length === 2 && days.includes(0) && days.includes(6)) {
-            return "Akhir Pekan (Sabtu & Minggu)";
-        }
-        return days.map(d => DAYS_NAMES[d]).join(", ");
-    };
+    // Flatten rules into rows per room type & rate plan for precise verification
+    const tableRows = rules.flatMap((rule, ruleIdx) => {
+        const targetRooms = rule.roomTypeIds.includes("all")
+            ? roomTypes
+            : roomTypes.filter(rt => rule.roomTypeIds.includes(rt.id));
+
+        const targetPlans = rule.ratePlanIds.includes("all")
+            ? ratePlans
+            : ratePlans.filter(rp => rule.ratePlanIds.includes(rp.id));
+
+        const dateRangeText = `${formatDateStr(rule.dateFrom)} to ${formatDateStr(rule.dateTo)}`;
+        const restrictionsText = buildRestrictionsString(rule);
+
+        const rows: Array<{
+            key: string;
+            roomName: string;
+            ratePlanName: string;
+            dateRange: string;
+            restrictions: string;
+            ruleIndex: number;
+        }> = [];
+
+        targetRooms.forEach(rt => {
+            targetPlans.forEach(rp => {
+                rows.push({
+                    key: `${rule.id}-${rt.id}-${rp.id}`,
+                    roomName: rt.name,
+                    ratePlanName: rp.name,
+                    dateRange: dateRangeText,
+                    restrictions: restrictionsText,
+                    ruleIndex: ruleIdx + 1
+                });
+            });
+        });
+
+        return rows;
+    });
 
     return (
         <div className={styles.container}>
-            <div className={styles.warningBox}>
-                <AlertTriangle size={20} style={{ flexShrink: 0 }} />
-                <div className={styles.warningContent}>
-                    <div className={styles.warningTitle}>Perhatian Sebelum Menerapkan</div>
-                    <div className={styles.warningDesc}>
-                        Pembaruan massal (Bulk Update) akan langsung menimpa data harga, allotment, atau status restriksi pada tanggal dan kamar yang ditentukan. Pastikan data di bawah sudah sesuai sebelum menekan tombol Terapkan.
-                    </div>
-                </div>
+            {/* Table in Channex Certification Format */}
+            <div className={styles.tableContainer}>
+                <table className={styles.channexTable}>
+                    <thead>
+                        <tr>
+                            <th className={styles.channexTh}>Room Type</th>
+                            <th className={styles.channexTh}>Rate Plan</th>
+                            <th className={styles.channexTh}>Date</th>
+                            <th className={styles.channexTh}>Restrictions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {tableRows.map((row) => (
+                            <tr key={row.key}>
+                                <td className={styles.channexTd}>
+                                    <div style={{ fontWeight: 800 }}>{row.roomName}</div>
+                                </td>
+                                <td className={styles.channexTd}>
+                                    <div style={{ fontWeight: 600 }}>{row.ratePlanName}</div>
+                                </td>
+                                <td className={styles.channexTd}>
+                                    <div style={{ whiteSpace: "nowrap" }}>{row.dateRange}</div>
+                                </td>
+                                <td className={styles.channexTd}>
+                                    <span className={styles.codeSyntax}>{row.restrictions}</span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
-            <div className={styles.rulesList}>
-                {rules.map((rule, idx) => {
-                    const metrics = rule.selectedMetrics;
-
-                    return (
-                        <div key={rule.id} className={styles.ruleSummaryCard}>
-                            <div className={styles.ruleHeader}>
-                                <div className={styles.ruleTitle}>
-                                    {rule.title || `Aturan Bulk #${idx + 1}`}
-                                </div>
-                                <div className={styles.badgeList}>
-                                    {metrics.map(m => (
-                                        <span key={m} className={styles.metricBadge}>
-                                            {m.toUpperCase()}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className={styles.detailsGrid}>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Target Kamar</span>
-                                    <span className={styles.detailValue}>
-                                        <Bed size={13} style={{ display: "inline", marginRight: 4 }} />
-                                        {getRoomTypesText(rule.roomTypeIds)}
-                                    </span>
-                                </div>
-
-                                {metrics.some(m => m !== "inventory") && (
-                                    <div className={styles.detailItem}>
-                                        <span className={styles.detailLabel}>Target Rate Plan</span>
-                                        <span className={styles.detailValue}>
-                                            <Tag size={13} style={{ display: "inline", marginRight: 4 }} />
-                                            {getRatePlansText(rule.ratePlanIds)}
-                                        </span>
-                                    </div>
-                                )}
-
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Periode Tanggal</span>
-                                    <span className={styles.detailValue}>
-                                        <Calendar size={13} style={{ display: "inline", marginRight: 4 }} />
-                                        {rule.dateFrom} s/d {rule.dateTo}
-                                    </span>
-                                </div>
-
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Hari Aktif</span>
-                                    <span className={styles.detailValue}>
-                                        {getDaysText(rule.daysOfWeek)}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Actions & Values Summary */}
-                            <div className={styles.actionValuesSection}>
-                                <span className={styles.detailLabel}>Nilai &amp; Aksi Perubahan:</span>
-
-                                {metrics.includes("rate") && (
-                                    <div className={styles.actionRow}>
-                                        <span className={styles.actionRowLabel}>Rate (Harga):</span>
-                                        <span className={styles.actionRowValue}>
-                                            {rule.rateAction === "set" && `Setel ${formatCurrency(rule.rateValue)}`}
-                                            {rule.rateAction === "inc_amount" && `+ ${formatCurrency(rule.rateValue)}`}
-                                            {rule.rateAction === "dec_amount" && `- ${formatCurrency(rule.rateValue)}`}
-                                            {rule.rateAction === "inc_percent" && `+ ${rule.rateValue}%`}
-                                            {rule.rateAction === "dec_percent" && `- ${rule.rateValue}%`}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {metrics.includes("inventory") && (
-                                    <div className={styles.actionRow}>
-                                        <span className={styles.actionRowLabel}>Inventory (Allotment):</span>
-                                        <span className={styles.actionRowValue}>
-                                            Setel {rule.inventoryValue} unit kamar
-                                        </span>
-                                    </div>
-                                )}
-
-                                {metrics.includes("stopsell") && (
-                                    <div className={styles.actionRow}>
-                                        <span className={styles.actionRowLabel}>Stop Sell:</span>
-                                        <span className={styles.actionRowValue}>
-                                            {rule.stopSellAction === "close" ? "TUTUP (Stop Sell Aktif)" : "BUKA (Open)"}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {metrics.includes("minstay_through") && (
-                                    <div className={styles.actionRow}>
-                                        <span className={styles.actionRowLabel}>Min Stay Through:</span>
-                                        <span className={styles.actionRowValue}>
-                                            {rule.minStayThroughAction === "set"
-                                                ? `${rule.minStayThroughValue} malam`
-                                                : "Hapus batasan"}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {metrics.includes("minstay_arrival") && (
-                                    <div className={styles.actionRow}>
-                                        <span className={styles.actionRowLabel}>Min Stay Arrival:</span>
-                                        <span className={styles.actionRowValue}>
-                                            {rule.minStayArrivalAction === "set"
-                                                ? `${rule.minStayArrivalValue} malam`
-                                                : "Hapus batasan"}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {metrics.includes("maxstay") && (
-                                    <div className={styles.actionRow}>
-                                        <span className={styles.actionRowLabel}>Maximum Stay:</span>
-                                        <span className={styles.actionRowValue}>
-                                            {rule.maxStayAction === "set"
-                                                ? `${rule.maxStayValue} malam`
-                                                : "Hapus batasan"}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {metrics.includes("cta") && (
-                                    <div className={styles.actionRow}>
-                                        <span className={styles.actionRowLabel}>Closed to Arrival (COA):</span>
-                                        <span className={styles.actionRowValue}>
-                                            {rule.ctaAction === "close" ? "TUTUP (Larang Check-in)" : "BUKA (Izinkan Check-in)"}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {metrics.includes("ctd") && (
-                                    <div className={styles.actionRow}>
-                                        <span className={styles.actionRowLabel}>Closed to Departure (COD):</span>
-                                        <span className={styles.actionRowValue}>
-                                            {rule.ctdAction === "close" ? "TUTUP (Larang Check-out)" : "BUKA (Izinkan Check-out)"}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
+            {/* Standard Channex 1 API Call Notice */}
+            <div className={styles.oneCallAlert}>
+                <AlertCircle size={16} style={{ color: "#0284c7", flexShrink: 0 }} />
+                <span>
+                    <strong>Standar Channex:</strong> Pembaruan ini akan dikirim dalam <strong>1 batched API call</strong> ke endpoint Channex <code>/restrictions</code>.
+                </span>
             </div>
         </div>
     );

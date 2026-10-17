@@ -32,8 +32,8 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
     if (metrics.length === 0) {
         return (
             <div className={styles.emptyState}>
-                <AlertCircle size={16} />
-                <span>Belum ada komponen metrik yang dipilih pada Langkah 1.</span>
+                <AlertCircle size={15} />
+                <span>Silakan klik komponen di atas (Rate, Stop Sell, COA, COD, dll.) untuk mulai mengatur nilainya.</span>
             </div>
         );
     }
@@ -121,39 +121,62 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                 </div>
             )}
 
-            {/* 3. Stop Sell */}
+            {/* 3. Stop Sell (Channex Standard: stop_sell = true | false) */}
             {metrics.includes("stopsell") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
                         <StopSell3DIcon size={38} />
                         <div>
-                            <span className={styles.metricName}>Stop Sell</span>
-                            <span className={styles.metricSub}>Buka atau tutup seluruh penjualan</span>
+                            <span className={styles.metricName}>Stop Sell (stop_sell)</span>
+                            <span className={styles.metricSub}>Standar Channex: true (Tutup) / false (Buka)</span>
                         </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <div className={styles.toggleButtonGroup}>
                             <button
                                 type="button"
-                                onClick={() => onChange({ stopSellAction: "open" })}
+                                onClick={() => {
+                                    const isCurrentlyTrue = rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true";
+                                    onChange({
+                                        stopSell: isCurrentlyTrue ? undefined : true,
+                                        stopSellAction: isCurrentlyTrue ? "none" : "true"
+                                    });
+                                }}
                                 className={`${styles.toggleBtn} ${
-                                    rule.stopSellAction === "open" ? styles.toggleBtnOpen : ""
+                                    (rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true") ? styles.toggleBtnClose : ""
                                 }`}
+                                title="Set stop_sell: true (Tutup Penjualan)"
                             >
-                                <Check size={12} />
-                                <span>Buka (Open)</span>
+                                <X size={12} />
+                                <span>true</span>
                             </button>
                             <button
                                 type="button"
-                                onClick={() => onChange({ stopSellAction: "close" })}
+                                onClick={() => {
+                                    const isCurrentlyFalse = rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false";
+                                    onChange({
+                                        stopSell: isCurrentlyFalse ? undefined : false,
+                                        stopSellAction: isCurrentlyFalse ? "none" : "false"
+                                    });
+                                }}
                                 className={`${styles.toggleBtn} ${
-                                    rule.stopSellAction === "close" ? styles.toggleBtnClose : ""
+                                    (rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false") ? styles.toggleBtnOpen : ""
                                 }`}
+                                title="Set stop_sell: false (Buka Penjualan)"
                             >
-                                <X size={12} />
-                                <span>Tutup (Stop Sell)</span>
+                                <Check size={12} />
+                                <span>false</span>
                             </button>
                         </div>
+                        <span className={`${styles.channexCodePill} ${
+                            (rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true")
+                                ? styles.channexCodePillActive
+                                : (rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false")
+                                ? styles.channexCodePillFalse
+                                : ""
+                        }`}>
+                            stop_sell: {rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true" ? "true" : (rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false" ? "false" : "none")}
+                        </span>
                     </div>
                 </div>
             )}
@@ -296,76 +319,122 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                 </div>
             )}
 
-            {/* 7. COA */}
+            {/* 7. COA (closed_to_arrival) */}
             {metrics.includes("cta") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
                         <Cta3DIcon size={38} />
                         <div>
-                            <span className={styles.metricName}>Closed to Arrival (COA)</span>
-                            <span className={styles.metricSub}>Kunci check-in pada hari tersebut</span>
+                            <span className={styles.metricName}>Closed to Arrival (closed_to_arrival / COA)</span>
+                            <span className={styles.metricSub}>Standar Channex: true (kunci check-in) / false (buka check-in)</span>
                         </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <div className={styles.toggleButtonGroup}>
                             <button
                                 type="button"
-                                onClick={() => onChange({ ctaAction: "open" })}
+                                onClick={() => {
+                                    const isCurrentlyTrue = rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true";
+                                    onChange({
+                                        closedToArrival: isCurrentlyTrue ? undefined : true,
+                                        ctaAction: isCurrentlyTrue ? "none" : "true"
+                                    });
+                                }}
                                 className={`${styles.toggleBtn} ${
-                                    rule.ctaAction === "open" ? styles.toggleBtnOpen : ""
+                                    (rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true") ? styles.toggleBtnClose : ""
                                 }`}
+                                title="Set closed_to_arrival: true"
                             >
-                                <Check size={12} />
-                                <span>Buka Check-in</span>
+                                <X size={12} />
+                                <span>true</span>
                             </button>
                             <button
                                 type="button"
-                                onClick={() => onChange({ ctaAction: "close" })}
+                                onClick={() => {
+                                    const isCurrentlyFalse = rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false";
+                                    onChange({
+                                        closedToArrival: isCurrentlyFalse ? undefined : false,
+                                        ctaAction: isCurrentlyFalse ? "none" : "false"
+                                    });
+                                }}
                                 className={`${styles.toggleBtn} ${
-                                    rule.ctaAction === "close" ? styles.toggleBtnClose : ""
+                                    (rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false") ? styles.toggleBtnOpen : ""
                                 }`}
+                                title="Set closed_to_arrival: false"
                             >
-                                <X size={12} />
-                                <span>Tutup Check-in (COA)</span>
+                                <Check size={12} />
+                                <span>false</span>
                             </button>
                         </div>
+                        <span className={`${styles.channexCodePill} ${
+                            (rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true")
+                                ? styles.channexCodePillActive
+                                : (rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false")
+                                ? styles.channexCodePillFalse
+                                : ""
+                        }`}>
+                            closed_to_arrival: {rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true" ? "true" : (rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false" ? "false" : "none")}
+                        </span>
                     </div>
                 </div>
             )}
 
-            {/* 8. COD */}
+            {/* 8. COD (closed_to_departure) */}
             {metrics.includes("ctd") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
                         <Ctd3DIcon size={38} />
                         <div>
-                            <span className={styles.metricName}>Closed to Departure (COD)</span>
-                            <span className={styles.metricSub}>Kunci check-out pada hari tersebut</span>
+                            <span className={styles.metricName}>Closed to Departure (closed_to_departure / COD)</span>
+                            <span className={styles.metricSub}>Standar Channex: true (kunci check-out) / false (buka check-out)</span>
                         </div>
                     </div>
                     <div className={styles.rowInputsCol}>
                         <div className={styles.toggleButtonGroup}>
                             <button
                                 type="button"
-                                onClick={() => onChange({ ctdAction: "open" })}
+                                onClick={() => {
+                                    const isCurrentlyTrue = rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true";
+                                    onChange({
+                                        closedToDeparture: isCurrentlyTrue ? undefined : true,
+                                        ctdAction: isCurrentlyTrue ? "none" : "true"
+                                    });
+                                }}
                                 className={`${styles.toggleBtn} ${
-                                    rule.ctdAction === "open" ? styles.toggleBtnOpen : ""
+                                    (rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true") ? styles.toggleBtnClose : ""
                                 }`}
+                                title="Set closed_to_departure: true"
                             >
-                                <Check size={12} />
-                                <span>Buka Check-out</span>
+                                <X size={12} />
+                                <span>true</span>
                             </button>
                             <button
                                 type="button"
-                                onClick={() => onChange({ ctdAction: "close" })}
+                                onClick={() => {
+                                    const isCurrentlyFalse = rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false";
+                                    onChange({
+                                        closedToDeparture: isCurrentlyFalse ? undefined : false,
+                                        ctdAction: isCurrentlyFalse ? "none" : "false"
+                                    });
+                                }}
                                 className={`${styles.toggleBtn} ${
-                                    rule.ctdAction === "close" ? styles.toggleBtnClose : ""
+                                    (rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false") ? styles.toggleBtnOpen : ""
                                 }`}
+                                title="Set closed_to_departure: false"
                             >
-                                <X size={12} />
-                                <span>Tutup Check-out (COD)</span>
+                                <Check size={12} />
+                                <span>false</span>
                             </button>
                         </div>
+                        <span className={`${styles.channexCodePill} ${
+                            (rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true")
+                                ? styles.channexCodePillActive
+                                : (rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false")
+                                ? styles.channexCodePillFalse
+                                : ""
+                        }`}>
+                            closed_to_departure: {rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true" ? "true" : (rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false" ? "false" : "none")}
+                        </span>
                     </div>
                 </div>
             )}

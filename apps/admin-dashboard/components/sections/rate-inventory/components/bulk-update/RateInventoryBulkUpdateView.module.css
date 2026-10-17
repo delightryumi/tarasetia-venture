@@ -177,16 +177,22 @@
     gap: 14px;
 }
 
-/* Step 3 & 4 Rule Container Card */
+/* Step 3 & 4 Rule Container Card (Slim & Compact) */
 .ruleStepCard {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px 18px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    transition: all 0.15s ease-in-out;
+}
+
+.ruleStepCard:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
 }
 
 :global(.dark) .ruleStepCard {
@@ -194,27 +200,39 @@
     border-color: #334155;
 }
 
+:global(.dark) .ruleStepCard:hover {
+    border-color: #475569;
+}
+
 .ruleStepHeader {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    padding-bottom: 10px;
+    padding-bottom: 7px;
     border-bottom: 1px solid #f1f5f9;
 }
 
 :global(.dark) .ruleStepHeader {
-    border-bottom-color: #2d3748;
+    border-bottom-color: #273549;
+}
+
+.ruleStepHeaderLeft {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .ruleStepBadge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
     background-color: #72263d;
     color: #ffffff;
     flex-shrink: 0;
@@ -225,7 +243,7 @@
 }
 
 .ruleStepTitle {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     color: #0f172a;
 }
@@ -235,13 +253,39 @@
 }
 
 .ruleStepTargets {
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 11px;
     font-weight: 600;
-    color: #64748b;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #475569;
 }
 
 :global(.dark) .ruleStepTargets {
-    color: #94a3b8;
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.ruleStepDatePill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    background-color: #fdf2f4;
+    border: 1px solid #fce7eb;
+    color: #72263d;
+}
+
+:global(.dark) .ruleStepDatePill {
+    background-color: #3b1219;
+    border-color: #5c1d2e;
+    color: #fda4af;
 }
 
 /* Sync schedule toolbar */

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Calendar, Clock, Info, ArrowRight } from "lucide-react";
+import { Calendar, ArrowRight, Clock, Info } from "lucide-react";
 import styles from "./BulkDateRangeSelector.module.css";
 
 interface BulkDateRangeSelectorProps {
@@ -68,9 +68,9 @@ export function BulkDateRangeSelector({
     const toggleDay = (idx: number) => {
         if (daysOfWeek.includes(idx)) {
             const next = daysOfWeek.filter(d => d !== idx);
-            onDaysOfWeekChange(next.length === 0 ? [idx] : next);
+            onDaysOfWeekChange?.(next.length === 0 ? [idx] : next);
         } else {
-            onDaysOfWeekChange([...daysOfWeek, idx]);
+            onDaysOfWeekChange?.([...daysOfWeek, idx]);
         }
     };
 
@@ -105,147 +105,162 @@ export function BulkDateRangeSelector({
     const affectedDays = calculateAffectedDaysCount();
 
     return (
-        <div className={styles.container}>
-            {/* 1. Date Inputs with Duration Badge */}
-            <div className={styles.datePickerGrid}>
-                <div className={styles.dateField}>
-                    <label htmlFor="bulk-date-from" className={styles.fieldLabel}>
-                        <Calendar size={13} />
-                        Tanggal Mulai (Dari)
-                    </label>
+        <div className={styles.slimWrapper}>
+            {/* 1. Compact Date Range Inputs + Duration Pill */}
+            <div className={styles.rangeInputGroup}>
+                <div className={styles.singleDateField}>
+                    <span className={styles.inputPrefix}>Dari</span>
                     <input
-                        id="bulk-date-from"
                         type="date"
                         value={dateFrom}
                         onChange={e => onDateFromChange(e.target.value)}
-                        className={styles.dateInput}
+                        className={styles.slimDateInput}
+                        title="Tanggal Mulai"
                     />
                 </div>
 
-                <div className={styles.durationBadge}>
-                    <ArrowRight size={12} />
-                    <span>{totalDays} Hari</span>
-                </div>
+                <span className={styles.rangeArrow}>
+                    <ArrowRight size={13} />
+                </span>
 
-                <div className={styles.dateField}>
-                    <label htmlFor="bulk-date-to" className={styles.fieldLabel}>
-                        <Calendar size={13} />
-                        Tanggal Selesai (Sampai)
-                    </label>
+                <div className={styles.singleDateField}>
+                    <span className={styles.inputPrefix}>Sampai</span>
                     <input
-                        id="bulk-date-to"
                         type="date"
                         value={dateTo}
                         min={dateFrom}
                         onChange={e => onDateToChange(e.target.value)}
-                        className={styles.dateInput}
+                        className={styles.slimDateInput}
+                        title="Tanggal Selesai"
                     />
+                </div>
+
+                <div className={styles.slimDurationBadge} title="Durasi total hari yang dipilih">
+                    <Calendar size={12} />
+                    <span>{totalDays} Hari</span>
                 </div>
             </div>
 
-            {/* 2. Quick Presets */}
-            <div className={styles.presetBar}>
-                <span className={styles.presetLabel}>Preset Rentang:</span>
+            {/* 2. Quick Presets Bar */}
+            <div className={styles.slimPresetBar}>
+                <span className={styles.presetLabel}>Preset:</span>
                 <button
                     type="button"
                     onClick={() => setPresetDays(7)}
-                    className={styles.presetChip}
+                    className={styles.slimPresetChip}
+                    title="Set rentang 7 hari dari tanggal mulai"
                 >
-                    7 Hari
+                    +7 Hari
                 </button>
                 <button
                     type="button"
                     onClick={() => setPresetDays(14)}
-                    className={styles.presetChip}
+                    className={styles.slimPresetChip}
+                    title="Set rentang 14 hari dari tanggal mulai"
                 >
-                    14 Hari
+                    +14 Hari
                 </button>
                 <button
                     type="button"
                     onClick={() => setPresetDays(30)}
-                    className={styles.presetChip}
+                    className={styles.slimPresetChip}
+                    title="Set rentang 30 hari dari tanggal mulai"
                 >
-                    30 Hari
+                    +30 Hari
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setPresetDays(90)}
+                    className={styles.slimPresetChip}
+                    title="Set rentang 90 hari (3 bulan) dari tanggal mulai"
+                >
+                    +3 Bln
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setPresetDays(180)}
+                    className={styles.slimPresetChip}
+                    title="Set rentang 180 hari (6 bulan) dari tanggal mulai"
+                >
+                    +6 Bln
                 </button>
                 <button
                     type="button"
                     onClick={setThisMonth}
-                    className={styles.presetChip}
+                    className={styles.slimPresetChip}
+                    title="Set rentang bulan kalender saat ini"
                 >
                     Bulan Ini
                 </button>
                 <button
                     type="button"
                     onClick={setNextMonth}
-                    className={styles.presetChip}
+                    className={styles.slimPresetChip}
+                    title="Set rentang bulan berikutnya penuh"
                 >
                     Bulan Depan
                 </button>
             </div>
 
+            {/* Optional Days Selector (if standalone) */}
             {showDays && onDaysOfWeekChange && (
-                <>
-                    <div className={styles.divider} />
-
-                    {/* 3. Days of the Week Selector */}
-                    <div className={styles.daysSection}>
-                        <div className={styles.daysHeader}>
-                            <span className={styles.fieldLabel}>
-                                <Clock size={13} />
-                                Hari yang Berlaku dalam Seminggu
-                            </span>
-                            <div className={styles.presetBar}>
-                                <button
-                                    type="button"
-                                    onClick={() => onDaysOfWeekChange([0, 1, 2, 3, 4, 5, 6])}
-                                    className={styles.presetChip}
-                                >
-                                    Semua Hari (7 Hari)
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onDaysOfWeekChange([1, 2, 3, 4, 5])}
-                                    className={styles.presetChip}
-                                >
-                                    Hari Kerja (Sen-Jum)
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onDaysOfWeekChange([0, 6])}
-                                    className={styles.presetChip}
-                                >
-                                    Akhir Pekan (Sab-Min)
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className={styles.daysTogglesRow}>
-                            {DAYS_ORDER.map(day => {
-                                const isSelected = daysOfWeek.includes(day.idx);
-                                return (
-                                    <button
-                                        key={day.idx}
-                                        type="button"
-                                        onClick={() => toggleDay(day.idx)}
-                                        className={`${styles.dayPill} ${
-                                            isSelected ? styles.dayPillActive : ""
-                                        }`}
-                                        title={day.full}
-                                    >
-                                        {day.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div className={styles.affectedNotice}>
-                            <Info size={14} style={{ flexShrink: 0 }} />
-                            <span>
-                                Total <strong>{affectedDays} tanggal kalender</strong> akan diperbarui pada jadwal ini.
-                            </span>
+                <div className={styles.embeddedDaysSection}>
+                    <div className={styles.daysHeader}>
+                        <span className={styles.fieldLabel}>
+                            <Clock size={12} />
+                            Hari Aktif:
+                        </span>
+                        <div className={styles.presetBar}>
+                            <button
+                                type="button"
+                                onClick={() => onDaysOfWeekChange([0, 1, 2, 3, 4, 5, 6])}
+                                className={styles.slimPresetChip}
+                            >
+                                Semua
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onDaysOfWeekChange([1, 2, 3, 4, 5])}
+                                className={styles.slimPresetChip}
+                            >
+                                Weekday
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onDaysOfWeekChange([0, 6])}
+                                className={styles.slimPresetChip}
+                            >
+                                Weekend
+                            </button>
                         </div>
                     </div>
-                </>
+
+                    <div className={styles.daysTogglesRow}>
+                        {DAYS_ORDER.map(day => {
+                            const isSelected = daysOfWeek.includes(day.idx);
+                            return (
+                                <button
+                                    key={day.idx}
+                                    type="button"
+                                    onClick={() => toggleDay(day.idx)}
+                                    className={`${styles.dayPill} ${
+                                        isSelected ? styles.dayPillActive : ""
+                                    }`}
+                                    title={day.full}
+                                >
+                                    {day.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className={styles.affectedNotice}>
+                        <Info size={13} style={{ flexShrink: 0 }} />
+                        <span>
+                            Total <strong>{affectedDays} tanggal kalender</strong> aktif.
+                        </span>
+                    </div>
+                </div>
             )}
         </div>
     );

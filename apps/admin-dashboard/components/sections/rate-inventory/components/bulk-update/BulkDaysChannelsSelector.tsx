@@ -63,86 +63,85 @@ export function BulkDaysChannelsSelector({
     const activeChannels = Object.entries(channelConfigs).filter(([_, cfg]) => cfg?.active);
 
     return (
-        <div className={styles.container}>
-            {/* 1. Day of Week Header and Presets */}
-            <div className={styles.sectionHeader}>
-                <span className={styles.fieldLabel}>
-                    <Clock size={13} />
-                    Pilih Hari Aktif dalam Seminggu
-                </span>
-                <div className={styles.presetBar}>
-                    <button
-                        type="button"
-                        onClick={() => onDaysOfWeekChange([0, 1, 2, 3, 4, 5, 6])}
-                        className={styles.presetChip}
-                    >
-                        Semua Hari (7 Hari)
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onDaysOfWeekChange([1, 2, 3, 4, 5])}
-                        className={styles.presetChip}
-                    >
-                        Hari Kerja (Sen-Jum)
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onDaysOfWeekChange([0, 6])}
-                        className={styles.presetChip}
-                    >
-                        Akhir Pekan (Sab-Min)
-                    </button>
+        <div className={styles.slimWrapper}>
+            {/* 1. Days Selection Row */}
+            <div className={styles.daysRow}>
+                <div className={styles.daysLeftGroup}>
+                    <span className={styles.groupLabel}>
+                        <Clock size={12} />
+                        Hari:
+                    </span>
+
+                    <div className={styles.presetBar}>
+                        <button
+                            type="button"
+                            onClick={() => onDaysOfWeekChange([0, 1, 2, 3, 4, 5, 6])}
+                            className={styles.slimPresetChip}
+                        >
+                            Semua (7H)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onDaysOfWeekChange([1, 2, 3, 4, 5])}
+                            className={styles.slimPresetChip}
+                        >
+                            Hari Kerja
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onDaysOfWeekChange([0, 6])}
+                            className={styles.slimPresetChip}
+                        >
+                            Akhir Pekan
+                        </button>
+                    </div>
+
+                    <div className={styles.daysTogglesRow}>
+                        {DAYS_ORDER.map(day => {
+                            const isSelected = daysOfWeek.includes(day.idx);
+                            return (
+                                <button
+                                    key={day.idx}
+                                    type="button"
+                                    onClick={() => toggleDay(day.idx)}
+                                    className={`${styles.dayPill} ${
+                                        isSelected ? styles.dayPillActive : ""
+                                    }`}
+                                    title={day.full}
+                                >
+                                    {day.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className={styles.affectedDaysBadge} title="Jumlah hari yang terdampak pembaruan ini">
+                    <Info size={11} />
+                    <span>{affectedDays} Hari Aktif</span>
                 </div>
             </div>
 
-            {/* 2. Days Pills (Clean buttons, zero text concatenation) */}
-            <div className={styles.daysTogglesRow}>
-                {DAYS_ORDER.map(day => {
-                    const isSelected = daysOfWeek.includes(day.idx);
-                    return (
-                        <button
-                            key={day.idx}
-                            type="button"
-                            onClick={() => toggleDay(day.idx)}
-                            className={`${styles.dayPill} ${
-                                isSelected ? styles.dayPillActive : ""
-                            }`}
-                            title={day.full}
-                        >
-                            {day.label}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* 3. Affected Days Badge */}
-            <div className={styles.affectedNotice}>
-                <Info size={14} style={{ flexShrink: 0 }} />
-                <span>
-                    Total <strong>{affectedDays} tanggal kalender</strong> akan diperbarui pada jadwal ini.
-                </span>
-            </div>
-
-            <div className={styles.divider} />
-
-            {/* 4. Distribution Channels */}
+            {/* 2. Channel Selection Row */}
             <div className={styles.channelRow}>
-                <label className={styles.fieldLabel}>
-                    <Globe size={13} />
-                    Target Saluran Distribusi (OTA):
-                </label>
-                <select
-                    value={channelId}
-                    onChange={e => onChannelChange(e.target.value)}
-                    className={styles.channelSelect}
-                >
-                    <option value="all">Semua Saluran (Direct PMS &amp; Semua OTA)</option>
-                    {activeChannels.map(([chKey, cfg]) => (
-                        <option key={chKey} value={chKey}>
-                            Hanya {cfg.name || chKey.toUpperCase()}
-                        </option>
-                    ))}
-                </select>
+                <div className={styles.channelInputGroup}>
+                    <span className={styles.groupLabel}>
+                        <Globe size={12} />
+                        Saluran OTA:
+                    </span>
+                    <select
+                        value={channelId}
+                        onChange={e => onChannelChange(e.target.value)}
+                        className={styles.slimChannelSelect}
+                    >
+                        <option value="all">Semua Saluran (Direct PMS &amp; Semua OTA)</option>
+                        {activeChannels.map(([chKey, cfg]) => (
+                            <option key={chKey} value={chKey}>
+                                Hanya {cfg.name || chKey.toUpperCase()}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             </div>
         </div>
     );

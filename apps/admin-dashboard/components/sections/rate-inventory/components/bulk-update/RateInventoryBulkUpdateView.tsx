@@ -2,15 +2,20 @@
 
 import React, { useState } from "react";
 import {
-    Plus,
-    Check,
     ChevronRight,
     ChevronLeft,
     SlidersHorizontal,
     Building2,
     RotateCcw,
     X,
-    Link2
+    Send,
+    Plus,
+    Copy,
+    Calendar,
+    Clock,
+    Layers,
+    Info,
+    Check
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -20,7 +25,6 @@ import {
     BulkUpdateMetricType
 } from "./types";
 import { BulkUpdateStepper, BULK_STEPS } from "./BulkUpdateStepper";
-import { BulkMetricSelector } from "./BulkMetricSelector";
 import { BulkRuleCard } from "./BulkRuleCard";
 import { BulkDateRangeSelector } from "./BulkDateRangeSelector";
 import { BulkDaysChannelsSelector } from "./BulkDaysChannelsSelector";
@@ -50,12 +54,10 @@ export function RateInventoryBulkUpdateView({
         return d.toISOString().split("T")[0];
     })();
 
-    const [globalMetrics, setGlobalMetrics] = useState<BulkUpdateMetricType[]>([]);
-
-    const createDefaultRule = (index: number, initialMetrics = globalMetrics): BulkRuleState => ({
+    const createDefaultRule = (index: number, initialMetrics?: BulkUpdateMetricType[]): BulkRuleState => ({
         id: `rule-${Date.now()}-${index}`,
         title: `Aturan Target #${index + 1}`,
-        selectedMetrics: [...initialMetrics],
+        selectedMetrics: initialMetrics || [],
         roomTypeIds: ["all"],
         ratePlanIds: ["all"],
         channelId: "all",
@@ -67,69 +69,35 @@ export function RateInventoryBulkUpdateView({
         rateValue: 0,
         inventoryAction: "set",
         inventoryValue: 5,
-        stopSellAction: "close",
+        stopSellAction: "false",
+        stopSell: false,
         minStayThroughAction: "set",
         minStayThroughValue: 1,
         minStayArrivalAction: "set",
         minStayArrivalValue: 1,
-        maxStayAction: "set",
+        maxStayAction: "none",
         maxStayValue: 30,
-        ctaAction: "close",
-        ctdAction: "close"
+        ctaAction: "false",
+        closedToArrival: false,
+        ctdAction: "false",
+        closedToDeparture: false
     });
 
-    const [rules, setRules] = useState<BulkRuleState[]>([createDefaultRule(0)]);
-    const [currentStep, setCurrentStep] = useState<BulkStepId>("metrics_select");
+    const [rules, setRules] = useState<BulkRuleState[]>([
+        createDefaultRule(0, [])
+    ]);
+    const [currentStep, setCurrentStep] = useState<BulkStepId>("targets_values");
     const [completedSteps, setCompletedSteps] = useState<BulkStepId[]>([]);
     const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 
-    // Summary text of rooms and rateplans for headers in steps 3 & 4
-    const getRuleTargetSummary = (rule: BulkRuleState) => {
-        const parts: string[] = [];
-        if (rule.roomTypeIds.includes("all")) {
-            parts.push("Semua Kamar");
-        } else {
-            const names = rule.roomTypeIds
-                .map(id => roomTypes.find(rt => rt.id === id)?.name || id)
-                .join(", ");
-            parts.push(names);
-        }
-
-        if (rule.selectedMetrics.some(m => m !== "inventory")) {
-            if (rule.ratePlanIds.includes("all")) {
-                parts.push("Semua Rate Plan");
-            } else {
-                const names = rule.ratePlanIds
-                    .map(id => {
-                        const rp = ratePlans.find(r => r.id === id);
-                        return rp?.name || rp?.code || id;
-                    })
-                    .join(", ");
-                parts.push(names);
-            }
-        }
-        return parts.join(" • ");
-    };
-
-    // Step 1: When user selects global metrics, update all rules
-    const handleGlobalMetricsChange = (metrics: BulkUpdateMetricType[]) => {
-        setGlobalMetrics(metrics);
-        setRules(prev =>
-            prev.map(r => ({
-                ...r,
-                selectedMetrics: [...metrics]
-            }))
-        );
-    };
-
-    // Step 2: Add new target rule
+    // Add new target rule
     const handleAddRule = () => {
-        const newRule = createDefaultRule(rules.length, globalMetrics);
+        const newRule = createDefaultRule(rules.length, []);
         setRules(prev => [...prev, newRule]);
         toast.success(`Aturan #${rules.length + 1} ditambahkan.`);
     };
 
-    // Step 2: Duplicate target rule
+    // Duplicate target rule
     const handleDuplicateRule = (ruleId: string) => {
         const ruleToDuplicate = rules.find(r => r.id === ruleId);
         if (!ruleToDuplicate) return;
@@ -144,7 +112,7 @@ export function RateInventoryBulkUpdateView({
         toast.success(`Berhasil menduplikasi ${ruleToDuplicate.title}.`);
     };
 
-    // Step 2: Remove target rule
+    // Remove target rule
     const handleRemoveRule = (ruleId: string) => {
         if (rules.length <= 1) return;
         setRules(prev => prev.filter(r => r.id !== ruleId));
@@ -158,7 +126,7 @@ export function RateInventoryBulkUpdateView({
         );
     };
 
-    // Step 3 convenience: Copy dates from Rule #1 to all other rules
+    // Convenience: Copy dates from Rule #1 to all other rules (Step 2)
     const handleSyncDatesFromFirst = () => {
         if (rules.length <= 1) return;
         const source = rules[0];
@@ -169,11 +137,11 @@ export function RateInventoryBulkUpdateView({
                 dateTo: source.dateTo
             }))
         );
-        toast.success("Rentang tanggal dari Aturan #1 berhasil disalin ke semua aturan.");
+        toast.success("Rentang tanggal dari Aturan #1 berhasil disalin ke semua target.");
     };
 
-    // Step 4 convenience: Copy days & channels from Rule #1 to all other rules
-    const handleSyncDaysFromFirst = () => {
+    // Convenience: Copy days & channels from Rule #1 to all other rules (Step 3)
+    const handleSyncDaysChannelsFromFirst = () => {
         if (rules.length <= 1) return;
         const source = rules[0];
         setRules(prev =>
@@ -183,39 +151,20 @@ export function RateInventoryBulkUpdateView({
                 channelId: source.channelId
             }))
         );
-        toast.success("Pilihan hari & saluran dari Aturan #1 berhasil disalin ke semua aturan.");
+        toast.success("Pengaturan hari & saluran dari Aturan #1 berhasil disalin ke semua target.");
     };
 
     // Reset confirmation
     const handleConfirmReset = () => {
-        const defaultRule = createDefaultRule(0, []);
-        setGlobalMetrics([]);
-        setRules([defaultRule]);
-        setCurrentStep("metrics_select");
+        setRules([createDefaultRule(0, [])]);
+        setCurrentStep("targets_values");
         setCompletedSteps([]);
         setShowResetConfirm(false);
         toast.success("Formulir bulk update telah direset.");
     };
 
-    // 5-Step Order
-    const stepOrder: BulkStepId[] = [
-        "metrics_select",
-        "targets_values",
-        "date_ranges",
-        "days_channels",
-        "review_apply"
-    ];
-    const currentStepIndex = stepOrder.indexOf(currentStep);
-
+    // Step validation helpers
     const validateStep = (step: BulkStepId): boolean => {
-        if (step === "metrics_select") {
-            if (globalMetrics.length === 0) {
-                toast.error("Pilih minimal 1 komponen metrik untuk melanjutkan.");
-                return false;
-            }
-            return true;
-        }
-
         if (step === "targets_values") {
             for (let i = 0; i < rules.length; i++) {
                 const r = rules[i];
@@ -227,8 +176,8 @@ export function RateInventoryBulkUpdateView({
                     toast.error(`Pilih minimal 1 rate plan pada ${r.title}.`);
                     return false;
                 }
-                if (r.selectedMetrics.includes("rate") && r.rateAction === "none") {
-                    toast.error(`Pilih aksi perubahan Rate pada ${r.title}.`);
+                if (r.selectedMetrics.length === 0) {
+                    toast.error(`Aktifkan minimal 1 komponen pada ${r.title}.`);
                     return false;
                 }
             }
@@ -264,38 +213,81 @@ export function RateInventoryBulkUpdateView({
         return true;
     };
 
-    const handleNext = () => {
-        if (!validateStep(currentStep)) return;
-
-        if (!completedSteps.includes(currentStep)) {
-            setCompletedSteps(prev => [...prev, currentStep]);
-        }
-
-        if (currentStepIndex < stepOrder.length - 1) {
-            setCurrentStep(stepOrder[currentStepIndex + 1]);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }
+    const markStepCompleted = (step: BulkStepId) => {
+        setCompletedSteps(prev => (prev.includes(step) ? prev : [...prev, step]));
     };
 
-    const handlePrev = () => {
-        if (currentStepIndex > 0) {
-            setCurrentStep(stepOrder[currentStepIndex - 1]);
-            window.scrollTo({ top: 0, behavior: "smooth" });
+    // Navigation handlers
+    const goToNextStep = () => {
+        if (!validateStep(currentStep)) return;
+
+        markStepCompleted(currentStep);
+
+        if (currentStep === "targets_values") {
+            setCurrentStep("date_ranges");
+        } else if (currentStep === "date_ranges") {
+            setCurrentStep("days_channels");
+        } else if (currentStep === "days_channels") {
+            setCurrentStep("review_apply");
         }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const goToPrevStep = () => {
+        if (currentStep === "date_ranges") {
+            setCurrentStep("targets_values");
+        } else if (currentStep === "days_channels") {
+            setCurrentStep("date_ranges");
+        } else if (currentStep === "review_apply") {
+            setCurrentStep("days_channels");
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const handleStepClick = (stepId: BulkStepId) => {
+        const stepOrder: BulkStepId[] = [
+            "targets_values",
+            "date_ranges",
+            "days_channels",
+            "review_apply"
+        ];
         const targetIdx = stepOrder.indexOf(stepId);
-        if (targetIdx < currentStepIndex || completedSteps.includes(stepId)) {
+        const currentIdx = stepOrder.indexOf(currentStep);
+
+        if (targetIdx <= currentIdx || completedSteps.includes(stepId)) {
             setCurrentStep(stepId);
             window.scrollTo({ top: 0, behavior: "smooth" });
-        } else {
-            handleNext();
+        } else if (targetIdx === currentIdx + 1) {
+            goToNextStep();
         }
+    };
+
+    // Human-readable target labels for Step 2 & 3
+    const getRuleTargetLabel = (rule: BulkRuleState) => {
+        const roomLabels = rule.roomTypeIds.includes("all")
+            ? "Semua Tipe Kamar"
+            : rule.roomTypeIds
+                  .map(id => roomTypes.find(rt => rt.id === id)?.name || id)
+                  .join(", ");
+
+        const rateLabels = rule.ratePlanIds.includes("all")
+            ? "Semua Rate Plan"
+            : rule.ratePlanIds
+                  .map(id => ratePlans.find(rp => rp.id === id)?.name || id)
+                  .join(", ");
+
+        return `${roomLabels} • ${rateLabels}`;
     };
 
     // Apply execution
     const handleApplyAll = async () => {
+        for (const step of ["targets_values", "date_ranges", "days_channels"] as BulkStepId[]) {
+            if (!validateStep(step)) {
+                setCurrentStep(step);
+                return;
+            }
+        }
+
         const itemsToApply: BulkUpdateItem[] = [];
 
         rules.forEach(rule => {
@@ -305,6 +297,15 @@ export function RateInventoryBulkUpdateView({
             const ratePlanTargetList = rule.ratePlanIds.includes("all")
                 ? ["all"]
                 : rule.ratePlanIds;
+
+            const isStopSellActive = rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true";
+            const isStopSellInactive = rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false";
+
+            const isCtaActive = rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true";
+            const isCtaInactive = rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false";
+
+            const isCtdActive = rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true";
+            const isCtdInactive = rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false";
 
             roomTargetList.forEach(rId => {
                 ratePlanTargetList.forEach(rpId => {
@@ -320,15 +321,18 @@ export function RateInventoryBulkUpdateView({
                         rateValue: rule.selectedMetrics.includes("rate") ? rule.rateValue : undefined,
                         inventoryAction: rule.selectedMetrics.includes("inventory") ? rule.inventoryAction : "none",
                         inventoryValue: rule.selectedMetrics.includes("inventory") ? rule.inventoryValue : undefined,
-                        stopSellAction: rule.selectedMetrics.includes("stopsell") ? rule.stopSellAction : "none",
+                        stopSellAction: rule.selectedMetrics.includes("stopsell") ? (isStopSellActive ? "true" : (isStopSellInactive ? "false" : "none")) : "none",
+                        stopSell: rule.selectedMetrics.includes("stopsell") ? (isStopSellActive ? true : (isStopSellInactive ? false : undefined)) : undefined,
                         minStayThroughAction: rule.selectedMetrics.includes("minstay_through") ? rule.minStayThroughAction : "none",
                         minStayThroughValue: rule.selectedMetrics.includes("minstay_through") ? rule.minStayThroughValue : undefined,
                         minStayArrivalAction: rule.selectedMetrics.includes("minstay_arrival") ? rule.minStayArrivalAction : "none",
                         minStayArrivalValue: rule.selectedMetrics.includes("minstay_arrival") ? rule.minStayArrivalValue : undefined,
                         maxStayAction: rule.selectedMetrics.includes("maxstay") ? rule.maxStayAction : "none",
                         maxStayValue: rule.selectedMetrics.includes("maxstay") ? rule.maxStayValue : undefined,
-                        ctaAction: rule.selectedMetrics.includes("cta") ? rule.ctaAction : "none",
-                        ctdAction: rule.selectedMetrics.includes("ctd") ? rule.ctdAction : "none"
+                        ctaAction: rule.selectedMetrics.includes("cta") ? (isCtaActive ? "true" : (isCtaInactive ? "false" : "none")) : "none",
+                        closedToArrival: rule.selectedMetrics.includes("cta") ? (isCtaActive ? true : (isCtaInactive ? false : undefined)) : undefined,
+                        ctdAction: rule.selectedMetrics.includes("ctd") ? (isCtdActive ? "true" : (isCtdInactive ? "false" : "none")) : "none",
+                        closedToDeparture: rule.selectedMetrics.includes("ctd") ? (isCtdActive ? true : (isCtdInactive ? false : undefined)) : undefined
                     });
                 });
             });
@@ -344,14 +348,11 @@ export function RateInventoryBulkUpdateView({
                 mode: "multi",
                 items: itemsToApply
             });
-            // Redirect immediately back to inventory tab
             onClose();
         } catch (err: any) {
             console.error("Bulk update apply error:", err);
         }
     };
-
-    const currentConfig = BULK_STEPS[currentStepIndex];
 
     return (
         <div className={styles.pageContainer}>
@@ -390,81 +391,120 @@ export function RateInventoryBulkUpdateView({
                 </div>
             </div>
 
-            {/* 2. Stepper Timeline Navigation (5 Steps) */}
+            {/* 2. Stepper Navigation (Streamlined 4-Step Stepper) */}
             <BulkUpdateStepper
                 currentStep={currentStep}
                 onStepClick={handleStepClick}
                 completedSteps={completedSteps}
             />
 
-            {/* 3. Main Stepper Content */}
+            {/* 3. Main Content Area */}
             <div className={styles.contentArea}>
-                {/* STEP 1: PILIH KOMPONEN */}
-                {currentStep === "metrics_select" && (
-                    <div className={styles.stepCardContainer}>
-                        <BulkMetricSelector
-                            selectedMetrics={globalMetrics}
-                            onChange={handleGlobalMetricsChange}
-                            canChangeRate={canChangeRate}
-                            canChangeInventory={canChangeInventory}
-                            canStopSell={canStopSell}
-                        />
-                    </div>
-                )}
-
-                {/* STEP 2: TARGET & NILAI (Inline Multi-Rule Target & Input Nilai) */}
+                {/* STEP 1: Target, Komponen & Nilai (Unified & Dynamic Per Target) */}
                 {currentStep === "targets_values" && (
                     <div className={styles.rulesList}>
+                        {/* Action Toolbar */}
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            flexWrap: "wrap",
+                            gap: 10,
+                            padding: "10px 16px",
+                            backgroundColor: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: 10
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    fontSize: 12.5,
+                                    fontWeight: 700,
+                                    color: "#72263d"
+                                }}>
+                                    <Layers size={14} />
+                                    Daftar Target: {rules.length} Aturan Aktif
+                                </span>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <button
+                                    type="button"
+                                    onClick={handleAddRule}
+                                    style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: 6,
+                                        padding: "6px 14px",
+                                        borderRadius: 7,
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        backgroundColor: "#72263d",
+                                        border: "none",
+                                        color: "#ffffff",
+                                        cursor: "pointer"
+                                    }}
+                                    title="Tambah target kamar / aturan pembaruan baru"
+                                >
+                                    <Plus size={13} />
+                                    <span>Tambah Aturan Target</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Target Rule Cards: Dynamic Components & Values */}
                         {rules.map((rule, idx) => (
                             <BulkRuleCard
                                 key={rule.id}
                                 rule={rule}
                                 ruleIndex={idx}
                                 totalRules={rules.length}
-                                currentStep={currentStep}
                                 roomTypes={roomTypes}
                                 ratePlans={ratePlans}
                                 channelConfigs={channelConfigs}
                                 canChangeRate={canChangeRate}
                                 canChangeInventory={canChangeInventory}
                                 canStopSell={canStopSell}
+                                showSchedule={false}
                                 onUpdate={updates => handleUpdateRule(rule.id, updates)}
                                 onRemove={() => handleRemoveRule(rule.id)}
                                 onDuplicate={() => handleDuplicateRule(rule.id)}
                             />
                         ))}
 
-                        {/* "+ Tambah Target Kamar / Aturan Baru" */}
+                        {/* Add Rule Quick Button */}
                         <div className={styles.addRuleWrapper}>
                             <button
                                 type="button"
                                 onClick={handleAddRule}
                                 className={styles.btnAddRule}
-                                title="Tambahkan target kamar / aturan lainnya"
                             >
-                                <Plus size={14} />
-                                <span>Tambah Target Kamar / Aturan Baru</span>
+                                <Plus size={15} />
+                                <span>Tambah Aturan Target Lainnya</span>
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* STEP 3: RENTANG TANGGAL */}
+                {/* STEP 2: Rentang Tanggal (Dynamic Per Target - Slim & Compact) */}
                 {currentStep === "date_ranges" && (
                     <div className={styles.rulesList}>
+                        {/* Info & Sync Toolbar */}
                         {rules.length > 1 && (
                             <div className={styles.syncScheduleBar}>
-                                <span className={styles.syncText}>
-                                    Terdapat <strong>{rules.length} aturan target</strong> yang dikonfigurasi.
-                                </span>
+                                <div className={styles.syncText}>
+                                    <strong>💡 Tips Efisiensi:</strong> Setiap target dapat memiliki rentang tanggal berbeda, atau salin tanggal Aturan #1 ke semua target dengan satu klik.
+                                </div>
                                 <button
                                     type="button"
                                     onClick={handleSyncDatesFromFirst}
                                     className={styles.btnSync}
-                                    title="Salin tanggal dari Aturan #1 ke semua aturan lainnya"
+                                    title="Salin tanggal mulai & selesai dari Aturan #1 ke semua aturan lainnya"
                                 >
-                                    <Link2 size={12} />
-                                    <span>Samakan Tanggal Semua Aturan</span>
+                                    <Copy size={12} />
+                                    <span>Salin Tanggal #1 ke Semua</span>
                                 </button>
                             </div>
                         )}
@@ -472,18 +512,19 @@ export function RateInventoryBulkUpdateView({
                         {rules.map((rule, idx) => (
                             <div key={rule.id} className={styles.ruleStepCard}>
                                 <div className={styles.ruleStepHeader}>
-                                    <div className={styles.ruleStepBadge}>{idx + 1}</div>
-                                    <span className={styles.ruleStepTitle}>{rule.title}</span>
-                                    <span className={styles.ruleStepTargets}>
-                                        ({getRuleTargetSummary(rule)})
-                                    </span>
+                                    <div className={styles.ruleStepHeaderLeft}>
+                                        <div className={styles.ruleStepBadge}>{idx + 1}</div>
+                                        <span className={styles.ruleStepTitle}>{rule.title}</span>
+                                        <span className={styles.ruleStepTargets}>{getRuleTargetLabel(rule)}</span>
+                                    </div>
                                 </div>
+
                                 <BulkDateRangeSelector
                                     dateFrom={rule.dateFrom}
                                     dateTo={rule.dateTo}
                                     daysOfWeek={rule.daysOfWeek}
-                                    onDateFromChange={from => handleUpdateRule(rule.id, { dateFrom: from })}
-                                    onDateToChange={to => handleUpdateRule(rule.id, { dateTo: to })}
+                                    onDateFromChange={val => handleUpdateRule(rule.id, { dateFrom: val })}
+                                    onDateToChange={val => handleUpdateRule(rule.id, { dateTo: val })}
                                     showDays={false}
                                 />
                             </div>
@@ -491,22 +532,23 @@ export function RateInventoryBulkUpdateView({
                     </div>
                 )}
 
-                {/* STEP 4: HARI & SALURAN */}
+                {/* STEP 3: Hari & Saluran (Dynamic Per Target - Slim & Compact) */}
                 {currentStep === "days_channels" && (
                     <div className={styles.rulesList}>
+                        {/* Info & Sync Toolbar */}
                         {rules.length > 1 && (
                             <div className={styles.syncScheduleBar}>
-                                <span className={styles.syncText}>
-                                    Terdapat <strong>{rules.length} aturan target</strong> yang dikonfigurasi.
-                                </span>
+                                <div className={styles.syncText}>
+                                    <strong>💡 Tips Efisiensi:</strong> Setiap target dapat memilih hari aktif dan channel OTA sendiri, atau salin pengaturan Aturan #1 ke semua target.
+                                </div>
                                 <button
                                     type="button"
-                                    onClick={handleSyncDaysFromFirst}
+                                    onClick={handleSyncDaysChannelsFromFirst}
                                     className={styles.btnSync}
-                                    title="Salin hari & saluran dari Aturan #1 ke semua aturan lainnya"
+                                    title="Salin hari aktif dan saluran dari Aturan #1 ke semua aturan lainnya"
                                 >
-                                    <Link2 size={12} />
-                                    <span>Samakan Hari &amp; Saluran Semua Aturan</span>
+                                    <Copy size={12} />
+                                    <span>Salin Hari &amp; Saluran #1 ke Semua</span>
                                 </button>
                             </div>
                         )}
@@ -514,12 +556,16 @@ export function RateInventoryBulkUpdateView({
                         {rules.map((rule, idx) => (
                             <div key={rule.id} className={styles.ruleStepCard}>
                                 <div className={styles.ruleStepHeader}>
-                                    <div className={styles.ruleStepBadge}>{idx + 1}</div>
-                                    <span className={styles.ruleStepTitle}>{rule.title}</span>
-                                    <span className={styles.ruleStepTargets}>
-                                        ({getRuleTargetSummary(rule)})
-                                    </span>
+                                    <div className={styles.ruleStepHeaderLeft}>
+                                        <div className={styles.ruleStepBadge}>{idx + 1}</div>
+                                        <span className={styles.ruleStepTitle}>{rule.title}</span>
+                                        <span className={styles.ruleStepTargets}>{getRuleTargetLabel(rule)}</span>
+                                        <span className={styles.ruleStepDatePill}>
+                                            {rule.dateFrom} s/d {rule.dateTo}
+                                        </span>
+                                    </div>
                                 </div>
+
                                 <BulkDaysChannelsSelector
                                     daysOfWeek={rule.daysOfWeek}
                                     channelId={rule.channelId}
@@ -534,29 +580,22 @@ export function RateInventoryBulkUpdateView({
                     </div>
                 )}
 
-                {/* STEP 5: REVIEW & TERAPKAN */}
+                {/* STEP 4: Review & Simpan (Channex Format) */}
                 {currentStep === "review_apply" && (
-                    <BulkSummaryStep
-                        rules={rules}
-                        roomTypes={roomTypes}
-                        ratePlans={ratePlans}
-                    />
+                    <div className={styles.stepCardContainer}>
+                        <BulkSummaryStep
+                            rules={rules}
+                            roomTypes={roomTypes}
+                            ratePlans={ratePlans}
+                        />
+                    </div>
                 )}
             </div>
 
-            {/* 4. Bottom Sticky Action Navigation Bar */}
+            {/* 4. Action Footer */}
             <div className={styles.footerBar}>
                 <div className={styles.footerLeft}>
-                    {currentStepIndex > 0 ? (
-                        <button
-                            type="button"
-                            onClick={handlePrev}
-                            className={styles.btnPrev}
-                        >
-                            <ChevronLeft size={14} />
-                            <span>Sebelumnya</span>
-                        </button>
-                    ) : (
+                    {currentStep === "targets_values" ? (
                         <button
                             type="button"
                             onClick={onClose}
@@ -564,32 +603,37 @@ export function RateInventoryBulkUpdateView({
                         >
                             Batal
                         </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={goToPrevStep}
+                            className={styles.btnPrev}
+                        >
+                            <ChevronLeft size={13} />
+                            <span>Kembali</span>
+                        </button>
                     )}
                 </div>
 
                 <div className={styles.footerCenter}>
                     <span className={styles.stepInfoText}>
-                        Langkah {currentStepIndex + 1} dari {stepOrder.length}:{" "}
-                        <strong>{currentConfig.shortLabel}</strong>
-                        {rules.length > 1 && ` (${rules.length} Aturan Target)`}
+                        Langkah{" "}
+                        <strong>
+                            {BULK_STEPS.find(s => s.id === currentStep)?.stepNumber || 1} dari 4
+                        </strong>
+                        : {BULK_STEPS.find(s => s.id === currentStep)?.shortLabel}
                     </span>
                 </div>
 
                 <div className={styles.footerRight}>
-                    {currentStepIndex < stepOrder.length - 1 ? (
+                    {currentStep !== "review_apply" ? (
                         <button
                             type="button"
-                            onClick={handleNext}
+                            onClick={goToNextStep}
                             className={styles.btnNext}
-                            disabled={currentStep === "metrics_select" && globalMetrics.length === 0}
-                            title={
-                                currentStep === "metrics_select" && globalMetrics.length === 0
-                                    ? "Pilih minimal 1 komponen metrik untuk melanjutkan"
-                                    : undefined
-                            }
                         >
-                            <span>Lanjut ke Langkah {currentStepIndex + 2}</span>
-                            <ChevronRight size={14} />
+                            <span>Lanjut</span>
+                            <ChevronRight size={13} />
                         </button>
                     ) : (
                         <button
@@ -598,30 +642,20 @@ export function RateInventoryBulkUpdateView({
                             disabled={saving}
                             className={styles.btnApply}
                         >
-                            {saving ? (
-                                <>
-                                    <div className={styles.btnSpinner} />
-                                    <span>Menerapkan Bulk Update...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Check size={14} />
-                                    <span>Terapkan Bulk Update Sekarang</span>
-                                </>
-                            )}
+                            <Send size={13} />
+                            <span>{saving ? "Mengirim ke Channex..." : "Terapkan & Kirim ke Channex (1 Call)"}</span>
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Custom CSS Reset Confirmation Modal */}
+            {/* 5. Reset Confirmation Modal */}
             <BulkConfirmModal
                 isOpen={showResetConfirm}
-                title="Reset Semua Pengaturan?"
-                message="Semua perubahan metrik, tanggal, hari, dan aturan yang belum disimpan akan dikembalikan ke kondisi awal."
+                title="Reset Formulir Bulk Update?"
+                message="Semua aturan target dan konfigurasi restriksi yang telah Anda buat akan dikembalikan ke kondisi awal."
                 confirmText="Ya, Reset Formulir"
                 cancelText="Batal"
-                isDanger={true}
                 onConfirm={handleConfirmReset}
                 onCancel={() => setShowResetConfirm(false)}
             />

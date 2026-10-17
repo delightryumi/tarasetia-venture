@@ -35,7 +35,7 @@ export interface BulkRuleState {
     dateTo: string;
     daysOfWeek: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
 
-    // Step 3: Values & Actions
+    // Step 3: Values & Actions (Channex Standard)
     rateAction: "none" | "set" | "inc_amount" | "dec_amount" | "inc_percent" | "dec_percent";
     rateValueStr: string;
     rateValue: number;
@@ -43,7 +43,9 @@ export interface BulkRuleState {
     inventoryAction: "none" | "set";
     inventoryValue: number;
 
-    stopSellAction: "none" | "open" | "close";
+    // Channex standard boolean restrictions (true / false / none)
+    stopSellAction: "none" | "open" | "close" | "true" | "false";
+    stopSell?: boolean;
 
     minStayThroughAction: "none" | "set" | "remove";
     minStayThroughValue: number;
@@ -54,16 +56,19 @@ export interface BulkRuleState {
     maxStayAction: "none" | "set" | "remove";
     maxStayValue: number;
 
-    ctaAction: "none" | "open" | "close";
-    ctdAction: "none" | "open" | "close";
+    ctaAction: "none" | "open" | "close" | "true" | "false";
+    closedToArrival?: boolean;
+
+    ctdAction: "none" | "open" | "close" | "true" | "false";
+    closedToDeparture?: boolean;
 }
 
 export type BulkStepId =
-    | "metrics_select"
     | "targets_values"
+    | "review_apply"
+    | "metrics_select"
     | "date_ranges"
-    | "days_channels"
-    | "review_apply";
+    | "days_channels";
 
 export interface BulkStepConfig {
     id: BulkStepId;
