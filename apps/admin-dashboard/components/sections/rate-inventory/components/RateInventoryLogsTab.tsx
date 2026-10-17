@@ -368,13 +368,13 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
         );
     };
 
-    if (!isSuperadmin) {
+    if (!isAuthorized) {
         return (
             <div className={styles.restrictedContainer}>
                 <ShieldAlert size={40} color="#dc2626" className={styles.restrictedIcon} />
-                <h3 className={styles.restrictedTitle}>Akses Terbatas: Superadmin Saja</h3>
+                <h3 className={styles.restrictedTitle}>Akses Terbatas</h3>
                 <p className={styles.restrictedDesc}>
-                    Tab audit log inventori dan rate hanya dapat dibuka oleh akun dengan role Superadmin untuk mengamankan riwayat dan menghemat kuota pembacaan basis data.
+                    Tab audit log inventori dan rate hanya dapat dibuka oleh akun dengan role Administrator atau Manajemen Hotel.
                 </p>
             </div>
         );
