@@ -29,6 +29,7 @@ interface BookingDetailModalProps {
 export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
     const router = useRouter();
     const [copied, setCopied] = React.useState(false);
+    const [copiedBookingId, setCopiedBookingId] = React.useState(false);
     const { formatCurrency } = useCurrency();
 
     // Close on Escape key press
@@ -51,6 +52,15 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
         setCopied(true);
         toast.success(`Voucher disalin: ${code}`);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleCopyBookingId = () => {
+        const idToCopy = booking.bookingId;
+        if (!idToCopy) return;
+        navigator.clipboard.writeText(idToCopy);
+        setCopiedBookingId(true);
+        toast.success(`OTA Booking ID disalin: ${idToCopy}`);
+        setTimeout(() => setCopiedBookingId(false), 2000);
     };
 
     const formatDateDisplay = (dateStr: string) => {
@@ -219,10 +229,33 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                         </div>
                         <div className={s.grid2}>
                             <div className={s.field}>
-                                <span className={s.fieldLabel}>OTA Booking ID / Channex UUID</span>
-                                <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace" }}>
-                                    {booking.bookingId}
-                                </span>
+                                <span className={s.fieldLabel}>OTA Booking ID</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                                    <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace", wordBreak: "break-all" }}>
+                                        {booking.bookingId}
+                                    </span>
+                                    {booking.bookingId && (
+                                        <button 
+                                            type="button"
+                                            onClick={handleCopyBookingId}
+                                            style={{ 
+                                                background: "none", 
+                                                border: "none", 
+                                                cursor: "pointer", 
+                                                display: "inline-flex", 
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                color: "#2563eb", 
+                                                padding: 2,
+                                                borderRadius: 4,
+                                                flexShrink: 0
+                                            }}
+                                            title="Salin OTA Booking ID"
+                                        >
+                                            {copiedBookingId ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Koneksi Saluran</span>
