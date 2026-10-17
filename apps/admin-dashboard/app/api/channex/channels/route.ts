@@ -296,19 +296,63 @@ export async function POST(req: NextRequest) {
                     const ratePlansPayload: any[] = [];
                     const seenRatePlanIds = new Set<string>();
 
-                    for (const rp of localRatePlans) {
-                        const otaRateCode = rateMappings[rp.id];
-                        const channexRateId = rp.channexRatePlanId;
-                        if (!channexRateId || !otaRateCode) continue;
+                    for (const rt of localRoomTypes) {
+                        const otaRoomCode = roomMappings[rt.id] || hotelId;
+                        const capacity = Number(rt.capacity || 2);
 
-                        // Find corresponding room type
+                        const parsedRoomCode = (!isNaN(Number(otaRoomCode)) && String(otaRoomCode).trim() !== "") 
+                            ? parseInt(String(otaRoomCode), 10) 
+                            : otaRoomCode;
+
+                        for (const rp of localRatePlans) {
+                            const appliesToRoom = 
+                                (rp.roomTypeIds && Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.includes(rt.id)) ||
+                                rp.roomTypeId === rt.id ||
+                                (!rp.roomTypeIds?.length && !rp.roomTypeId);
+
+                            if (!appliesToRoom) continue;
+
+                            const channexRateId = rp.channexRatePlanIds?.[rt.id] || 
+                                (rp.roomTypeId === rt.id ? rp.channexRatePlanId : undefined) ||
+                                (localRoomTypes.length === 1 ? rp.channexRatePlanId : undefined);
+
+                            const otaRateCode = rateMappings[`${rt.id}_${rp.id}`] || 
+                                (rp.roomTypeId === rt.id ? rateMappings[rp.id] : undefined) ||
+                                rateMappings[rp.id];
+
+                            if (!channexRateId || !otaRateCode || seenRatePlanIds.has(channexRateId)) continue;
+                            seenRatePlanIds.add(channexRateId);
+
+                            const parsedRateCode = (!isNaN(Number(otaRateCode)) && String(otaRateCode).trim() !== "") 
+                                ? parseInt(String(otaRateCode), 10) 
+                                : otaRateCode;
+
+                            ratePlansPayload.push({
+                                rate_plan_id: channexRateId,
+                                settings: {
+                                    room_type_code: parsedRoomCode,
+                                    rate_plan_code: parsedRateCode,
+                                    occupancy: capacity,
+                                    pricing_type: "OBP",
+                                    primary_occ: true,
+                                    readonly: false
+                                }
+                            });
+                        }
+                    }
+
+                    // Fallback for standalone rate plans
+                    for (const rp of localRatePlans) {
+                        const channexRateId = rp.channexRatePlanId;
+                        const otaRateCode = rateMappings[rp.id];
+                        if (!channexRateId || !otaRateCode || seenRatePlanIds.has(channexRateId)) continue;
+
                         const matchedRt = localRoomTypes.find(r => r.id === rp.roomTypeId);
                         const otaRoomCode = (matchedRt && roomMappings[matchedRt.id]) 
                             ? roomMappings[matchedRt.id] 
                             : (hotelId || otaRateCode);
 
                         const capacity = Number(matchedRt?.capacity || 2);
-                        const isPrimary = !seenRatePlanIds.has(channexRateId);
                         seenRatePlanIds.add(channexRateId);
 
                         const parsedRoomCode = (!isNaN(Number(otaRoomCode)) && String(otaRoomCode).trim() !== "") 
@@ -325,7 +369,7 @@ export async function POST(req: NextRequest) {
                                 rate_plan_code: parsedRateCode,
                                 occupancy: capacity,
                                 pricing_type: "OBP",
-                                primary_occ: isPrimary,
+                                primary_occ: true,
                                 readonly: false
                             }
                         });
@@ -548,13 +592,41 @@ export async function POST(req: NextRequest) {
                 const channexRates = cc.attributes?.rate_plans || [];
                 const extractedRateMappings: Record<string, string> = {};
                 channexRates.forEach((cr: any) => {
-                    const matchedRp = localRatePlans.find((r: any) => 
-                        r.channexRatePlanId === channexRatePlanId || 
-                        (r.channexRatePlanIds && typeof r.channexRatePlanIds === "object" && Object.values(r.channexRatePlanIds).includes(channexRatePlanId)) ||
-                        r.id === channexRatePlanId
-                    );
-                    const targetKey = matchedRp ? matchedRp.id : channexRatePlanId;
-                    extractedRateMappings[targetKey] = otaRatePlanCode;
+                    const channexRatePlanId = cr.rate_plan_id;
+                    const otaRatePlanCode = String(cr.settings?.rate_plan_code || cr.rate_plan_code || "");
+                    if (!channexRatePlanId || !otaRatePlanCode) return;
+
+                    let matchedRtId = "";
+                    let matchedRp: any = null;
+
+                    for (const r of localRatePlans) {
+                        if (r.channexRatePlanIds && typeof r.channexRatePlanIds === "object") {
+                            for (const [rtId, cId] of Object.entries(r.channexRatePlanIds)) {
+                                if (cId === channexRatePlanId) {
+                                    matchedRtId = rtId;
+                                    matchedRp = r;
+                                    break;
+                                }
+                            }
+                        }
+                        if (matchedRp) break;
+                        if (r.channexRatePlanId === channexRatePlanId) {
+                            matchedRp = r;
+                            matchedRtId = r.roomTypeId || "";
+                            break;
+                        }
+                    }
+
+                    if (matchedRp) {
+                        if (matchedRtId) {
+                            extractedRateMappings[`${matchedRtId}_${matchedRp.id}`] = otaRatePlanCode;
+                        }
+                        if (!extractedRateMappings[matchedRp.id]) {
+                            extractedRateMappings[matchedRp.id] = otaRatePlanCode;
+                        }
+                    } else {
+                        extractedRateMappings[channexRatePlanId] = otaRatePlanCode;
+                    }
                 });
 
                 const existingChannel = syncedLocal[matchedCode] || {};

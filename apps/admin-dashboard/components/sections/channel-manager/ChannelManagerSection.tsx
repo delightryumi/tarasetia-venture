@@ -35,6 +35,8 @@ import {
     Unlink,
     RotateCcw,
     BedDouble,
+    Bed,
+    CheckCircle,
     Activity,
     MessageSquare,
     Star,
@@ -1083,29 +1085,41 @@ export function ChannelManagerSection() {
                     }
                 });
 
-                // Auto-match rate plans
-                ratePlans.forEach(rp => {
-                    if (newRateMappings[rp.id]) return; // keep if already mapped
-                    const pmsRateName = (rp.name || "").toLowerCase().trim();
-                    const targetRoomOtaId = rp.roomTypeId ? newRoomMappings[rp.roomTypeId] : null;
-
+                // Auto-match rate plans for each room type
+                roomTypes.forEach(rt => {
+                    const targetRoomOtaId = newRoomMappings[rt.id];
                     const candidateRates = targetRoomOtaId 
                         ? allOtaRates.filter(rate => String(rate.roomId) === String(targetRoomOtaId))
                         : allOtaRates;
 
-                    const matchedRate = candidateRates.find(rate => {
-                        const otaRName = rate.title.toLowerCase();
-                        const isBb = pmsRateName.includes("breakfast") || pmsRateName.includes("bb");
-                        const otaIsBb = otaRName.includes("breakfast") || otaRName.includes("bb");
-                        if (isBb && otaIsBb) return true;
-                        if (!isBb && !otaIsBb) return true;
-                        return otaRName.includes(pmsRateName) || pmsRateName.includes(otaRName);
-                    }) || candidateRates[0];
+                    const applicableRps = ratePlans.filter(rp => 
+                        (rp.roomTypeIds && Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.includes(rt.id)) ||
+                        rp.roomTypeId === rt.id ||
+                        (!rp.roomTypeIds?.length && !rp.roomTypeId)
+                    );
 
-                    if (matchedRate) {
-                        newRateMappings[rp.id] = String(matchedRate.id);
-                        autoMatchedRates++;
-                    }
+                    applicableRps.forEach(rp => {
+                        const compositeKey = `${rt.id}_${rp.id}`;
+                        if (newRateMappings[compositeKey]) return; // keep if already mapped
+
+                        const pmsRateName = (rp.name || "").toLowerCase().trim();
+                        const matchedRate = candidateRates.find(rate => {
+                            const otaRName = rate.title.toLowerCase();
+                            const isBb = pmsRateName.includes("breakfast") || pmsRateName.includes("bb");
+                            const otaIsBb = otaRName.includes("breakfast") || otaRName.includes("bb");
+                            if (isBb && otaIsBb) return true;
+                            if (!isBb && !otaIsBb) return true;
+                            return otaRName.includes(pmsRateName) || pmsRateName.includes(otaRName);
+                        }) || candidateRates[0];
+
+                        if (matchedRate) {
+                            newRateMappings[compositeKey] = String(matchedRate.id);
+                            if (!newRateMappings[rp.id]) {
+                                newRateMappings[rp.id] = String(matchedRate.id);
+                            }
+                            autoMatchedRates++;
+                        }
+                    });
                 });
 
                 setChannelConfigs(prev => ({
@@ -1287,12 +1301,15 @@ export function ChannelManagerSection() {
     };
 
     // Helper: Clear single Rate Plan ID mapping
-    const handleClearRateMapping = (code: string, ratePlanId: string) => {
+    const handleClearRateMapping = (code: string, mappingKey: string, ratePlanId?: string) => {
         setChannelConfigs(prev => {
             const updated = { ...prev };
             if (updated[code]?.rateMappings) {
                 const newMappings = { ...updated[code].rateMappings };
-                delete newMappings[ratePlanId];
+                delete newMappings[mappingKey];
+                if (ratePlanId && newMappings[ratePlanId]) {
+                    delete newMappings[ratePlanId];
+                }
                 updated[code] = {
                     ...updated[code],
                     rateMappings: newMappings
@@ -2382,10 +2399,10 @@ export function ChannelManagerSection() {
                                         type="button"
                                         onClick={() => handleSyncSingleChannelToChannex(selectedChannelCode)}
                                         disabled={syncingChannex}
-                                        className={styles.btnActionSecondary}
+                                        className={styles.btnActionClean}
                                         title="Push rates & inventory sync directly to Channel Manager"
                                     >
-                                        <RefreshCw size={13} className={syncingChannex ? "animate-spin" : ""} />
+                                        <RefreshCw size={12} className={syncingChannex ? "animate-spin" : ""} />
                                         <span>{syncingChannex ? "Syncing..." : "Push ARI Sync"}</span>
                                     </button>
 
@@ -2393,10 +2410,10 @@ export function ChannelManagerSection() {
                                         type="button"
                                         onClick={() => handleTestOtaConnection(selectedChannelCode)}
                                         disabled={testingOta}
-                                        className={styles.btnActionSecondary}
+                                        className={styles.btnActionClean}
                                         title="Validate Extranet Hotel ID credentials"
                                     >
-                                        <Activity size={13} className={testingOta ? "animate-spin" : ""} />
+                                        <Activity size={12} className={testingOta ? "animate-spin" : ""} />
                                         <span>{testingOta ? "Testing..." : "Test Connection"}</span>
                                     </button>
 
@@ -2404,37 +2421,32 @@ export function ChannelManagerSection() {
                                         type="button"
                                         onClick={() => handleFetchOtaMapping(selectedChannelCode)}
                                         disabled={fetchingOtaMapping}
-                                        className={styles.btnActionSecondary}
-                                        style={{
-                                            background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-                                            color: "#ffffff",
-                                            border: "none",
-                                            fontWeight: 600,
-                                            boxShadow: "0 2px 4px rgba(79, 70, 229, 0.25)"
-                                        }}
+                                        className={styles.btnActionFetch}
                                         title="Fetch room and rate plan lists directly from OTA Extranet based on Hotel ID"
                                     >
-                                        <RefreshCw size={13} className={fetchingOtaMapping ? "animate-spin" : ""} />
+                                        <RefreshCw size={12} className={fetchingOtaMapping ? "animate-spin" : ""} />
                                         <span>{fetchingOtaMapping ? "Fetching Rooms..." : "Fetch OTA Rooms & Rates"}</span>
                                     </button>
+
+                                    <div className={styles.channelBarDivider} />
 
                                     <button
                                         type="button"
                                         onClick={() => promptResetAllMappings(selectedChannelCode, channelConfigs[selectedChannelCode].channelName)}
-                                        className={styles.btnActionWarning}
+                                        className={styles.btnActionClean}
                                         title="Clear all Room and Rate Plan mappings for this channel"
                                     >
-                                        <RotateCcw size={13} />
+                                        <RotateCcw size={12} />
                                         <span>Clear All Mappings</span>
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={() => promptDisconnectChannel(selectedChannelCode, channelConfigs[selectedChannelCode].channelName)}
-                                        className={styles.btnActionDanger}
+                                        className={styles.btnActionDangerClean}
                                         title="Disconnect and deactivate this channel"
                                     >
-                                        <Trash2 size={13} />
+                                        <Trash2 size={12} />
                                         <span>Disconnect Channel</span>
                                     </button>
                                 </div>
@@ -2651,103 +2663,307 @@ export function ChannelManagerSection() {
                                 </div>
                             </div>
 
-                            {/* Rate Plan Mapping Sub-Table */}
+                            {/* Rate Plan Mapping Sub-Table - Grouped cleanly by Room Type */}
                             <div>
-                                <div style={{ marginBottom: "12px" }}>
-                                    <span className={styles.mappingSectionHeading} style={{ margin: 0 }}>
-                                        2. Rate Plan &amp; Package Mapping (PMS to OTA):
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
+                                    <div>
+                                        <span className={styles.mappingSectionHeading} style={{ margin: 0 }}>
+                                            2. Rate Plan &amp; Package Mapping (PMS to OTA):
+                                        </span>
+                                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                                            Dikelompokkan rapi per Tipe Kamar agar pemetaan terarah dan akurat untuk setiap kamar.
+                                        </div>
+                                    </div>
+                                    <span style={{ fontSize: "11px", color: "#5c0f1e", backgroundColor: "#fdf2f4", padding: "3px 8px", borderRadius: "4px", border: "1px solid #f3cfd6", fontWeight: 600 }}>
+                                        {roomTypes.length} Tipe Kamar • {ratePlans.length} Master Rate Plan
                                     </span>
                                 </div>
-                                <div className={styles.mappingTableWrapper}>
-                                    <table className={styles.dsiTable}>
-                                    <thead>
-                                        <tr>
-                                            <th className={styles.dsiTh}>PMS Rate Plan &amp; Code</th>
-                                            <th className={styles.dsiTh}>Room Type &amp; CM Rate UUID</th>
-                                            <th className={styles.dsiTh}>OTA Rate Plan ID ({channelConfigs[selectedChannelCode].channelName.replace(/\s*\(.*?\)/, '')})</th>
-                                            <th className={`${styles.dsiTh} ${styles.mappingThAction}`}>Status &amp; Diagnostics</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {ratePlans.map(rp => {
-                                            const val = channelConfigs[selectedChannelCode]?.rateMappings?.[rp.id] || "";
+
+                                {roomTypes.length > 0 ? (
+                                    <div className={styles.roomRateGroupList}>
+                                        {roomTypes.map(rt => {
+                                            const mappedOtaRoomId = channelConfigs[selectedChannelCode]?.roomMappings?.[rt.id];
                                             const currentOtaRooms = otaExtranetRooms[selectedChannelCode] || [];
-                                            const flatOtaRates: Array<{ id: string | number; title: string }> = [];
+                                            const otaRoomObj = currentOtaRooms.find((r: any) => String(r.id) === String(mappedOtaRoomId));
+                                            const otaRoomTitle = otaRoomObj?.title || otaRoomObj?.name;
+
+                                            // Filter applicable rate plans for this room
+                                            const applicableRatePlans = ratePlans.filter(rp => {
+                                                if (rp.roomTypeIds && Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.length > 0) {
+                                                    return rp.roomTypeIds.includes(rt.id);
+                                                }
+                                                if (rp.roomTypeId) {
+                                                    return rp.roomTypeId === rt.id;
+                                                }
+                                                return true;
+                                            });
+
+                                            // Separate OTA rates: specific to this mapped room vs others
+                                            const roomSpecificOtaRates: Array<{ id: string | number; title: string }> = [];
+                                            const otherOtaRates: Array<{ id: string | number; title: string }> = [];
+
                                             currentOtaRooms.forEach((r: any) => {
                                                 (r.rates || []).forEach((rate: any) => {
-                                                    flatOtaRates.push({
+                                                    const item = {
                                                         id: rate.id,
-                                                        title: `${r.title ? r.title + ' -> ' : ''}${rate.title || 'Standard'} (ID: ${rate.id})`
-                                                    });
+                                                        title: `${rate.title || 'Standard Rate'} (ID: ${rate.id})`
+                                                    };
+                                                    if (mappedOtaRoomId && String(r.id) === String(mappedOtaRoomId)) {
+                                                        roomSpecificOtaRates.push(item);
+                                                    } else {
+                                                        otherOtaRates.push({
+                                                            id: rate.id,
+                                                            title: `${r.title ? r.title + ' -> ' : ''}${rate.title || 'Standard'} (ID: ${rate.id})`
+                                                        });
+                                                    }
                                                 });
                                             });
 
                                             return (
-                                                <tr key={rp.id} className={styles.dsiRow}>
-                                                    <td>
-                                                        <div className={styles.cellRoomName}>{rp.name}</div>
-                                                        <div className={styles.cellRateCode}>Code: {rp.code}</div>
-                                                        <div className={styles.idList}>
+                                                <div key={rt.id} className={styles.roomRateGroupCard}>
+                                                    <div className={styles.roomRateGroupHeader}>
+                                                        <div className={styles.roomRateGroupTitleGroup}>
+                                                            <div className={styles.roomRateGroupIcon}>
+                                                                <Bed size={16} />
+                                                            </div>
+                                                            <div>
+                                                                <div className={styles.roomRateGroupName}>{rt.name}</div>
+                                                                <div className={styles.roomRateGroupSubtitle}>
+                                                                    {mappedOtaRoomId ? (
+                                                                        <span className={`${styles.roomRateOtaBadge} ${styles.roomRateOtaBadgeMapped}`}>
+                                                                            <CheckCircle size={11} />
+                                                                            <span>OTA Room: {otaRoomTitle || `ID ${mappedOtaRoomId}`}</span>
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className={`${styles.roomRateOtaBadge} ${styles.roomRateOtaBadgeUnmapped}`}>
+                                                                            <AlertTriangle size={11} />
+                                                                            <span>Belum dipetakan di Step 1</span>
+                                                                        </span>
+                                                                    )}
+                                                                    <span style={{ margin: "0 4px", color: "#cbd5e1" }}>•</span>
+                                                                    <span>{applicableRatePlans.length} Rate Plan Berlaku</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className={styles.roomRateGroupHeaderRight}>
                                                             <button
                                                                 type="button"
-                                                                onClick={() => copyText(rp.id, "PMS Rate Plan ID")}
+                                                                onClick={() => copyText(rt.id, "PMS Room Type ID")}
                                                                 className={styles.idPill}
-                                                                title="Click to copy PMS Rate Plan ID"
+                                                                title="Click to copy PMS Room Type ID"
                                                             >
-                                                                <span>PMS: {rp.id}</span>
+                                                                <span>PMS: {rt.id}</span>
                                                                 <Copy size={10} className={styles.copyIcon} />
                                                             </button>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div className={styles.cellRateRoomType}>
-                                                            {rp.roomTypeName || (rp.roomTypeNames && rp.roomTypeNames.length > 0 ? (rp.roomTypeNames.length > 2 ? `${rp.roomTypeNames.slice(0, 2).join(", ")} +${rp.roomTypeNames.length - 2}` : rp.roomTypeNames.join(", ")) : rp.roomTypeId || "All Room Types")}
-                                                        </div>
-                                                        {rp.channexRatePlanId ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => copyText(rp.channexRatePlanId!, "Channel Rate UUID")}
-                                                                className={`${styles.idPill} ${styles.idPillChannex}`}
-                                                                title="Click to copy Channel Manager Rate UUID"
-                                                            >
-                                                                <span>{rp.channexRatePlanId}</span>
-                                                                <Copy size={10} className={styles.copyIcon} />
-                                                            </button>
-                                                        ) : (
-                                                            <span className={styles.unmappedChannexText}>
-                                                                Not Synced with Channel Manager
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td>
-                                                        <div className={styles.mappingInputRow}>
-                                                            {flatOtaRates.length > 0 ? (
-                                                                <select
-                                                                    value={val}
-                                                                    onChange={e => {
-                                                                        const newVal = e.target.value;
-                                                                        setChannelConfigs(prev => ({
-                                                                            ...prev,
-                                                                            [selectedChannelCode]: {
-                                                                                ...prev[selectedChannelCode],
-                                                                                rateMappings: {
-                                                                                    ...(prev[selectedChannelCode]?.rateMappings || {}),
-                                                                                    [rp.id]: newVal
-                                                                                }
-                                                                            }
-                                                                        }));
-                                                                    }}
-                                                                    className={`${styles.cellSelect} ${styles.mappingInputField}`}
-                                                                    style={{ fontSize: "12px", width: "100%", fontWeight: val ? 600 : 400 }}
+                                                            {rt.channexRoomTypeId && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => copyText(rt.channexRoomTypeId!, "Channel Room UUID")}
+                                                                    className={`${styles.idPill} ${styles.idPillChannex}`}
+                                                                    title="Click to copy Channel Manager Room UUID"
                                                                 >
-                                                                    <option value="">-- Select OTA Extranet Rate Plan --</option>
-                                                                    {flatOtaRates.map((rate: any) => (
-                                                                        <option key={rate.id} value={String(rate.id)}>
-                                                                            {rate.title}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            ) : (
+                                                                    <span>CM: {rt.channexRoomTypeId.slice(0, 8)}...</span>
+                                                                    <Copy size={10} className={styles.copyIcon} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className={styles.roomRateTableContainer}>
+                                                        <table className={styles.roomRateTable}>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style={{ width: "32%" }}>PMS Rate Plan &amp; Code</th>
+                                                                    <th style={{ width: "24%" }}>CM Rate UUID</th>
+                                                                    <th style={{ width: "28%" }}>OTA Rate Plan ({channelConfigs[selectedChannelCode].channelName.replace(/\s*\(.*?\)/, '')})</th>
+                                                                    <th style={{ width: "16%", textAlign: "center" }}>Status &amp; Test</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {applicableRatePlans.map(rp => {
+                                                                    const compositeKey = `${rt.id}_${rp.id}`;
+                                                                    const val = channelConfigs[selectedChannelCode]?.rateMappings?.[compositeKey] || 
+                                                                        (rp.roomTypeId === rt.id ? channelConfigs[selectedChannelCode]?.rateMappings?.[rp.id] : "") ||
+                                                                        channelConfigs[selectedChannelCode]?.rateMappings?.[rp.id] || "";
+
+                                                                    const roomChannexRateId = rp.channexRatePlanIds?.[rt.id] || 
+                                                                        (rp.roomTypeId === rt.id ? rp.channexRatePlanId : undefined) || 
+                                                                        rp.channexRatePlanId;
+
+                                                                    return (
+                                                                        <tr key={rp.id}>
+                                                                            <td>
+                                                                                <div className={styles.cellRoomName}>{rp.name}</div>
+                                                                                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
+                                                                                    <span className={styles.cellRateCode}>Code: {rp.code}</span>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => copyText(rp.id, "PMS Rate Plan ID")}
+                                                                                        className={styles.idPill}
+                                                                                        style={{ padding: "1px 6px", fontSize: "9.5px" }}
+                                                                                        title="Click to copy PMS Rate Plan ID"
+                                                                                    >
+                                                                                        <span>PMS: {rp.id}</span>
+                                                                                        <Copy size={9} className={styles.copyIcon} />
+                                                                                    </button>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                {roomChannexRateId ? (
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => copyText(roomChannexRateId, "Channel Rate UUID")}
+                                                                                        className={`${styles.idPill} ${styles.idPillChannex}`}
+                                                                                        title="Click to copy Channel Manager Rate UUID for this Room"
+                                                                                    >
+                                                                                        <span>{roomChannexRateId.slice(0, 8)}...</span>
+                                                                                        <Copy size={10} className={styles.copyIcon} />
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <span className={styles.unmappedChannexText} style={{ fontSize: "11px" }}>
+                                                                                        Not Synced
+                                                                                    </span>
+                                                                                )}
+                                                                            </td>
+                                                                            <td>
+                                                                                <div className={styles.mappingInputRow}>
+                                                                                    {(roomSpecificOtaRates.length > 0 || otherOtaRates.length > 0) ? (
+                                                                                        <select
+                                                                                            value={val}
+                                                                                            onChange={e => {
+                                                                                                const newVal = e.target.value;
+                                                                                                setChannelConfigs(prev => {
+                                                                                                    const currentChannel = prev[selectedChannelCode];
+                                                                                                    const updatedRateMappings = {
+                                                                                                        ...(currentChannel?.rateMappings || {}),
+                                                                                                        [compositeKey]: newVal
+                                                                                                    };
+                                                                                                    if (rp.roomTypeId === rt.id || !currentChannel?.rateMappings?.[rp.id]) {
+                                                                                                        updatedRateMappings[rp.id] = newVal;
+                                                                                                    }
+                                                                                                    return {
+                                                                                                        ...prev,
+                                                                                                        [selectedChannelCode]: {
+                                                                                                            ...currentChannel,
+                                                                                                            rateMappings: updatedRateMappings
+                                                                                                        }
+                                                                                                    };
+                                                                                                });
+                                                                                            }}
+                                                                                            className={`${styles.cellSelect} ${styles.mappingInputField}`}
+                                                                                            style={{ fontSize: "11.5px", width: "100%", fontWeight: val ? 600 : 400 }}
+                                                                                        >
+                                                                                            <option value="">-- Pilih OTA Rate Plan --</option>
+                                                                                            {roomSpecificOtaRates.length > 0 && (
+                                                                                                <optgroup label={`Rate Khusus ${otaRoomTitle || rt.name}`}>
+                                                                                                    {roomSpecificOtaRates.map((rate: any) => (
+                                                                                                        <option key={rate.id} value={String(rate.id)}>
+                                                                                                            {rate.title}
+                                                                                                        </option>
+                                                                                                    ))}
+                                                                                                </optgroup>
+                                                                                            )}
+                                                                                            {otherOtaRates.length > 0 && (
+                                                                                                <optgroup label="Rate OTA Lainnya">
+                                                                                                    {otherOtaRates.map((rate: any) => (
+                                                                                                        <option key={rate.id} value={String(rate.id)}>
+                                                                                                            {rate.title}
+                                                                                                        </option>
+                                                                                                    ))}
+                                                                                                </optgroup>
+                                                                                            )}
+                                                                                        </select>
+                                                                                    ) : (
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            value={val}
+                                                                                            onChange={e => {
+                                                                                                const newVal = e.target.value;
+                                                                                                setChannelConfigs(prev => {
+                                                                                                    const currentChannel = prev[selectedChannelCode];
+                                                                                                    const updatedRateMappings = {
+                                                                                                        ...(currentChannel?.rateMappings || {}),
+                                                                                                        [compositeKey]: newVal
+                                                                                                    };
+                                                                                                    if (rp.roomTypeId === rt.id || !currentChannel?.rateMappings?.[rp.id]) {
+                                                                                                        updatedRateMappings[rp.id] = newVal;
+                                                                                                    }
+                                                                                                    return {
+                                                                                                        ...prev,
+                                                                                                        [selectedChannelCode]: {
+                                                                                                            ...currentChannel,
+                                                                                                            rateMappings: updatedRateMappings
+                                                                                                        }
+                                                                                                    };
+                                                                                                });
+                                                                                            }}
+                                                                                            placeholder="OTA Rate ID (mis. 201)"
+                                                                                            className={`${styles.cellInput} ${styles.mappingInputField}`}
+                                                                                        />
+                                                                                    )}
+                                                                                    {val && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => handleClearRateMapping(selectedChannelCode, compositeKey, rp.id)}
+                                                                                            className={styles.btnIconClear}
+                                                                                            title="Hapus Pemetaan Rate Plan Ini"
+                                                                                        >
+                                                                                            <X size={12} />
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div className={styles.mappingActionCell} style={{ justifyContent: "center" }}>
+                                                                                    {val ? (
+                                                                                        <span className={`${styles.badge} ${styles.badgeActive}`}>Mapped</span>
+                                                                                    ) : (
+                                                                                        <span className={`${styles.badge} ${styles.badgeInactive}`}>Unmapped</span>
+                                                                                    )}
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => handlePingTest("rate_plan", compositeKey, roomChannexRateId, val)}
+                                                                                        disabled={pingingMap[compositeKey]}
+                                                                                        className={styles.btnPing}
+                                                                                        title="Uji koneksi diagnostik Channel Manager untuk Rate Plan ini"
+                                                                                    >
+                                                                                        <Activity size={11} className={pingingMap[compositeKey] ? "animate-spin" : ""} />
+                                                                                        <span>{pingingMap[compositeKey] ? "Testing..." : "Test"}</span>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className={styles.mappingTableWrapper}>
+                                        <table className={styles.dsiTable}>
+                                            <thead>
+                                                <tr>
+                                                    <th className={styles.dsiTh}>PMS Rate Plan &amp; Code</th>
+                                                    <th className={styles.dsiTh}>Room Type &amp; CM Rate UUID</th>
+                                                    <th className={styles.dsiTh}>OTA Rate Plan ID ({channelConfigs[selectedChannelCode].channelName.replace(/\s*\(.*?\)/, '')})</th>
+                                                    <th className={`${styles.dsiTh} ${styles.mappingThAction}`}>Status &amp; Diagnostics</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {ratePlans.map(rp => {
+                                                    const val = channelConfigs[selectedChannelCode]?.rateMappings?.[rp.id] || "";
+                                                    return (
+                                                        <tr key={rp.id} className={styles.dsiRow}>
+                                                            <td>
+                                                                <div className={styles.cellRoomName}>{rp.name}</div>
+                                                                <div className={styles.cellRateCode}>Code: {rp.code}</div>
+                                                            </td>
+                                                            <td>{rp.roomTypeName || "All Room Types"}</td>
+                                                            <td>
                                                                 <input
                                                                     type="text"
                                                                     value={val}
@@ -2764,47 +2980,21 @@ export function ChannelManagerSection() {
                                                                             }
                                                                         }));
                                                                     }}
-                                                                    placeholder={`OTA Rate ID (e.g. 201)`}
                                                                     className={`${styles.cellInput} ${styles.mappingInputField}`}
                                                                 />
-                                                            )}
-                                                            {val && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleClearRateMapping(selectedChannelCode, rp.id)}
-                                                                    className={styles.btnIconClear}
-                                                                    title="Remove Rate Plan Mapping"
-                                                                >
-                                                                    <X size={13} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div className={styles.mappingActionCell}>
-                                                            {val ? (
-                                                                <span className={`${styles.badge} ${styles.badgeActive}`}>Mapped</span>
-                                                            ) : (
-                                                                <span className={`${styles.badge} ${styles.badgeInactive}`}>Unmapped</span>
-                                                            )}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handlePingTest("rate_plan", rp.id, rp.channexRatePlanId, val)}
-                                                                disabled={pingingMap[rp.id]}
-                                                                className={styles.btnPing}
-                                                                title="Test connection diagnostics with Channel Manager for this Rate Plan"
-                                                            >
-                                                                <Activity size={12} className={pingingMap[rp.id] ? "animate-spin" : ""} />
-                                                                <span>{pingingMap[rp.id] ? "Testing..." : "Test Connection"}</span>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                    </table>
-                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <span className={`${styles.badge} ${val ? styles.badgeActive : styles.badgeInactive}`}>
+                                                                    {val ? "Mapped" : "Unmapped"}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Mapping Action Footer */}
