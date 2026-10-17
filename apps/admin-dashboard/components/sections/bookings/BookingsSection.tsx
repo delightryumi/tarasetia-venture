@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
     CalendarCheck, 
     SquaresFour, 
@@ -10,6 +10,7 @@ import {
     Calendar,
     ArrowCounterClockwise
 } from "@phosphor-icons/react";
+import { useAuth } from "@/context/AuthContext";
 import { useBookings } from "./useBookings";
 import { BookingCard } from "./components/BookingCard";
 import { BookingTable } from "./components/BookingTable";
@@ -18,84 +19,64 @@ import { BookingStatusFilter, ViewMode, BookingRecord } from "./types";
 import s from "./BookingsSection.module.css";
 
 export function BookingsSection() {
-    // Default initial dates (Today)
+    const { activeHotelCode } = useAuth();
+
+    // Default initial dates: 1st of current month up to 60 days ahead so upcoming bookings appear immediately
     const initialDates = useMemo(() => {
         const today = new Date();
         const y = today.getFullYear();
         const m = String(today.getMonth() + 1).padStart(2, "0");
-        const d = String(today.getDate()).padStart(2, "0");
-        const todayStr = `${y}-${m}-${d}`;
+        const startOfMonth = `${y}-${m}-01`;
+
+        const endD = new Date(today);
+        endD.setDate(endD.getDate() + 60);
+        const endStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, "0")}-${String(endD.getDate()).padStart(2, "0")}`;
 
         return {
-            start: todayStr,
-            end: todayStr,
+            start: startOfMonth,
+            end: endStr,
         };
     }, []);
 
     const endDateInputRef = useRef<HTMLInputElement>(null);
 
-    // Staged input states
+    // Active filter states (immediately reactive)
     const [startDate, setStartDate] = useState(initialDates.start);
     const [endDate, setEndDate] = useState(initialDates.end);
     const [searchQuery, setSearchQuery] = useState("");
     const [channelFilter, setChannelFilter] = useState("ALL");
     const [roomTypeFilter, setRoomTypeFilter] = useState("ALL");
-
-    // Applied search params that trigger the actual query
-    const [appliedFilters, setAppliedFilters] = useState({
-        startDate: initialDates.start,
-        endDate: initialDates.end,
-        searchQuery: "",
-        channelFilter: "ALL",
-        roomTypeFilter: "ALL",
-    });
-
     const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("ALL");
     const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "guest_asc">("date_desc");
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
 
-    // Call high-efficiency hook with applied search criteria
+    // Trigger silent Channex feed drain on mount to ensure real-time OTA reservations are captured
+    useEffect(() => {
+        if (!activeHotelCode || activeHotelCode === "0") return;
+        fetch("/api/channex/sync-feed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hotelCode: activeHotelCode })
+        }).catch(() => {});
+    }, [activeHotelCode]);
+
+    // High-efficiency hook with immediate reactivity
     const { bookings, rawCount, stats, filterOptions, loading, error } = useBookings({
-        startDate: appliedFilters.startDate,
-        endDate: appliedFilters.endDate,
+        startDate,
+        endDate,
         statusFilter,
-        channelFilter: appliedFilters.channelFilter,
-        roomTypeFilter: appliedFilters.roomTypeFilter,
-        searchQuery: appliedFilters.searchQuery,
+        channelFilter,
+        roomTypeFilter,
+        searchQuery,
         sortBy,
     });
 
-    // Auto trigger/open end date picker immediately after picking start date
     const handleStartDateChange = (newStart: string) => {
         setStartDate(newStart);
         if (endDate && endDate < newStart) {
             setEndDate(newStart);
         }
-        setTimeout(() => {
-            try {
-                if (endDateInputRef.current) {
-                    if (typeof (endDateInputRef.current as any).showPicker === "function") {
-                        (endDateInputRef.current as any).showPicker();
-                    } else {
-                        endDateInputRef.current.focus();
-                    }
-                }
-            } catch {
-                endDateInputRef.current?.focus();
-            }
-        }, 80);
-    };
-
-    // Explicit Search Action Handler
-    const handleApplySearch = () => {
-        setAppliedFilters({
-            startDate,
-            endDate,
-            searchQuery,
-            channelFilter,
-            roomTypeFilter,
-        });
     };
 
     const handleResetFilters = () => {
@@ -105,14 +86,10 @@ export function BookingsSection() {
         setChannelFilter("ALL");
         setRoomTypeFilter("ALL");
         setStatusFilter("ALL");
+    };
 
-        setAppliedFilters({
-            startDate: initialDates.start,
-            endDate: initialDates.end,
-            searchQuery: "",
-            channelFilter: "ALL",
-            roomTypeFilter: "ALL",
-        });
+    const handleApplySearch = () => {
+        // Immediate reactivity already active
     };
 
     return (

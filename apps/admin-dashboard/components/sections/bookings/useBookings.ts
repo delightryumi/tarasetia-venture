@@ -109,8 +109,8 @@ export function useBookings({
             const entries = docData.entries || [];
 
             entries.forEach((entry: any) => {
-                // Only process accommodation bookings (skip stand-alone F&B other_income if not linked)
-                if (entry.type && entry.type !== "accommodation" && !entry.roomType && !entry.checkInDate && !entry.checkIn) {
+                // Only process accommodation bookings (skip stand-alone F&B other_income or breakfast packages)
+                if (entry.isBreakfastPackage || entry.type === "other_income" || (entry.type && entry.type !== "accommodation" && !entry.roomType)) {
                     return;
                 }
 
