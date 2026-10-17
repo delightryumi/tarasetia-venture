@@ -54,10 +54,11 @@ export async function POST(req: NextRequest) {
             Boolean((payload as any)?.payload?.booking_id);
 
         if (isBookingEvent) {
-            // Extract revision ID and property ID if webhook came in lightweight notification shape
-            const nestedPayload = (payload as any)?.payload || {};
+            // Extract revision ID and property ID across all Channex webhook formats (data, payload, root)
+            const nestedPayload = (payload as any)?.data || (payload as any)?.payload || {};
             const revisionId = payload.booking_revision_id || 
                 nestedPayload.revision_id || 
+                nestedPayload.booking_revision_id ||
                 (payload as any).revision_id || 
                 (payload.booking as any)?.revision_id;
             
@@ -67,6 +68,19 @@ export async function POST(req: NextRequest) {
 
             if (propertyId) {
                 payload.property_id = propertyId;
+            }
+            if (revisionId) {
+                payload.booking_revision_id = revisionId;
+            }
+
+            // If nestedPayload already has booking attributes (or data)
+            if (!payload.booking && (nestedPayload.rooms || nestedPayload.customer || nestedPayload.attributes)) {
+                const attrs = nestedPayload.attributes || nestedPayload;
+                payload.booking = {
+                    id: attrs.id || nestedPayload.id || nestedPayload.booking_id || revisionId,
+                    property_id: payload.property_id || attrs.property_id,
+                    ...attrs
+                };
             }
 
             // Hydrate authoritative full booking payload via GET /booking_revisions/:id if payload.booking is missing or incomplete
