@@ -30,6 +30,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
     const router = useRouter();
     const [copied, setCopied] = React.useState(false);
     const [copiedBookingId, setCopiedBookingId] = React.useState(false);
+    const [copiedRevisionId, setCopiedRevisionId] = React.useState(false);
     const { formatCurrency } = useCurrency();
 
     // Close on Escape key press
@@ -61,6 +62,15 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
         setCopiedBookingId(true);
         toast.success(`OTA Booking ID disalin: ${idToCopy}`);
         setTimeout(() => setCopiedBookingId(false), 2000);
+    };
+
+    const handleCopyRevisionId = () => {
+        const idToCopy = booking.revisionId;
+        if (!idToCopy) return;
+        navigator.clipboard.writeText(idToCopy);
+        setCopiedRevisionId(true);
+        toast.success(`Revision ID disalin: ${idToCopy}`);
+        setTimeout(() => setCopiedRevisionId(false), 2000);
     };
 
     const formatDateDisplay = (dateStr: string) => {
@@ -257,6 +267,35 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                                     )}
                                 </div>
                             </div>
+                            {booking.revisionId && (
+                                <div className={s.field}>
+                                    <span className={s.fieldLabel}>Revision ID</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                                        <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace", wordBreak: "break-all" }}>
+                                            {booking.revisionId}
+                                        </span>
+                                        <button 
+                                            type="button"
+                                            onClick={handleCopyRevisionId}
+                                            style={{ 
+                                                background: "none", 
+                                                border: "none", 
+                                                cursor: "pointer", 
+                                                display: "inline-flex", 
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                color: "#2563eb", 
+                                                padding: 2,
+                                                borderRadius: 4,
+                                                flexShrink: 0
+                                            }}
+                                            title="Salin Revision ID"
+                                        >
+                                            {copiedRevisionId ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Koneksi Saluran</span>
                                 <span className={s.fieldValue}>{booking.connectionChannel || "Direct Front Office"}</span>
