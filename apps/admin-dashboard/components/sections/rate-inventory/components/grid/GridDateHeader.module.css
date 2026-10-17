@@ -101,8 +101,8 @@
 }
 
 .datePickerInput:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    border-color: #72263d;
+    box-shadow: 0 0 0 2px rgba(114, 38, 61, 0.15);
 }
 
 /* Day Columns */
@@ -169,22 +169,22 @@
 }
 
 .colToday {
-    background-color: #f0f7ff !important;
-    border-bottom: 2px solid #3b82f6 !important;
+    background-color: #fdf2f4 !important;
+    border-bottom: 2px solid #72263d !important;
 }
 
 :global(.dark) .colToday {
-    background-color: #172554 !important;
-    border-bottom-color: #3b82f6 !important;
+    background-color: #36121e !important;
+    border-bottom-color: #e07a93 !important;
 }
 
 .colToday .dayNumber {
-    color: #2563eb !important;
-    font-weight: 600 !important;
+    color: #72263d !important;
+    font-weight: 700 !important;
 }
 
 :global(.dark) .colToday .dayNumber {
-    color: #60a5fa !important;
+    color: #fce7eb !important;
 }
 
 /* Jump Forward Column */

@@ -113,15 +113,15 @@
 }
 
 .badgeBlue {
-    background: #eff6ff;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
+    background: #fdf2f4;
+    color: #72263d;
+    border: 1px solid #f3d5dc;
 }
 
 :global(.dark) .badgeBlue {
-    background: #1e3a8a;
-    color: #93c5fd;
-    border-color: #2563eb;
+    background: #36121e;
+    color: #fce7eb;
+    border-color: #72263d;
 }
 
 .badgeAmber {
@@ -159,15 +159,15 @@
 }
 
 .iconRooms {
-    background: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #dbeafe;
+    background: #fdf2f4;
+    color: #72263d;
+    border: 1px solid #f3d5dc;
 }
 
 :global(.dark) .iconRooms {
-    background: #1e3a8a;
-    color: #93c5fd;
-    border-color: #2563eb;
+    background: #36121e;
+    color: #fce7eb;
+    border-color: #72263d;
 }
 
 .iconRates {
@@ -211,11 +211,11 @@
 }
 
 .iconBlueText {
-    color: #2563eb;
+    color: #72263d;
 }
 
 :global(.dark) .iconBlueText {
-    color: #60a5fa;
+    color: #e07a93;
 }
 
 .iconGreenText {

@@ -89,17 +89,44 @@ export interface RoomTypeInventoryRow {
     ratePlans: RatePlanGridRow[];
 }
 
-export interface BulkUpdateParams {
+export interface BulkUpdateItem {
+    id: string;
+    roomTypeId: string;
+    ratePlanId: string;
     dateFrom: string;
     dateTo: string;
     daysOfWeek: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
-    roomTypeIds: string[]; // empty or ["all"] means all
-    ratePlanIds: string[]; // empty or ["all"] means all
     channelId?: string;
-    rateAction: "none" | "set" | "inc_amount" | "dec_amount" | "inc_percent" | "dec_percent";
+    rateAction?: "none" | "set" | "inc_amount" | "dec_amount" | "inc_percent" | "dec_percent";
     rateValue?: number;
-    stopSellAction: "none" | "open" | "close";
-    inventoryAction: "none" | "set";
+    stopSellAction?: "none" | "open" | "close";
+    inventoryAction?: "none" | "set";
+    inventoryValue?: number;
+    minStayAction?: "none" | "set" | "remove";
+    minStayValue?: number;
+    minStayArrivalAction?: "none" | "set" | "remove";
+    minStayArrivalValue?: number;
+    minStayThroughAction?: "none" | "set" | "remove";
+    minStayThroughValue?: number;
+    maxStayAction?: "none" | "set" | "remove";
+    maxStayValue?: number;
+    ctaAction?: "none" | "open" | "close";
+    ctdAction?: "none" | "open" | "close";
+}
+
+export interface BulkUpdateParams {
+    mode?: "single" | "multi";
+    items?: BulkUpdateItem[];
+    dateFrom?: string;
+    dateTo?: string;
+    daysOfWeek?: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
+    roomTypeIds?: string[]; // empty or ["all"] means all
+    ratePlanIds?: string[]; // empty or ["all"] means all
+    channelId?: string;
+    rateAction?: "none" | "set" | "inc_amount" | "dec_amount" | "inc_percent" | "dec_percent";
+    rateValue?: number;
+    stopSellAction?: "none" | "open" | "close";
+    inventoryAction?: "none" | "set";
     inventoryValue?: number;
     minStayAction?: "none" | "set" | "remove"; // legacy unified
     minStayValue?: number;
@@ -112,3 +139,4 @@ export interface BulkUpdateParams {
     ctaAction?: "none" | "open" | "close";
     ctdAction?: "none" | "open" | "close";
 }
+

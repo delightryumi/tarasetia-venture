@@ -1,28 +1,29 @@
 /* GridRoomTypeCard.module.css — Compact Room Type Header Row */
 
-/* Room Type Header Row */
+/* Room Type Header Row - Soft Burgundy Luxury Tone */
 .roomTypeRow {
-    background-color: #f8fafc;
-    border-top: 1px solid #cbd5e1;
-    border-bottom: 1px solid #cbd5e1;
+    background-color: #faf0f2 !important;
+    border-top: 1px solid #ecccd3 !important;
+    border-bottom: 1px solid #ecccd3 !important;
     font-weight: 500;
 }
 
 :global(.dark) .roomTypeRow {
-    background-color: #1e293b;
-    border-top-color: #475569;
-    border-bottom-color: #475569;
+    background-color: #260c14 !important;
+    border-top-color: #4a1523 !important;
+    border-bottom-color: #4a1523 !important;
 }
 
 .roomTypeRowInventory {
-    background-color: #ffffff !important;
-    border-top: none;
-    border-bottom: 1px solid #e2e8f0 !important;
+    background-color: #faf0f2 !important;
+    border-top: 1px solid #ecccd3 !important;
+    border-bottom: 1px solid #ecccd3 !important;
 }
 
 :global(.dark) .roomTypeRowInventory {
-    background-color: #1f2937 !important;
-    border-bottom-color: #374151 !important;
+    background-color: #260c14 !important;
+    border-top-color: #4a1523 !important;
+    border-bottom-color: #4a1523 !important;
 }
 
 .roomTypeTitleCell {
@@ -32,9 +33,10 @@
     position: sticky;
     left: 0;
     z-index: 12;
-    background-color: #f8fafc;
-    border-right: 1px solid #cbd5e1;
-    border-bottom: 1px solid #cbd5e1;
+    background-color: #f7e6ea !important;
+    border-right: 1px solid #ecccd3 !important;
+    border-bottom: 1px solid #ecccd3 !important;
+    border-left: 3.5px solid #72263d !important;
     padding: 6px 10px;
     height: 38px;
     display: flex;
@@ -44,19 +46,22 @@
 }
 
 :global(.dark) .roomTypeTitleCell {
-    background-color: #1e293b;
-    border-right-color: #475569;
-    border-bottom-color: #475569;
+    background-color: #310f1a !important;
+    border-right-color: #4a1523 !important;
+    border-bottom-color: #4a1523 !important;
+    border-left: 3.5px solid #e07a93 !important;
 }
 
 .roomTypeTitleCellInventory {
-    background-color: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
+    background-color: #f7e6ea !important;
+    border-bottom: 1px solid #ecccd3 !important;
+    border-left: 3.5px solid #72263d !important;
 }
 
 :global(.dark) .roomTypeTitleCellInventory {
-    background-color: #1f2937 !important;
-    border-bottom-color: #374151 !important;
+    background-color: #310f1a !important;
+    border-bottom-color: #4a1523 !important;
+    border-left: 3.5px solid #e07a93 !important;
 }
 
 .roomTypeLeft {
@@ -68,7 +73,7 @@
 }
 
 .roomIconBox {
-    color: #475569;
+    color: #72263d;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -76,21 +81,22 @@
 }
 
 :global(.dark) .roomIconBox {
-    color: #cbd5e1;
+    color: #e07a93;
 }
 
 .roomTypeNameText {
-    font-size: 12px;
-    font-weight: 600;
-    color: #1e293b;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #581c2b;
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: -0.01em;
 }
 
 :global(.dark) .roomTypeNameText {
-    color: #f8fafc;
+    color: #fce7eb;
 }
 
 .roomCountPill {
@@ -102,15 +108,15 @@
     padding: 0 4px;
     border-radius: 4px;
     font-size: 10px;
-    font-weight: 500;
-    background-color: #e2e8f0;
-    color: #334155;
+    font-weight: 700;
+    background-color: #ecccd3;
+    color: #581c2b;
     flex-shrink: 0;
 }
 
 :global(.dark) .roomCountPill {
-    background-color: #334155;
-    color: #cbd5e1;
+    background-color: #4a1523;
+    color: #fce7eb;
 }
 
 .btnSyncRoom {
@@ -159,16 +165,16 @@
     padding: 6px 2px;
     text-align: center;
     vertical-align: middle;
-    background-color: #f8fafc;
-    border-right: 1px solid #e2e8f0;
-    border-bottom: 1px solid #cbd5e1;
+    background-color: #faf0f2;
+    border-right: 1px solid #f2dbe0;
+    border-bottom: 1px solid #ecccd3;
     box-sizing: border-box;
 }
 
 :global(.dark) .categoryCell {
-    background-color: #1e293b;
-    border-right-color: #334155;
-    border-bottom-color: #475569;
+    background-color: #260c14;
+    border-right-color: #3d131f;
+    border-bottom-color: #4a1523;
 }
 
 /* Category Daily Available Count */
@@ -177,13 +183,13 @@
     width: 100%;
     text-align: center;
     font-size: 12px;
-    font-weight: 500;
-    color: #1e293b;
+    font-weight: 600;
+    color: #4a1523;
     line-height: 1;
 }
 
 :global(.dark) .categoryAvailText {
-    color: #f1f5f9;
+    color: #fce7eb;
 }
 
 .categoryAvailZero {

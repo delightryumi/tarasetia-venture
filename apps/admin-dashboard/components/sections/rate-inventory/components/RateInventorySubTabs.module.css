@@ -134,17 +134,17 @@
 }
 
 :global(.dark) .tabItemActive {
-    background: #2563eb !important;
-    border-color: #1d4ed8 !important;
+    background: #72263d !important;
+    border-color: #581c2b !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4) !important;
+    box-shadow: 0 2px 6px rgba(114, 38, 61, 0.4) !important;
 }
 
 .activeIndicator {
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background-color: #2563eb;
+    background-color: #72263d;
 }
 
 :global(.dark) .activeIndicator {
@@ -324,8 +324,8 @@
 }
 
 .menuBtnActive {
-    background: #0284c7 !important;
-    border-color: #0284c7 !important;
+    background: #72263d !important;
+    border-color: #581c2b !important;
     color: #ffffff !important;
 }
 
@@ -398,7 +398,7 @@
     border: none;
     font-size: 11px;
     font-weight: 500;
-    color: #0284c7;
+    color: #72263d;
     cursor: pointer;
     padding: 0;
     font-family: inherit;
@@ -406,12 +406,12 @@
 }
 
 .quickActionBtn:hover {
-    color: #0369a1;
+    color: #581c2b;
     text-decoration: underline;
 }
 
 :global(.dark) .quickActionBtn {
-    color: #38bdf8;
+    color: #e07a93;
 }
 
 .quickActionDot {
@@ -468,8 +468,8 @@
 }
 
 .checkboxChecked {
-    background: #0284c7 !important;
-    border-color: #0284c7 !important;
+    background: #72263d !important;
+    border-color: #72263d !important;
     color: #ffffff !important;
 }
 
@@ -505,9 +505,9 @@
     padding: 0 8px;
     font-size: 11.5px;
     font-weight: 600;
-    color: #0284c7;
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
+    color: #72263d;
+    background: #fdf2f4;
+    border: 1px solid #f3d5dc;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -516,13 +516,13 @@
 }
 
 .btnBulkUpdateInMenu:hover {
-    background: #e0f2fe;
-    border-color: #7dd3fc;
+    background: #fae4e8;
+    border-color: #e8b6c1;
 }
 
 :global(.dark) .btnBulkUpdateInMenu {
-    background: #0c4a6e;
-    border-color: #0369a1;
-    color: #38bdf8;
+    background: #36121e;
+    border-color: #72263d;
+    color: #fce7eb;
 }
 

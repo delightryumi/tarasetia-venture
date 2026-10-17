@@ -185,8 +185,8 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                                         const targetState = !allStop;
                                         rt.ratePlans.forEach(rp => {
                                             const rpStopKey = isChannelSpecific 
-                                                ? `channelStopSell_${channelFilter}_${rp.ratePlanId}_${dateStr}` 
-                                                : `stopSell_${rp.ratePlanId}_${dateStr}`;
+                                                ? `channelStopSell_${channelFilter}_${rt.roomTypeId}_${rp.ratePlanId}_${dateStr}` 
+                                                : `stopSell_${rt.roomTypeId}_${rp.ratePlanId}_${dateStr}`;
                                             stageEdit(rpStopKey, targetState);
                                         });
                                     }}
@@ -216,7 +216,7 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                                         if (!canStopSell) return;
                                         const targetState = !allCta;
                                         rt.ratePlans.forEach(rp => {
-                                            stageEdit(`cta_${rp.ratePlanId}_${dateStr}`, targetState);
+                                            stageEdit(`cta_${rt.roomTypeId}_${rp.ratePlanId}_${dateStr}`, targetState);
                                         });
                                     }}
                                     className={[
@@ -245,7 +245,7 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                                         if (!canStopSell) return;
                                         const targetState = !allCtd;
                                         rt.ratePlans.forEach(rp => {
-                                            stageEdit(`ctd_${rp.ratePlanId}_${dateStr}`, targetState);
+                                            stageEdit(`ctd_${rt.roomTypeId}_${rp.ratePlanId}_${dateStr}`, targetState);
                                         });
                                     }}
                                     className={[

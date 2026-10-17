@@ -66,6 +66,7 @@ export function RateInventoryMobileView({
 
     // Quick Price edit modal state
     const [priceModalData, setPriceModalData] = useState<{
+        roomTypeId: string;
         ratePlanId: string;
         ratePlanName: string;
         currentRate: number;
@@ -73,12 +74,12 @@ export function RateInventoryMobileView({
     } | null>(null);
     const [priceInputValue, setPriceInputValue] = useState<string>("");
 
-    const openPriceModal = (ratePlanId: string, ratePlanName: string, currentRate: number, dateStr: string) => {
+    const openPriceModal = (roomTypeId: string, ratePlanId: string, ratePlanName: string, currentRate: number, dateStr: string) => {
         if (!canChangeRate) {
             toast.error("You do not have permission to edit rates.");
             return;
         }
-        setPriceModalData({ ratePlanId, ratePlanName, currentRate, dateStr });
+        setPriceModalData({ roomTypeId, ratePlanId, ratePlanName, currentRate, dateStr });
         setPriceInputValue(String(currentRate));
     };
 
@@ -92,8 +93,8 @@ export function RateInventoryMobileView({
             return;
         }
         const key = channelFilter && channelFilter !== "all"
-            ? `channelRate_${channelFilter}_${priceModalData.ratePlanId}_${priceModalData.dateStr}`
-            : `rate_${priceModalData.ratePlanId}_${priceModalData.dateStr}`;
+            ? `channelRate_${channelFilter}_${priceModalData.roomTypeId}_${priceModalData.ratePlanId}_${priceModalData.dateStr}`
+            : `rate_${priceModalData.roomTypeId}_${priceModalData.ratePlanId}_${priceModalData.dateStr}`;
         stageEdit(key, val);
         setPriceModalData(null);
         toast.success(`Rate updated to ${currConfig.code} ${formatCurrency(val)}`);
@@ -313,7 +314,7 @@ export function RateInventoryMobileView({
                                                     </span>
                                                     <button
                                                         type="button"
-                                                        onClick={() => openPriceModal(rp.ratePlanId, rp.ratePlanName, currentPrice, selectedDate)}
+                                                        onClick={() => openPriceModal(rt.roomTypeId, rp.ratePlanId, rp.ratePlanName, currentPrice, selectedDate)}
                                                         className={s.priceEditBtn}
                                                         title="Edit Rate"
                                                     >
@@ -333,8 +334,8 @@ export function RateInventoryMobileView({
                                         const rpDay = rp.days?.[selectedDate] || {};
                                         const rpStopSell = !!rpDay.stopSell;
                                         const stopKey = channelFilter && channelFilter !== "all"
-                                            ? `channelStopSell_${channelFilter}_${rp.ratePlanId}_${selectedDate}`
-                                            : `stopSell_${rp.ratePlanId}_${selectedDate}`;
+                                            ? `channelStopSell_${channelFilter}_${rt.roomTypeId}_${rp.ratePlanId}_${selectedDate}`
+                                            : `stopSell_${rt.roomTypeId}_${rp.ratePlanId}_${selectedDate}`;
 
                                         const handleToggleStopSell = () => {
                                             if (!canStopSell) {

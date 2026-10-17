@@ -77,8 +77,8 @@
 }
 
 .selectDropdown:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    border-color: #72263d;
+    box-shadow: 0 0 0 2px rgba(114, 38, 61, 0.2);
 }
 
 /* Inline Radio Buttons */
@@ -106,7 +106,7 @@
 }
 
 .radioInput {
-    accent-color: #2563eb;
+    accent-color: #72263d;
     width: 14px;
     height: 14px;
     cursor: pointer;
@@ -138,7 +138,7 @@
 }
 
 .checkboxInput {
-    accent-color: #2563eb;
+    accent-color: #72263d;
     width: 14px;
     height: 14px;
     cursor: pointer;

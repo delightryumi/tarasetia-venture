@@ -1057,294 +1057,381 @@ export const useRateInventory = () => {
         }
     };
 
-    // Apply Bulk Update across Date Range & Conditions
+    // Apply Bulk Update across Date Range & Conditions (Single or Multi-Type Batch)
     const applyBulkUpdate = async (params: BulkUpdateParams) => {
         if (!activeHotelCode) return;
         setSaving(true);
 
         try {
-            const start = new Date(params.dateFrom);
-            const end = new Date(params.dateTo);
-            const affectedDates: string[] = [];
+            // Determine items to process
+            const isMultiMode = params.mode === "multi" && Array.isArray(params.items) && params.items.length > 0;
+            
+            const rawItems: BulkUpdateItem[] = isMultiMode
+                ? params.items!
+                : [{
+                    id: "single-1",
+                    roomTypeId: params.roomTypeIds && params.roomTypeIds.length > 0 ? params.roomTypeIds[0] : "all",
+                    ratePlanId: params.ratePlanIds && params.ratePlanIds.length > 0 ? params.ratePlanIds[0] : "all",
+                    dateFrom: params.dateFrom || "",
+                    dateTo: params.dateTo || "",
+                    daysOfWeek: params.daysOfWeek || [0, 1, 2, 3, 4, 5, 6],
+                    channelId: params.channelId || "all",
+                    rateAction: params.rateAction || "none",
+                    rateValue: params.rateValue,
+                    stopSellAction: params.stopSellAction || "none",
+                    inventoryAction: params.inventoryAction || "none",
+                    inventoryValue: params.inventoryValue,
+                    minStayAction: params.minStayAction,
+                    minStayValue: params.minStayValue,
+                    minStayArrivalAction: params.minStayArrivalAction,
+                    minStayArrivalValue: params.minStayArrivalValue,
+                    minStayThroughAction: params.minStayThroughAction,
+                    minStayThroughValue: params.minStayThroughValue,
+                    maxStayAction: params.maxStayAction,
+                    maxStayValue: params.maxStayValue,
+                    ctaAction: params.ctaAction,
+                    ctdAction: params.ctdAction
+                }];
 
-            let curr = new Date(start);
-            while (curr <= end) {
-                const dayIndex = curr.getDay();
-                if (params.daysOfWeek.includes(dayIndex)) {
-                    const y = curr.getFullYear();
-                    const m = String(curr.getMonth() + 1).padStart(2, "0");
-                    const day = String(curr.getDate()).padStart(2, "0");
-                    affectedDates.push(`${y}-${m}-${day}`);
-                }
-                curr.setDate(curr.getDate() + 1);
-            }
-
-            if (affectedDates.length === 0) {
-                toast.warning("No dates match the selected day criteria.");
+            if (rawItems.length === 0) {
+                toast.warning("No update items to apply.");
                 setSaving(false);
                 return;
             }
 
-            if (params.rateAction !== "none" && !canChangeRate) {
+            // Permission checks
+            const hasRateAction = rawItems.some(it => it.rateAction && it.rateAction !== "none");
+            if (hasRateAction && !canChangeRate) {
                 toast.error("You do not have permission to modify Rates.");
                 setSaving(false);
                 return;
             }
-            if (params.stopSellAction !== "none" && !canStopSell) {
+            const hasStopSellAction = rawItems.some(it => it.stopSellAction && it.stopSellAction !== "none");
+            if (hasStopSellAction && !canStopSell) {
                 toast.error("You do not have permission to modify Stop Sell.");
                 setSaving(false);
                 return;
             }
-            if (params.inventoryAction !== "none" && !canChangeInventory) {
+            const hasInvAction = rawItems.some(it => it.inventoryAction && it.inventoryAction !== "none");
+            if (hasInvAction && !canChangeInventory) {
                 toast.error("You do not have permission to modify Inventory.");
                 setSaving(false);
                 return;
             }
 
-            // Identify target rate plans and room types
-            const targetRoomTypes = (params.roomTypeIds.length === 0 || params.roomTypeIds.includes("all"))
-                ? roomTypes
-                : roomTypes.filter(rt => params.roomTypeIds.includes(rt.id));
+            // Accumulators
+            const dateDocsAccumulator: Record<string, {
+                rates: Record<string, number>;
+                stopSell: Record<string, boolean>;
+                minStay: Record<string, number>;
+                minStayArrival: Record<string, number>;
+                minStayThrough: Record<string, number>;
+                maxStay: Record<string, number>;
+                cta: Record<string, boolean>;
+                ctd: Record<string, boolean>;
+                inventoryOverrides: Record<string, number>;
+                channels: Record<string, any>;
+            }> = {};
 
-            const targetRatePlans = (params.ratePlanIds.length === 0 || params.ratePlanIds.includes("all"))
-                ? ratePlans
-                : ratePlans.filter(rp => params.ratePlanIds.includes(rp.id));
+            const deltaRatesMap: Record<string, any> = {};
+            const deltaAvailMap: Record<string, any> = {};
+            const allAffectedDates = new Set<string>();
 
-            const batch = writeBatch(db);
+            for (const item of rawItems) {
+                if (!item.dateFrom || !item.dateTo) continue;
+                const start = new Date(item.dateFrom);
+                const end = new Date(item.dateTo);
+                if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) continue;
 
-            affectedDates.forEach(dateStr => {
-                const docRef = doc(getHotelCollection(db, "ari_overrides", activeHotelCode), `${activeHotelCode}_${dateStr}`);
-                const currentDoc = ariOverridesMap[dateStr] || {};
-                const currentChannels = currentDoc.channels || {};
+                const daysOfWeek = item.daysOfWeek && item.daysOfWeek.length > 0 ? item.daysOfWeek : [0, 1, 2, 3, 4, 5, 6];
+                const itemDates: string[] = [];
+                let curr = new Date(start);
+                while (curr <= end) {
+                    if (daysOfWeek.includes(curr.getDay())) {
+                        const y = curr.getFullYear();
+                        const m = String(curr.getMonth() + 1).padStart(2, "0");
+                        const d = String(curr.getDate()).padStart(2, "0");
+                        const dateStr = `${y}-${m}-${d}`;
+                        itemDates.push(dateStr);
+                        allAffectedDates.add(dateStr);
+                    }
+                    curr.setDate(curr.getDate() + 1);
+                }
 
-                const targetChannelId = params.channelId || "all";
+                if (itemDates.length === 0) continue;
+
+                // Target Room Types
+                const targetRoomTypes = (!item.roomTypeId || item.roomTypeId === "all")
+                    ? (params.roomTypeIds && !params.roomTypeIds.includes("all") && params.roomTypeIds.length > 0
+                        ? roomTypes.filter(rt => params.roomTypeIds!.includes(rt.id))
+                        : roomTypes)
+                    : roomTypes.filter(rt => rt.id === item.roomTypeId);
+
+                // Target Rate Plans
+                const targetRatePlans = (!item.ratePlanId || item.ratePlanId === "all")
+                    ? (params.ratePlanIds && !params.ratePlanIds.includes("all") && params.ratePlanIds.length > 0
+                        ? ratePlans.filter(rp => params.ratePlanIds!.includes(rp.id))
+                        : ratePlans)
+                    : ratePlans.filter(rp => rp.id === item.ratePlanId);
+
+                const targetChannelId = item.channelId || params.channelId || "all";
                 const isChannelSpecific = targetChannelId !== "all";
 
-                if (isChannelSpecific) {
-                    const channelData = currentChannels[targetChannelId] || { rates: {}, allotments: {} };
-                    const newChRates = { ...(channelData.rates || {}) };
-                    const newChAllotments = { ...(channelData.allotments || {}) };
-
-                    if (params.rateAction !== "none") {
-                        targetRatePlans.forEach(rp => {
-                            const basePrice = Number(rp.baseRate || 0);
-                            const currPrice = channelData.rates?.[rp.id]?.rate ?? (currentDoc.rates?.[rp.id] ?? basePrice);
-                            let finalPrice = currPrice;
-                            if (params.rateAction === "set" && params.rateValue !== undefined) {
-                                finalPrice = params.rateValue;
-                            } else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) {
-                                finalPrice = currPrice + params.rateValue;
-                            } else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) {
-                                finalPrice = Math.max(0, currPrice - params.rateValue);
-                            } else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) {
-                                finalPrice = Math.round(currPrice * (1 + params.rateValue / 100));
-                            } else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) {
-                                finalPrice = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
-                            }
-                            newChRates[rp.id] = { rate: finalPrice, isCustom: true };
-                        });
+                itemDates.forEach(dateStr => {
+                    if (!dateDocsAccumulator[dateStr]) {
+                        const existing = ariOverridesMap[dateStr] || {};
+                        dateDocsAccumulator[dateStr] = {
+                            rates: { ...(existing.rates || {}) },
+                            stopSell: { ...(existing.stopSell || {}) },
+                            minStay: { ...(existing.minStay || {}) },
+                            minStayArrival: { ...(existing.minStayArrival || {}) },
+                            minStayThrough: { ...(existing.minStayThrough || {}) },
+                            maxStay: { ...(existing.maxStay || {}) },
+                            cta: { ...(existing.cta || {}) },
+                            ctd: { ...(existing.ctd || {}) },
+                            inventoryOverrides: { ...(existing.inventoryOverrides || {}) },
+                            channels: { ...(existing.channels || {}) }
+                        };
                     }
+                    const docData = dateDocsAccumulator[dateStr];
 
-                    if (params.stopSellAction === "close") {
-                        targetRatePlans.forEach(rp => {
-                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), stopSell: true };
-                        });
-                    } else if (params.stopSellAction === "open") {
-                        targetRatePlans.forEach(rp => {
-                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), stopSell: false };
-                        });
-                    }
+                    if (isChannelSpecific) {
+                        const channelData = docData.channels[targetChannelId] || { rates: {}, allotments: {} };
+                        const chRates = { ...(channelData.rates || {}) };
+                        const chAllotments = { ...(channelData.allotments || {}) };
 
-                    if (params.minStayAction === "set" && params.minStayValue !== undefined) {
-                        targetRatePlans.forEach(rp => {
-                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), minStay: params.minStayValue! };
-                        });
-                    } else if (params.minStayAction === "remove") {
-                        targetRatePlans.forEach(rp => {
-                            if (newChRates[rp.id]) delete newChRates[rp.id].minStay;
-                        });
-                    }
-
-                    if (params.ctaAction === "close") {
-                        targetRatePlans.forEach(rp => {
-                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), closedToArrival: true };
-                        });
-                    } else if (params.ctaAction === "open") {
-                        targetRatePlans.forEach(rp => {
-                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), closedToArrival: false };
-                        });
-                    }
-
-                    if (params.ctdAction === "close") {
-                        targetRatePlans.forEach(rp => {
-                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), closedToDeparture: true };
-                        });
-                    } else if (params.ctdAction === "open") {
-                        targetRatePlans.forEach(rp => {
-                            newChRates[rp.id] = { ...(newChRates[rp.id] || {}), closedToDeparture: false };
-                        });
-                    }
-
-                    if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
-                        targetRoomTypes.forEach(rt => {
-                            newChAllotments[rt.id] = { allotmentLimit: params.inventoryValue!, isCustom: true };
-                        });
-                    }
-
-                    const mergedChannels = {
-                        ...currentChannels,
-                        [targetChannelId]: {
-                            ...channelData,
-                            rates: newChRates,
-                            allotments: newChAllotments
+                        if (item.rateAction && item.rateAction !== "none") {
+                            targetRatePlans.forEach(rp => {
+                                const basePrice = Number(rp.baseRate || 0);
+                                const currPrice = channelData.rates?.[rp.id]?.rate ?? (docData.rates[rp.id] ?? basePrice);
+                                let finalPrice = currPrice;
+                                if (item.rateAction === "set" && item.rateValue !== undefined) {
+                                    finalPrice = item.rateValue;
+                                } else if (item.rateAction === "inc_amount" && item.rateValue !== undefined) {
+                                    finalPrice = currPrice + item.rateValue;
+                                } else if (item.rateAction === "dec_amount" && item.rateValue !== undefined) {
+                                    finalPrice = Math.max(0, currPrice - item.rateValue);
+                                } else if (item.rateAction === "inc_percent" && item.rateValue !== undefined) {
+                                    finalPrice = Math.round((currPrice * (1 + item.rateValue / 100) + Number.EPSILON) * 100) / 100;
+                                } else if (item.rateAction === "dec_percent" && item.rateValue !== undefined) {
+                                    finalPrice = Math.max(0, Math.round((currPrice * (1 - item.rateValue / 100) + Number.EPSILON) * 100) / 100);
+                                }
+                                targetRoomTypes.forEach(rt => {
+                                    const cKey = `${rt.id}_${rp.id}`;
+                                    chRates[cKey] = { ...(chRates[cKey] || {}), rate: finalPrice, isCustom: true };
+                                });
+                            });
                         }
-                    };
 
-                    batch.set(docRef, {
-                        date: dateStr,
-                        hotelCode: activeHotelCode,
-                        channels: mergedChannels,
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                } else {
-                    const newRates = { ...(currentDoc.rates || {}) };
-                    const newStopSell = { ...(currentDoc.stopSell || {}) };
-                    const newMinStay = { ...(currentDoc.minStay || {}) };
-                    const newMinStayArr = { ...(currentDoc.minStayArrival || {}) };
-                    const newMinStayThru = { ...(currentDoc.minStayThrough || {}) };
-                    const newMaxStay = { ...(currentDoc.maxStay || {}) };
-                    const newCta = { ...(currentDoc.cta || {}) };
-                    const newCtd = { ...(currentDoc.ctd || {}) };
-                    const newInv = { ...(currentDoc.inventoryOverrides || {}) };
+                        if (item.stopSellAction === "close") {
+                            targetRoomTypes.forEach(rt => {
+                                targetRatePlans.forEach(rp => {
+                                    const cKey = `${rt.id}_${rp.id}`;
+                                    chRates[cKey] = { ...(chRates[cKey] || {}), stopSell: true };
+                                });
+                            });
+                        } else if (item.stopSellAction === "open") {
+                            targetRoomTypes.forEach(rt => {
+                                targetRatePlans.forEach(rp => {
+                                    const cKey = `${rt.id}_${rp.id}`;
+                                    chRates[cKey] = { ...(chRates[cKey] || {}), stopSell: false };
+                                });
+                            });
+                        }
 
-                    // Apply Rate Adjustments per Room Type & Rate Plan
-                    if (params.rateAction !== "none") {
+                        if (item.inventoryAction === "set" && item.inventoryValue !== undefined) {
+                            targetRoomTypes.forEach(rt => {
+                                chAllotments[rt.id] = { allotmentLimit: item.inventoryValue!, isCustom: true };
+                            });
+                        }
+
+                        docData.channels[targetChannelId] = {
+                            ...channelData,
+                            rates: chRates,
+                            allotments: chAllotments
+                        };
+                    } else {
+                        // Common Pool / Master
+                        if (item.rateAction && item.rateAction !== "none") {
+                            targetRoomTypes.forEach(rt => {
+                                targetRatePlans.forEach(rp => {
+                                    const compoundKey = `${rt.id}_${rp.id}`;
+                                    const basePrice = Number(rp.roomRates?.[rt.id] ?? rp.baseRate ?? rt.basePrice ?? 0);
+                                    const currPrice = docData.rates[compoundKey] !== undefined 
+                                        ? docData.rates[compoundKey] 
+                                        : (docData.rates[rp.id] !== undefined ? docData.rates[rp.id] : basePrice);
+
+                                    let finalPrice = currPrice;
+                                    if (item.rateAction === "set" && item.rateValue !== undefined) {
+                                        finalPrice = item.rateValue;
+                                    } else if (item.rateAction === "inc_amount" && item.rateValue !== undefined) {
+                                        finalPrice = currPrice + item.rateValue;
+                                    } else if (item.rateAction === "dec_amount" && item.rateValue !== undefined) {
+                                        finalPrice = Math.max(0, currPrice - item.rateValue);
+                                    } else if (item.rateAction === "inc_percent" && item.rateValue !== undefined) {
+                                        finalPrice = Math.round((currPrice * (1 + item.rateValue / 100) + Number.EPSILON) * 100) / 100;
+                                    } else if (item.rateAction === "dec_percent" && item.rateValue !== undefined) {
+                                        finalPrice = Math.max(0, Math.round((currPrice * (1 - item.rateValue / 100) + Number.EPSILON) * 100) / 100);
+                                    }
+                                    docData.rates[compoundKey] = finalPrice;
+                                });
+                            });
+                        }
+
+                        if (item.stopSellAction === "close") {
+                            targetRoomTypes.forEach(rt => {
+                                targetRatePlans.forEach(rp => { 
+                                    docData.stopSell[`${rt.id}_${rp.id}`] = true;
+                                });
+                            });
+                        } else if (item.stopSellAction === "open") {
+                            targetRoomTypes.forEach(rt => {
+                                targetRatePlans.forEach(rp => { 
+                                    docData.stopSell[`${rt.id}_${rp.id}`] = false;
+                                });
+                            });
+                        }
+
+                        if (item.minStayArrivalAction === "set" && item.minStayArrivalValue !== undefined) {
+                            targetRatePlans.forEach(rp => { 
+                                docData.minStayArrival[rp.id] = item.minStayArrivalValue!; 
+                                docData.minStay[rp.id] = item.minStayArrivalValue!;
+                            });
+                        } else if (item.minStayArrivalAction === "remove") {
+                            targetRatePlans.forEach(rp => { delete docData.minStayArrival[rp.id]; });
+                        }
+
+                        if (item.minStayThroughAction === "set" && item.minStayThroughValue !== undefined) {
+                            targetRatePlans.forEach(rp => { docData.minStayThrough[rp.id] = item.minStayThroughValue!; });
+                        } else if (item.minStayThroughAction === "remove") {
+                            targetRatePlans.forEach(rp => { delete docData.minStayThrough[rp.id]; });
+                        }
+
+                        if (item.maxStayAction === "set" && item.maxStayValue !== undefined) {
+                            targetRatePlans.forEach(rp => { docData.maxStay[rp.id] = item.maxStayValue!; });
+                        } else if (item.maxStayAction === "remove") {
+                            targetRatePlans.forEach(rp => { delete docData.maxStay[rp.id]; });
+                        }
+
+                        if (item.minStayAction === "set" && item.minStayValue !== undefined) {
+                            targetRatePlans.forEach(rp => { 
+                                docData.minStay[rp.id] = item.minStayValue!; 
+                                docData.minStayArrival[rp.id] = item.minStayValue!;
+                                docData.minStayThrough[rp.id] = item.minStayValue!;
+                            });
+                        } else if (item.minStayAction === "remove") {
+                            targetRatePlans.forEach(rp => { 
+                                delete docData.minStay[rp.id]; 
+                                delete docData.minStayArrival[rp.id];
+                                delete docData.minStayThrough[rp.id];
+                            });
+                        }
+
+                        if (item.ctaAction === "close") {
+                            targetRatePlans.forEach(rp => { docData.cta[rp.id] = true; });
+                        } else if (item.ctaAction === "open") {
+                            targetRatePlans.forEach(rp => { docData.cta[rp.id] = false; });
+                        }
+
+                        if (item.ctdAction === "close") {
+                            targetRatePlans.forEach(rp => { docData.ctd[rp.id] = true; });
+                        } else if (item.ctdAction === "open") {
+                            targetRatePlans.forEach(rp => { docData.ctd[rp.id] = false; });
+                        }
+
+                        if (item.inventoryAction === "set" && item.inventoryValue !== undefined) {
+                            targetRoomTypes.forEach(rt => { docData.inventoryOverrides[rt.id] = item.inventoryValue!; });
+                        }
+                    }
+
+                    // Accumulate Delta Payload for Channex Batch
+                    const hasRateChange = item.rateAction && item.rateAction !== "none";
+                    const hasStopSellChange = item.stopSellAction && item.stopSellAction !== "none";
+                    const hasMinStayChange = item.minStayAction && item.minStayAction !== "none";
+                    const hasMinStayArrChange = item.minStayArrivalAction && item.minStayArrivalAction !== "none";
+                    const hasMinStayThruChange = item.minStayThroughAction && item.minStayThroughAction !== "none";
+                    const hasMaxStayChange = item.maxStayAction && item.maxStayAction !== "none";
+                    const hasCtaChange = item.ctaAction && item.ctaAction !== "none";
+                    const hasCtdChange = item.ctdAction && item.ctdAction !== "none";
+
+                    if (hasRateChange || hasStopSellChange || hasMinStayChange || hasMinStayArrChange || hasMinStayThruChange || hasMaxStayChange || hasCtaChange || hasCtdChange) {
                         targetRoomTypes.forEach(rt => {
                             targetRatePlans.forEach(rp => {
-                                const compoundKey = `${rt.id}_${rp.id}`;
-                                const basePrice = Number(rp.roomRates?.[rt.id] ?? rp.baseRate ?? rt.basePrice ?? 0);
-                                const currPrice = currentDoc.rates?.[compoundKey] !== undefined 
-                                    ? currentDoc.rates[compoundKey] 
-                                    : (currentDoc.rates?.[rp.id] !== undefined ? currentDoc.rates[rp.id] : basePrice);
-
-                                let finalPrice = currPrice;
-                                if (params.rateAction === "set" && params.rateValue !== undefined) {
-                                    finalPrice = params.rateValue;
-                                } else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) {
-                                    finalPrice = currPrice + params.rateValue;
-                                } else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) {
-                                    finalPrice = Math.max(0, currPrice - params.rateValue);
-                                } else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) {
-                                    finalPrice = Math.round(currPrice * (1 + params.rateValue / 100));
-                                } else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) {
-                                    finalPrice = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
+                                const deltaKey = `${rp.id}_${rt.id}_${dateStr}`;
+                                if (!deltaRatesMap[deltaKey]) {
+                                    deltaRatesMap[deltaKey] = {
+                                        ratePlanId: rp.id,
+                                        roomTypeId: rt.id,
+                                        date: dateStr
+                                    };
                                 }
-                                newRates[compoundKey] = finalPrice;
-                                // Fallback single key if only 1 room type
-                                if (targetRoomTypes.length === 1) {
-                                    newRates[rp.id] = finalPrice;
+                                const deltaItem = deltaRatesMap[deltaKey];
+
+                                if (hasRateChange) {
+                                    const compoundKey = `${rt.id}_${rp.id}`;
+                                    deltaItem.rate = docData.rates[compoundKey] ?? docData.rates[rp.id];
                                 }
+                                if (item.stopSellAction === "close") deltaItem.stopSell = true;
+                                else if (item.stopSellAction === "open") deltaItem.stopSell = false;
+
+                                if (item.minStayArrivalAction === "set" && item.minStayArrivalValue !== undefined) deltaItem.minStayArrival = item.minStayArrivalValue;
+                                else if (item.minStayArrivalAction === "remove") deltaItem.minStayArrival = null;
+
+                                if (item.minStayThroughAction === "set" && item.minStayThroughValue !== undefined) deltaItem.minStayThrough = item.minStayThroughValue;
+                                else if (item.minStayThroughAction === "remove") deltaItem.minStayThrough = null;
+
+                                if (item.maxStayAction === "set" && item.maxStayValue !== undefined) deltaItem.maxStay = item.maxStayValue;
+                                else if (item.maxStayAction === "remove") deltaItem.maxStay = null;
+
+                                if (item.minStayAction === "set" && item.minStayValue !== undefined) deltaItem.minStay = item.minStayValue;
+                                else if (item.minStayAction === "remove") deltaItem.minStay = null;
+
+                                if (item.ctaAction === "close") deltaItem.closedToArrival = true;
+                                else if (item.ctaAction === "open") deltaItem.closedToArrival = false;
+
+                                if (item.ctdAction === "close") deltaItem.closedToDeparture = true;
+                                else if (item.ctdAction === "open") deltaItem.closedToDeparture = false;
                             });
                         });
                     }
 
-                    // Apply Stop Sell per Room Type & Rate Plan
-                    if (params.stopSellAction === "close") {
+                    if (item.inventoryAction === "set" && item.inventoryValue !== undefined) {
                         targetRoomTypes.forEach(rt => {
-                            targetRatePlans.forEach(rp => { 
-                                newStopSell[`${rt.id}_${rp.id}`] = true;
-                                if (targetRoomTypes.length === 1) newStopSell[rp.id] = true;
-                            });
-                        });
-                    } else if (params.stopSellAction === "open") {
-                        targetRoomTypes.forEach(rt => {
-                            targetRatePlans.forEach(rp => { 
-                                newStopSell[`${rt.id}_${rp.id}`] = false;
-                                if (targetRoomTypes.length === 1) newStopSell[rp.id] = false;
-                            });
+                            const availKey = `${rt.id}_${dateStr}`;
+                            deltaAvailMap[availKey] = {
+                                roomTypeId: rt.id,
+                                date: dateStr,
+                                qty: item.inventoryValue!
+                            };
                         });
                     }
+                });
+            }
 
-                    // Apply Min Stay Arrival
-                    if (params.minStayArrivalAction === "set" && params.minStayArrivalValue !== undefined) {
-                        targetRatePlans.forEach(rp => { 
-                            newMinStayArr[rp.id] = params.minStayArrivalValue!; 
-                            newMinStay[rp.id] = params.minStayArrivalValue!;
-                        });
-                    } else if (params.minStayArrivalAction === "remove") {
-                        targetRatePlans.forEach(rp => { delete newMinStayArr[rp.id]; });
-                    }
+            const affectedDateList = Array.from(allAffectedDates);
+            if (affectedDateList.length === 0) {
+                toast.warning("No dates match the selected day criteria.");
+                setSaving(false);
+                return;
+            }
 
-                    // Apply Min Stay Through
-                    if (params.minStayThroughAction === "set" && params.minStayThroughValue !== undefined) {
-                        targetRatePlans.forEach(rp => { 
-                            newMinStayThru[rp.id] = params.minStayThroughValue!; 
-                        });
-                    } else if (params.minStayThroughAction === "remove") {
-                        targetRatePlans.forEach(rp => { delete newMinStayThru[rp.id]; });
-                    }
-
-                    // Apply Max Stay
-                    if (params.maxStayAction === "set" && params.maxStayValue !== undefined) {
-                        targetRatePlans.forEach(rp => { 
-                            newMaxStay[rp.id] = params.maxStayValue!; 
-                        });
-                    } else if (params.maxStayAction === "remove") {
-                        targetRatePlans.forEach(rp => { delete newMaxStay[rp.id]; });
-                    }
-
-                    // Apply Legacy Min Stay
-                    if (params.minStayAction === "set" && params.minStayValue !== undefined) {
-                        targetRatePlans.forEach(rp => { 
-                            newMinStay[rp.id] = params.minStayValue!; 
-                            newMinStayArr[rp.id] = params.minStayValue!;
-                            newMinStayThru[rp.id] = params.minStayValue!;
-                        });
-                    } else if (params.minStayAction === "remove") {
-                        targetRatePlans.forEach(rp => { 
-                            delete newMinStay[rp.id]; 
-                            delete newMinStayArr[rp.id];
-                            delete newMinStayThru[rp.id];
-                        });
-                    }
-
-                    // Apply CTA
-                    if (params.ctaAction === "close") {
-                        targetRatePlans.forEach(rp => { newCta[rp.id] = true; });
-                    } else if (params.ctaAction === "open") {
-                        targetRatePlans.forEach(rp => { newCta[rp.id] = false; });
-                    }
-
-                    // Apply CTD
-                    if (params.ctdAction === "close") {
-                        targetRatePlans.forEach(rp => { newCtd[rp.id] = true; });
-                    } else if (params.ctdAction === "open") {
-                        targetRatePlans.forEach(rp => { newCtd[rp.id] = false; });
-                    }
-
-                    // Apply Inventory Override
-                    if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
-                        targetRoomTypes.forEach(rt => { newInv[rt.id] = params.inventoryValue!; });
-                    }
-
+            // Write all accumulated dates to Firestore in batches
+            const entries = Object.entries(dateDocsAccumulator);
+            const BATCH_SIZE = 400;
+            for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+                const chunk = entries.slice(i, i + BATCH_SIZE);
+                const batch = writeBatch(db);
+                chunk.forEach(([dateStr, docData]) => {
+                    const docRef = doc(getHotelCollection(db, "ari_overrides", activeHotelCode), `${activeHotelCode}_${dateStr}`);
                     batch.set(docRef, {
                         date: dateStr,
                         hotelCode: activeHotelCode,
-                        rates: newRates,
-                        stopSell: newStopSell,
-                        minStay: newMinStay,
-                        minStayArrival: newMinStayArr,
-                        minStayThrough: newMinStayThru,
-                        maxStay: newMaxStay,
-                        cta: newCta,
-                        ctd: newCtd,
-                        inventoryOverrides: newInv,
+                        ...docData,
                         updatedAt: new Date().toISOString()
                     }, { merge: true });
-                }
-            });
-
-            await batch.commit();
+                });
+                await batch.commit();
+            }
 
             // Record audit trail log to Firestore for bulk update
             try {
@@ -1352,7 +1439,7 @@ export const useRateInventory = () => {
                 const bulkLogRef = collection(db, "hotels", activeHotelCode, "channex_task_logs");
                 const uniqueBulkTaskId = `bulk-ari-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
                 await setDoc(doc(bulkLogRef, uniqueBulkTaskId), {
-                    action: "Bulk Inventory / Rate Update",
+                    action: isMultiMode ? "Multi-Item Batched ARI Update" : "Bulk Inventory / Rate Update",
                     task_type: "BULK_UPDATE",
                     channelName: params.channelId ? params.channelId : "All Connected Channels",
                     user: authorLabel,
@@ -1368,23 +1455,16 @@ export const useRateInventory = () => {
                     task_id: uniqueBulkTaskId,
                     task_ids: [uniqueBulkTaskId],
                     diff: {
-                        dateRange: `${params.dateFrom} s/d ${params.dateTo}`,
-                        affectedDatesCount: affectedDates.length,
-                        rateAction: params.rateAction,
-                        rateValue: params.rateValue,
-                        stopSellAction: params.stopSellAction,
-                        minStayAction: params.minStayAction,
-                        minStayValue: params.minStayValue,
-                        minStayArrivalAction: params.minStayArrivalAction,
-                        minStayArrivalValue: params.minStayArrivalValue,
-                        minStayThroughAction: params.minStayThroughAction,
-                        minStayThroughValue: params.minStayThroughValue,
-                        maxStayAction: params.maxStayAction,
-                        maxStayValue: params.maxStayValue,
-                        ctaAction: params.ctaAction,
-                        ctdAction: params.ctdAction,
-                        inventoryAction: params.inventoryAction,
-                        inventoryValue: params.inventoryValue
+                        mode: isMultiMode ? "multi" : "single",
+                        itemsCount: rawItems.length,
+                        affectedDatesCount: affectedDateList.length,
+                        itemsSummary: rawItems.map(it => ({
+                            roomTypeId: it.roomTypeId,
+                            ratePlanId: it.ratePlanId,
+                            dateRange: `${it.dateFrom} s/d ${it.dateTo}`,
+                            rateValue: it.rateValue,
+                            rateAction: it.rateAction
+                        }))
                     },
                     details: params
                 });
@@ -1392,73 +1472,15 @@ export const useRateInventory = () => {
                 console.warn("[RateInventory Audit] Could not record bulk log:", auditErr);
             }
 
-            // Build delta payload for exact 1-call batch sync (Certification Standard)
-            const deltaRates: any[] = [];
-            const deltaAvail: any[] = [];
-
-            affectedDates.forEach(dateStr => {
-                const existingDoc = ariOverridesMap[dateStr] || {};
-                const hasRateChange = params.rateAction !== "none";
-                const hasStopSellChange = params.stopSellAction !== "none";
-                const hasMinStayChange = params.minStayAction && params.minStayAction !== "none";
-                const hasMinStayArrChange = params.minStayArrivalAction && params.minStayArrivalAction !== "none";
-                const hasMinStayThruChange = params.minStayThroughAction && params.minStayThroughAction !== "none";
-                const hasMaxStayChange = params.maxStayAction && params.maxStayAction !== "none";
-                const hasCtaChange = params.ctaAction && params.ctaAction !== "none";
-                const hasCtdChange = params.ctdAction && params.ctdAction !== "none";
-
-                if (hasRateChange || hasStopSellChange || hasMinStayChange || hasMinStayArrChange || hasMinStayThruChange || hasMaxStayChange || hasCtaChange || hasCtdChange) {
-                    targetRatePlans.forEach(rp => {
-                        const item: any = { ratePlanId: rp.id, date: dateStr };
-                        if (hasRateChange) {
-                            const basePrice = Number(rp.baseRate || 0);
-                            const currPrice = existingDoc.rates?.[rp.id] !== undefined ? existingDoc.rates[rp.id] : basePrice;
-                            let finalPrice = currPrice;
-                            if (params.rateAction === "set" && params.rateValue !== undefined) finalPrice = params.rateValue;
-                            else if (params.rateAction === "inc_amount" && params.rateValue !== undefined) finalPrice = currPrice + params.rateValue;
-                            else if (params.rateAction === "dec_amount" && params.rateValue !== undefined) finalPrice = Math.max(0, currPrice - params.rateValue);
-                            else if (params.rateAction === "inc_percent" && params.rateValue !== undefined) finalPrice = Math.round(currPrice * (1 + params.rateValue / 100));
-                            else if (params.rateAction === "dec_percent" && params.rateValue !== undefined) finalPrice = Math.max(0, Math.round(currPrice * (1 - params.rateValue / 100)));
-                            item.rate = finalPrice;
-                        }
-                        if (params.stopSellAction === "close") item.stopSell = true;
-                        else if (params.stopSellAction === "open") item.stopSell = false;
-
-                        if (params.minStayArrivalAction === "set" && params.minStayArrivalValue !== undefined) item.minStayArrival = params.minStayArrivalValue;
-                        else if (params.minStayArrivalAction === "remove") item.minStayArrival = null;
-
-                        if (params.minStayThroughAction === "set" && params.minStayThroughValue !== undefined) item.minStayThrough = params.minStayThroughValue;
-                        else if (params.minStayThroughAction === "remove") item.minStayThrough = null;
-
-                        if (params.maxStayAction === "set" && params.maxStayValue !== undefined) item.maxStay = params.maxStayValue;
-                        else if (params.maxStayAction === "remove") item.maxStay = null;
-
-                        if (params.minStayAction === "set" && params.minStayValue !== undefined) item.minStay = params.minStayValue;
-                        else if (params.minStayAction === "remove") item.minStay = null;
-
-                        if (params.ctaAction === "close") item.closedToArrival = true;
-                        else if (params.ctaAction === "open") item.closedToArrival = false;
-
-                        if (params.ctdAction === "close") item.closedToDeparture = true;
-                        else if (params.ctdAction === "open") item.closedToDeparture = false;
-
-                        deltaRates.push(item);
-                    });
-                }
-
-                if (params.inventoryAction === "set" && params.inventoryValue !== undefined) {
-                    targetRoomTypes.forEach(rt => {
-                        deltaAvail.push({ roomTypeId: rt.id, date: dateStr, qty: params.inventoryValue! });
-                    });
-                }
-            });
+            const deltaRates = Object.values(deltaRatesMap);
+            const deltaAvail = Object.values(deltaAvailMap);
 
             setBulkModalOpen(false);
             if (deltaRates.length > 0 || deltaAvail.length > 0) {
-                toast.success(`Bulk Update applied to ${affectedDates.length} date(s). Syncing delta to Channex...`);
+                toast.success(`Batched update applied to ${affectedDateList.length} date(s). Executing 1 batched API call to Channex...`);
                 await syncDeltaToChannex({ rates: deltaRates, availability: deltaAvail });
             } else {
-                toast.success(`Bulk Update applied to ${affectedDates.length} date(s).`);
+                toast.success(`Bulk Update applied to ${affectedDateList.length} date(s).`);
             }
         } catch (err: any) {
             console.error("Error applying bulk update:", err);

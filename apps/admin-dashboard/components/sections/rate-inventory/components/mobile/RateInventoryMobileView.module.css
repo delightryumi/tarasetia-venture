@@ -197,22 +197,22 @@
   border-radius: 10px;
   font-size: 11px;
   font-weight: 700;
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
-  box-shadow: 0 2px 0 #93c5fd;
+  background: #fdf2f4;
+  color: #72263d;
+  border: 1px solid #f3d5dc;
+  box-shadow: 0 2px 0 #eecdd5;
   cursor: pointer;
 }
 
 .todayBtn3D:active {
   transform: translateY(2px);
-  box-shadow: 0 0 0 #93c5fd;
+  box-shadow: 0 0 0 #eecdd5;
 }
 
 :global(.dark) .todayBtn3D {
-  background: #172554;
-  color: #60a5fa;
-  border-color: #1e3a8a;
+  background: #36121e;
+  color: #fce7eb;
+  border-color: #72263d;
   box-shadow: 0 2px 0 #0f172a;
 }
 
@@ -303,11 +303,11 @@
 }
 
 .datePillActive {
-  background: #2563eb !important;
-  border-color: #1d4ed8 !important;
+  background: #72263d !important;
+  border-color: #581c2b !important;
   box-shadow: 
-    0 4px 0 #1e40af !important,
-    0 8px 16px rgba(37, 99, 235, 0.35) !important;
+    0 4px 0 #450f1f !important,
+    0 8px 16px rgba(114, 38, 61, 0.35) !important;
   transform: translateY(-2px);
 }
 
@@ -649,10 +649,10 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #2563eb;
-  box-shadow: 0 2px 0 #93c5fd;
+  background: #fdf2f4;
+  border: 1px solid #f3d5dc;
+  color: #72263d;
+  box-shadow: 0 2px 0 #eecdd5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -661,7 +661,7 @@
 
 .priceEditBtn:active {
   transform: translateY(2px);
-  box-shadow: 0 0 0 #93c5fd;
+  box-shadow: 0 0 0 #eecdd5;
 }
 
 /* ── Sticky Bottom 3D Action Save Dock ── */
@@ -815,7 +815,7 @@
 }
 
 .sheetInput:focus {
-  border-color: #2563eb;
+  border-color: #72263d;
   background: #ffffff;
 }
 
@@ -883,9 +883,9 @@
   flex: 2;
   padding: 14px;
   border-radius: 14px;
-  background: #2563eb;
-  border: 1px solid #1d4ed8;
-  box-shadow: 0 3px 0 #1e40af;
+  background: #72263d;
+  border: 1px solid #581c2b;
+  box-shadow: 0 3px 0 #450f1f;
   font-size: 14px;
   font-weight: 800;
   color: #ffffff;

@@ -27,11 +27,11 @@
 }
 
 .cellToday {
-    background-color: #f8fbff;
+    background-color: #fdf5f7;
 }
 
 :global(.dark) .cellToday {
-    background-color: #1a2744;
+    background-color: #260c14;
 }
 
 .cellDirty {
@@ -71,14 +71,14 @@
 }
 
 .numberInput:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+    border-color: #72263d;
+    box-shadow: 0 0 0 2px rgba(114, 38, 61, 0.18);
     background-color: #ffffff;
 }
 
 :global(.dark) .numberInput:focus {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25);
+    border-color: #e07a93;
+    box-shadow: 0 0 0 2px rgba(224, 122, 147, 0.25);
     background-color: #0f172a;
 }
 

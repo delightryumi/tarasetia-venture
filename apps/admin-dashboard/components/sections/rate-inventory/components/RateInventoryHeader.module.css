@@ -27,9 +27,9 @@
     width: 42px;
     height: 42px;
     border-radius: 10px;
-    background-color: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
+    background-color: #fdf2f4;
+    color: #72263d;
+    border: 1px solid #f3d5dc;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -37,9 +37,9 @@
 }
 
 :global(.dark) .iconBox {
-    background-color: #1e3a8a;
-    color: #93c5fd;
-    border-color: #2563eb;
+    background-color: #36121e;
+    color: #fce7eb;
+    border-color: #72263d;
 }
 
 .hotelTitleGroup {

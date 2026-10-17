@@ -139,8 +139,8 @@
 
 .filterSelect:focus,
 .filterDateInput:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    border-color: #72263d;
+    box-shadow: 0 0 0 2px rgba(114, 38, 61, 0.15);
 }
 
 .filterSelectScope {
@@ -420,16 +420,16 @@
     border-radius: 5px;
     font-size: 11px;
     font-weight: 600;
-    background: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
+    background: #fdf2f4;
+    color: #72263d;
+    border: 1px solid #f3d5dc;
     letter-spacing: 0.2px;
 }
 
 :global(.dark) .roleBadgeDrawer {
-    background: rgba(30, 58, 138, 0.3);
-    color: #93c5fd;
-    border-color: #1e3a8a;
+    background: rgba(114, 38, 61, 0.3);
+    color: #fce7eb;
+    border-color: #72263d;
 }
 
 .timestampText {
@@ -486,7 +486,7 @@
 }
 
 .btnView {
-    color: #2563eb;
+    color: #72263d;
     background: none;
     border: none;
     font-size: 12px;
@@ -499,16 +499,16 @@
 }
 
 .btnView:hover {
-    background: #eff6ff;
+    background: #fdf2f4;
     text-decoration: underline;
 }
 
 :global(.dark) .btnView {
-    color: #60a5fa;
+    color: #e07a93;
 }
 
 :global(.dark) .btnView:hover {
-    background: #1e3a8a;
+    background: #36121e;
 }
 
 /* ── Task ID Chip ── */
@@ -539,14 +539,14 @@
 .taskIdMono {
     font-family: var(--font-mono-jb, monospace);
     font-size: 11px;
-    color: #2563eb;
+    color: #72263d;
     font-weight: 600;
     white-space: nowrap;
     letter-spacing: -0.2px;
 }
 
 :global(.dark) .taskIdMono {
-    color: #60a5fa;
+    color: #e07a93;
 }
 
 .taskIdCopyIcon {
@@ -600,9 +600,9 @@
 }
 
 .pageBtnActive {
-    background: #2563eb !important;
+    background: #72263d !important;
     color: #ffffff !important;
-    border-color: #2563eb !important;
+    border-color: #581c2b !important;
     font-weight: 700;
 }
 
@@ -778,17 +778,17 @@
 }
 
 .metaValueBlue {
-    color: #2563eb;
+    color: #72263d;
     font-weight: 600;
 }
 
 :global(.dark) .metaValueBlue {
-    color: #60a5fa;
+    color: #e07a93;
 }
 
 .metaValueTaskId {
     font-family: var(--font-mono-jb, monospace);
-    color: #2563eb;
+    color: #72263d;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -797,7 +797,7 @@
 }
 
 :global(.dark) .metaValueTaskId {
-    color: #60a5fa;
+    color: #e07a93;
 }
 
 .btnCopySmall {
@@ -878,13 +878,13 @@
 }
 
 .detailTabBtnActive {
-    color: #2563eb;
-    border-bottom-color: #2563eb;
+    color: #72263d;
+    border-bottom-color: #72263d;
 }
 
 :global(.dark) .detailTabBtnActive {
-    color: #60a5fa;
-    border-bottom-color: #60a5fa;
+    color: #e07a93;
+    border-bottom-color: #e07a93;
 }
 
 /* Code & JSON Box */
@@ -1142,23 +1142,23 @@
     padding: 4px 10px;
     font-size: 11px;
     font-weight: 600;
-    color: #1d4ed8;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    color: #72263d;
+    background: #fdf2f4;
+    border: 1px solid #f3d5dc;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 :global(.dark) .liveSyncBtn {
-    background: #1e3a8a;
-    color: #93c5fd;
-    border-color: #2563eb;
+    background: #36121e;
+    color: #fce7eb;
+    border-color: #72263d;
 }
 
 .liveSyncBtn:hover {
-    background: #dbeafe;
-    border-color: #93c5fd;
+    background: #fae4e8;
+    border-color: #e8b6c1;
 }
 
 .liveSyncBtnSpaced {

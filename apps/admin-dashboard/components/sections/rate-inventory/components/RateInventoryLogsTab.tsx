@@ -828,7 +828,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                                 <div key={idx} className={styles.otaCard}>
                                                     <div className={styles.otaCardTop}>
                                                         <div className={styles.otaChannelTitle}>
-                                                            <Globe size={14} color="#2563eb" />
+                                                            <Globe size={14} color="#72263d" />
                                                             <span>{ota.channel_name || ota.channel || ota.ota || "Connected OTA Channel"}</span>
                                                         </div>
                                                         <span className={`${styles.otaStatusBadge} ${isOtaSuccess ? styles.otaStatusSuccess : styles.otaStatusFailed}`}>
