@@ -235,6 +235,13 @@ export function useBookings({
                         status: isEntryCancelled ? "CANCELLED" : (entry.status || "CONFIRMED"),
                         guestStatus: entry.guestStatus || (isEntryCancelled ? "cancelled" : "confirmed"),
                         isCancelled: isEntryCancelled,
+                        isModified: Boolean(
+                            entry.isModified || 
+                            entry.revisionEvent === "booking_modification" || 
+                            entry.channexRaw?.eventId === "booking_modification" ||
+                            (entry.note && (entry.note.toLowerCase().includes("revisi") || entry.note.toLowerCase().includes("perubahan")))
+                        ),
+                        isRescheduled: Boolean(entry.isRescheduled),
                         cancelReason: entry.cancelReason || (isEntryCancelled ? (entry.note || "Dibatalkan melalui OTA / Tamu") : undefined),
                         note: entry.note || "",
                         staffName: entry.staffName || "Front Desk",

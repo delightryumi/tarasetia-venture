@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useCurrency } from "@/hooks/useCurrency";
 import { BookingRecord } from "../types";
 import s from "./BookingDetailModal.module.css";
 
@@ -28,6 +29,7 @@ interface BookingDetailModalProps {
 export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
     const router = useRouter();
     const [copied, setCopied] = React.useState(false);
+    const { formatCurrency } = useCurrency();
 
     // Close on Escape key press
     useEffect(() => {
@@ -49,14 +51,6 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
         setCopied(true);
         toast.success(`Voucher disalin: ${code}`);
         setTimeout(() => setCopied(false), 2000);
-    };
-
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            maximumFractionDigits: 0,
-        }).format(val);
     };
 
     const formatDateDisplay = (dateStr: string) => {

@@ -61,10 +61,12 @@ export interface BookingRecord {
     paidEdc?: number;
     paidQris?: number;
 
-    // Status
     status: "CONFIRMED" | "CHECKED_IN" | "CHECKED_OUT" | "CANCELLED" | "PENDING" | string;
     guestStatus?: string;
     isCancelled: boolean;
+    isModified?: boolean;
+    isRescheduled?: boolean;
+    revisionCount?: number;
     cancelReason?: string;
     note?: string;
     staffName?: string;

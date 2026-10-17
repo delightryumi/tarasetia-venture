@@ -9,6 +9,7 @@ import {
     Eye 
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { useCurrency } from "@/hooks/useCurrency";
 import { BookingRecord } from "../types";
 import s from "./BookingTable.module.css";
 
@@ -19,6 +20,7 @@ interface BookingTableProps {
 
 export function BookingTable({ bookings, onSelect }: BookingTableProps) {
     const [copiedId, setCopiedId] = React.useState<string | null>(null);
+    const { formatCurrency } = useCurrency();
 
     const handleCopyVoucher = (e: React.MouseEvent, code: string) => {
         e.stopPropagation();
@@ -27,14 +29,6 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
         setCopiedId(code);
         toast.success(`Voucher disalin: ${code}`);
         setTimeout(() => setCopiedId(null), 2000);
-    };
-
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            maximumFractionDigits: 0,
-        }).format(val);
     };
 
     const formatDateDisplay = (dateStr: string) => {
@@ -161,9 +155,16 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
 
                                 {/* Status */}
                                 <td className={s.td}>
-                                    <div className={`${s.statusBadge} ${getStatusClass(booking)}`}>
-                                        {booking.isCancelled ? <WarningCircle size={12} weight="bold" /> : null}
-                                        <span>{getStatusLabel(booking)}</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                        {booking.isModified ? (
+                                            <div className={s.revisionPill} title="Reservasi mengalami revisi / perubahan">
+                                                <span>Revisi</span>
+                                            </div>
+                                        ) : null}
+                                        <div className={`${s.statusBadge} ${getStatusClass(booking)}`}>
+                                            {booking.isCancelled ? <WarningCircle size={12} weight="bold" /> : null}
+                                            <span>{getStatusLabel(booking)}</span>
+                                        </div>
                                     </div>
                                 </td>
 

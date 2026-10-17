@@ -227,3 +227,18 @@
     transform: translateY(1px);
     box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.15);
 }
+
+.revisionPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}

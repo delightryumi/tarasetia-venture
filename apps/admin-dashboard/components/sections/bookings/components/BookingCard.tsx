@@ -13,6 +13,7 @@ import {
     Eye
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { useCurrency } from "@/hooks/useCurrency";
 import { BookingRecord } from "../types";
 import s from "./BookingCard.module.css";
 
@@ -23,6 +24,7 @@ interface BookingCardProps {
 
 export function BookingCard({ booking, onSelect }: BookingCardProps) {
     const [copied, setCopied] = React.useState(false);
+    const { formatCurrency } = useCurrency();
 
     const handleCopyVoucher = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -32,14 +34,6 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
         setCopied(true);
         toast.success(`Voucher disalin: ${codeToCopy}`);
         setTimeout(() => setCopied(false), 2000);
-    };
-
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            maximumFractionDigits: 0,
-        }).format(val);
     };
 
     const formatDateDisplay = (dateStr: string) => {
@@ -91,9 +85,16 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
                     <span>{booking.channel}</span>
                 </div>
 
-                <div className={`${s.statusPill} ${getStatusClass()}`}>
-                    {booking.isCancelled ? <WarningCircle size={10} weight="bold" /> : null}
-                    <span>{getStatusLabel()}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {booking.isModified ? (
+                        <div className={s.revisionPill} title="Reservasi mengalami revisi / perubahan">
+                            <span>Revisi</span>
+                        </div>
+                    ) : null}
+                    <div className={`${s.statusPill} ${getStatusClass()}`}>
+                        {booking.isCancelled ? <WarningCircle size={10} weight="bold" /> : null}
+                        <span>{getStatusLabel()}</span>
+                    </div>
                 </div>
             </div>
 

@@ -51,9 +51,14 @@ export function BookingsSection() {
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
 
-    // Trigger silent Channex feed drain on mount to ensure real-time OTA reservations are captured
+    // Trigger silent Channex feed drain on mount (cooldown: 60s per session to protect quota)
     useEffect(() => {
         if (!activeHotelCode || activeHotelCode === "0") return;
+        const now = Date.now();
+        const lastDrain = Number(sessionStorage.getItem(`channex_last_drain_${activeHotelCode}`) || 0);
+        if (now - lastDrain < 60000) return; // 60s cooldown
+
+        sessionStorage.setItem(`channex_last_drain_${activeHotelCode}`, String(now));
         fetch("/api/channex/sync-feed", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

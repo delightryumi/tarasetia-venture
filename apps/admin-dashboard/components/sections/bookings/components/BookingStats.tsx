@@ -9,6 +9,7 @@ import {
     XCircle, 
     CurrencyCircleDollar 
 } from "@phosphor-icons/react";
+import { useCurrency } from "@/hooks/useCurrency";
 import { BookingStatsSummary } from "../types";
 import s from "./BookingStats.module.css";
 
@@ -17,13 +18,7 @@ interface BookingStatsProps {
 }
 
 export function BookingStats({ stats }: BookingStatsProps) {
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            maximumFractionDigits: 0,
-        }).format(val);
-    };
+    const { formatCurrency } = useCurrency();
 
     return (
         <div className={s.statsGrid}>
