@@ -821,7 +821,10 @@ export class ChannexSyncService {
      */
     async recalculateAndPushAvailability(hotelCode: string, startDateStr: string, endDateStr: string): Promise<any> {
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
-        const channexPropertyId = hotelDoc.data()?.channexPropertyId || hotelDoc.data()?.channelManager?.channexPropertyId;
+        const hotelData = hotelDoc.data();
+        const channexPropertyId = hotelData?.channexPropertyId || 
+            hotelData?.channelManager?.channexPropertyId || 
+            hotelData?.channelManager?.propertyId;
 
         if (!channexPropertyId) {
             console.log(`[ChannexSync] Hotel ${hotelCode} has no channexPropertyId configured. Skipping availability push.`);
