@@ -7,6 +7,9 @@ export interface BookingRecord {
     reservationId: string;
     otaReservationId: string;
     revisionId: string;
+    initialRevisionId?: string;
+    modifiedRevisionId?: string;
+    cancelledRevisionId?: string;
     voucherCode: string;
     
     // Guest information

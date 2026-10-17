@@ -506,6 +506,32 @@ export class ChannexSyncService {
             }
         }
 
+        // Retrieve any existing booking revision history from daily_revenue
+        let existingInitialRevId: string | undefined = undefined;
+        let existingModifiedRevId: string | undefined = undefined;
+        try {
+            const existingSnapshot = await adminDb.collection(`hotels/${hotelCode}/daily_revenue`)
+                .where("hotelId", "==", hotelCode)
+                .limit(45)
+                .get();
+            for (const doc of existingSnapshot.docs) {
+                const entries = doc.data()?.entries || [];
+                const match = entries.find((e: any) => 
+                    e.bookingId === channexBookingId || 
+                    e.channexBookingId === channexBookingId || 
+                    e.reservationId === otaBookingId || 
+                    e.bookingId === otaBookingId
+                );
+                if (match) {
+                    existingInitialRevId = match.initialRevisionId || (!match.isModified && !match.isCancelled ? match.revisionId : undefined) || existingInitialRevId;
+                    existingModifiedRevId = match.modifiedRevisionId || existingModifiedRevId;
+                    if (existingInitialRevId) break;
+                }
+            }
+        } catch (e: any) {
+            console.warn("[Channex Webhook] Error fetching previous revision IDs:", e.message);
+        }
+
         // Process each booked room (skip creating new entries if already cancelled in existing daily records)
         if (!isCancelled || affectedDates.size === 0) {
             for (const bookedRoom of (booking.rooms || [])) {
@@ -588,10 +614,15 @@ export class ChannexSyncService {
                         type: "accommodation",
                         guestName,
                         bookingId: channexBookingId || otaBookingId,
-                        reservationId: otaBookingId,
                         channexBookingId: channexBookingId || otaBookingId,
+                        reservationId: otaBookingId,
                         revisionId: revisionId,
                         channexRevisionId: revisionId,
+                        revisionEvent: payload.event,
+                        initialRevisionId: existingInitialRevId || (payload.event === "booking_new" ? revisionId : undefined),
+                        modifiedRevisionId: payload.event === "booking_modification" ? revisionId : (existingModifiedRevId || undefined),
+                        cancelledRevisionId: isCancelled ? revisionId : undefined,
+                        isModified: payload.event === "booking_modification" || Boolean(existingModifiedRevId),
                         otaReservationId: otaReservationId,
                         channel: channelName,
                         source: channelName,

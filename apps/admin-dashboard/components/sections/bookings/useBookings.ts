@@ -182,7 +182,10 @@ export function useBookings({
                         bookingId: ids.bookingId || canonicalId,
                         reservationId: ids.reservationId || canonicalId,
                         otaReservationId: ids.otaReservationId || entry.voucherCode || canonicalId,
-                        revisionId: ids.revisionId || "",
+                        revisionId: ids.revisionId || entry.revisionId || "",
+                        initialRevisionId: entry.initialRevisionId || (!entry.isModified && !isEntryCancelled && (entry.revisionId || ids.revisionId)) || undefined,
+                        modifiedRevisionId: entry.modifiedRevisionId || (entry.isModified || entry.revisionEvent === "booking_modification" || entry.channexRaw?.eventId === "booking_modification" ? (entry.revisionId || ids.revisionId) : undefined),
+                        cancelledRevisionId: entry.cancelledRevisionId || (isEntryCancelled ? (entry.revisionId || ids.revisionId) : undefined),
                         voucherCode: entry.voucherCode || ids.otaReservationId || ids.reservationId || canonicalId,
 
                         guestName,
@@ -266,12 +269,39 @@ export function useBookings({
                         existing.checkOutDate = checkOutDate;
                     }
 
+                    // Propagate revision IDs & flags across occurrences
+                    if (entry.initialRevisionId && !existing.initialRevisionId) {
+                        existing.initialRevisionId = entry.initialRevisionId;
+                    }
+                    if (entry.modifiedRevisionId && !existing.modifiedRevisionId) {
+                        existing.modifiedRevisionId = entry.modifiedRevisionId;
+                    }
+                    if (entry.cancelledRevisionId && !existing.cancelledRevisionId) {
+                        existing.cancelledRevisionId = entry.cancelledRevisionId;
+                    }
+
+                    const isEntryModified = Boolean(
+                        entry.isModified || 
+                        entry.revisionEvent === "booking_modification" || 
+                        entry.channexRaw?.eventId === "booking_modification" ||
+                        (entry.note && (entry.note.toLowerCase().includes("revisi") || entry.note.toLowerCase().includes("perubahan")))
+                    );
+                    if (isEntryModified) {
+                        existing.isModified = true;
+                        if (!existing.modifiedRevisionId && (entry.revisionId || ids.revisionId)) {
+                            existing.modifiedRevisionId = entry.revisionId || ids.revisionId;
+                        }
+                    }
+
                     // If any occurrence is marked cancelled, keep cancelled flag
                     if (isEntryCancelled) {
                         existing.isCancelled = true;
                         existing.status = "CANCELLED";
                         existing.paymentStatus = "CANCELLED";
                         existing.guestStatus = "cancelled";
+                        if (!existing.cancelledRevisionId && (entry.revisionId || ids.revisionId)) {
+                            existing.cancelledRevisionId = entry.revisionId || ids.revisionId;
+                        }
                     }
 
                     // Accumulate totals if per-night entries were recorded separately

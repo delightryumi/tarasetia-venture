@@ -55,22 +55,14 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleCopyBookingId = () => {
-        const idToCopy = booking.bookingId;
-        if (!idToCopy) return;
-        navigator.clipboard.writeText(idToCopy);
-        setCopiedBookingId(true);
-        toast.success(`OTA Booking ID disalin: ${idToCopy}`);
-        setTimeout(() => setCopiedBookingId(false), 2000);
-    };
+    const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
 
-    const handleCopyRevisionId = () => {
-        const idToCopy = booking.revisionId;
-        if (!idToCopy) return;
-        navigator.clipboard.writeText(idToCopy);
-        setCopiedRevisionId(true);
-        toast.success(`Revision ID disalin: ${idToCopy}`);
-        setTimeout(() => setCopiedRevisionId(false), 2000);
+    const handleCopyField = (val?: string, label?: string) => {
+        if (!val) return;
+        navigator.clipboard.writeText(val);
+        setCopiedKey(label || val);
+        toast.success(`${label || "Kode"} disalin: ${val}`);
+        setTimeout(() => setCopiedKey(null), 2000);
     };
 
     const formatDateDisplay = (dateStr: string) => {
@@ -236,10 +228,10 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                         <div className={s.sectionTitle}>
                             <FileText size={16} weight="bold" />
                             <span>Catatan & Audit Sistem</span>
-                        </div>
-                        <div className={s.grid2}>
+                        </div>                        <div className={s.grid2}>
+                            {/* Booking ID */}
                             <div className={s.field}>
-                                <span className={s.fieldLabel}>OTA Booking ID</span>
+                                <span className={s.fieldLabel}>Booking ID</span>
                                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                                     <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace", wordBreak: "break-all" }}>
                                         {booking.bookingId}
@@ -247,55 +239,120 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                                     {booking.bookingId && (
                                         <button 
                                             type="button"
-                                            onClick={handleCopyBookingId}
+                                            onClick={() => handleCopyField(booking.bookingId, "Booking ID")}
                                             style={{ 
                                                 background: "none", 
                                                 border: "none", 
                                                 cursor: "pointer", 
                                                 display: "inline-flex", 
-                                                alignItems: "center",
+                                                alignItems: "center", 
                                                 justifyContent: "center",
                                                 color: "#2563eb", 
                                                 padding: 2,
                                                 borderRadius: 4,
                                                 flexShrink: 0
                                             }}
-                                            title="Salin OTA Booking ID"
+                                            title="Salin Booking ID"
                                         >
-                                            {copiedBookingId ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
+                                            {copiedKey === "Booking ID" ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
                                         </button>
                                     )}
                                 </div>
                             </div>
-                            {booking.revisionId && (
+
+                            {/* New Revision ID */}
+                            {(booking.initialRevisionId || (!booking.isModified && !booking.isCancelled && booking.revisionId)) && (
                                 <div className={s.field}>
-                                    <span className={s.fieldLabel}>Revision ID</span>
+                                    <span className={s.fieldLabel}>New Revision ID</span>
                                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                                         <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace", wordBreak: "break-all" }}>
-                                            {booking.revisionId}
+                                            {booking.initialRevisionId || booking.revisionId}
                                         </span>
                                         <button 
                                             type="button"
-                                            onClick={handleCopyRevisionId}
+                                            onClick={() => handleCopyField(booking.initialRevisionId || booking.revisionId, "New Revision ID")}
                                             style={{ 
                                                 background: "none", 
                                                 border: "none", 
                                                 cursor: "pointer", 
                                                 display: "inline-flex", 
-                                                alignItems: "center",
+                                                alignItems: "center", 
                                                 justifyContent: "center",
                                                 color: "#2563eb", 
                                                 padding: 2,
                                                 borderRadius: 4,
                                                 flexShrink: 0
                                             }}
-                                            title="Salin Revision ID"
+                                            title="Salin New Revision ID"
                                         >
-                                            {copiedRevisionId ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
+                                            {copiedKey === "New Revision ID" ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
                                         </button>
                                     </div>
                                 </div>
                             )}
+
+                            {/* Modified Revision ID (Shown whenever modified) */}
+                            {(booking.isModified || booking.modifiedRevisionId) && (
+                                <div className={s.field}>
+                                    <span className={s.fieldLabel} style={{ color: "#4f46e5", fontWeight: 700 }}>Modified Revision ID</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                                        <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace", wordBreak: "break-all", color: "#4f46e5", fontWeight: 600 }}>
+                                            {booking.modifiedRevisionId || booking.revisionId}
+                                        </span>
+                                        <button 
+                                            type="button"
+                                            onClick={() => handleCopyField(booking.modifiedRevisionId || booking.revisionId, "Modified Revision ID")}
+                                            style={{ 
+                                                background: "none", 
+                                                border: "none", 
+                                                cursor: "pointer", 
+                                                display: "inline-flex", 
+                                                alignItems: "center", 
+                                                justifyContent: "center",
+                                                color: "#4f46e5", 
+                                                padding: 2,
+                                                borderRadius: 4,
+                                                flexShrink: 0
+                                            }}
+                                            title="Salin Modified Revision ID"
+                                        >
+                                            {copiedKey === "Modified Revision ID" ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Cancelled Revision ID (Shown whenever cancelled) */}
+                            {(booking.isCancelled || booking.cancelledRevisionId) && (
+                                <div className={s.field}>
+                                    <span className={s.fieldLabel} style={{ color: "#dc2626", fontWeight: 700 }}>Cancelled Revision ID</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                                        <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace", wordBreak: "break-all", color: "#dc2626", fontWeight: 600 }}>
+                                            {booking.cancelledRevisionId || booking.revisionId}
+                                        </span>
+                                        <button 
+                                            type="button"
+                                            onClick={() => handleCopyField(booking.cancelledRevisionId || booking.revisionId, "Cancelled Revision ID")}
+                                            style={{ 
+                                                background: "none", 
+                                                border: "none", 
+                                                cursor: "pointer", 
+                                                display: "inline-flex", 
+                                                alignItems: "center", 
+                                                justifyContent: "center",
+                                                color: "#dc2626", 
+                                                padding: 2,
+                                                borderRadius: 4,
+                                                flexShrink: 0
+                                            }}
+                                            title="Salin Cancelled Revision ID"
+                                        >
+                                            {copiedKey === "Cancelled Revision ID" ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Koneksi Saluran</span>
                                 <span className={s.fieldValue}>{booking.connectionChannel || "Direct Front Office"}</span>
