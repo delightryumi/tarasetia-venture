@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Bell, BellOff, Volume2, Smartphone, Globe, Check, AlertCircle, Send, MessageSquare, Save, ShieldCheck, Lock, Unlock, KeyRound, ExternalLink } from "lucide-react";
+import { Bell, BellOff, Volume2, Smartphone, Globe, Check, AlertCircle, Send, MessageSquare, Save, ShieldCheck, Lock, Unlock, KeyRound, ExternalLink, Mail } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
 import styles from "./ChannelNotificationWidget.module.css";
@@ -78,6 +78,53 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
             })
             .finally(() => {
                 if (isMounted) setLoadingWa(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [hotelCode]);
+
+    // ── Email Notification State (Brevo Official Cloud Relay) ──
+    const [emailEnabled, setEmailEnabled] = useState<boolean>(true);
+    const [ownerEmail, setOwnerEmail] = useState<string>("");
+    const [notifyEmailNewBooking, setNotifyEmailNewBooking] = useState<boolean>(true);
+    const [notifyEmailCancellation, setNotifyEmailCancellation] = useState<boolean>(true);
+    const [notifyEmailModification, setNotifyEmailModification] = useState<boolean>(true);
+    const [loadingEmail, setLoadingEmail] = useState<boolean>(false);
+    const [savingEmail, setSavingEmail] = useState<boolean>(false);
+    const [testingEmail, setTestingEmail] = useState<boolean>(false);
+    const [hasBrevoKey, setHasBrevoKey] = useState<boolean>(false);
+    const [brevoSenderEmail, setBrevoSenderEmail] = useState<string>("delightryumi@gmail.com");
+
+    // Fetch hotel-specific Email notification settings
+    useEffect(() => {
+        if (!hotelCode || hotelCode === "0") return;
+
+        let isMounted = true;
+        setLoadingEmail(true);
+
+        fetch(`/api/notifications/email?hotelCode=${encodeURIComponent(hotelCode)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!isMounted) return;
+                if (data.success && data.config) {
+                    setEmailEnabled(data.config.enabled ?? true);
+                    setOwnerEmail(data.config.ownerEmail || "");
+                    setNotifyEmailNewBooking(data.config.notifyOnNewBooking ?? true);
+                    setNotifyEmailCancellation(data.config.notifyOnCancellation ?? true);
+                    setNotifyEmailModification(data.config.notifyOnModification ?? true);
+                }
+                if (data.systemDefaults) {
+                    setHasBrevoKey(Boolean(data.systemDefaults.hasBrevoKey));
+                    setBrevoSenderEmail(data.systemDefaults.senderEmail || "delightryumi@gmail.com");
+                }
+            })
+            .catch(err => {
+                console.warn("[Email Notification Settings Fetch Error]:", err);
+            })
+            .finally(() => {
+                if (isMounted) setLoadingEmail(false);
             });
 
         return () => {
@@ -196,9 +243,80 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
         }
     };
 
+    // Save Email settings for this hotel
+    const handleSaveEmailConfig = async () => {
+        if (!hotelCode) return;
+        setSavingEmail(true);
+        try {
+            const res = await fetch("/api/notifications/email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode,
+                    action: "save_config",
+                    config: {
+                        enabled: emailEnabled,
+                        ownerEmail: ownerEmail.trim(),
+                        notifyOnNewBooking: notifyEmailNewBooking,
+                        notifyOnCancellation: notifyEmailCancellation,
+                        notifyOnModification: notifyEmailModification
+                    }
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                toast.success(data.message || "Pengaturan Email Notifikasi Brevo berhasil disimpan.");
+            } else {
+                toast.error(data.error || "Gagal menyimpan pengaturan email.");
+            }
+        } catch (err: any) {
+            toast.error("Koneksi server gagal: " + err.message);
+        } finally {
+            setSavingEmail(false);
+        }
+    };
+
+    // Test send Brevo Email notification
+    const handleTestEmail = async () => {
+        if (!hotelCode) return;
+        if (!ownerEmail.trim()) {
+            toast.warning("Harap isi Alamat Email Penerima terlebih dahulu untuk uji coba.");
+            return;
+        }
+
+        setTestingEmail(true);
+        try {
+            const res = await fetch("/api/notifications/email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode,
+                    action: "test_send",
+                    testRecipient: ownerEmail.trim(),
+                    config: {
+                        ownerEmail: ownerEmail.trim()
+                    }
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                toast.success(data.message || `Email uji coba Brevo berhasil dikirim! Periksa inbox.`);
+            } else {
+                toast.error(`Uji Coba Email: ${data.error || "Gagal mengirim email."}`);
+            }
+        } catch (err: any) {
+            toast.error("Eksekusi tes gagal: " + err.message);
+        } finally {
+            setTestingEmail(false);
+        }
+    };
+
     const isGranted = permission === "granted" && isSubscribed;
     const isDenied = permission === "denied";
     const isMetaConfigured = !!ownerPhone && waEnabled && (metaAccessToken || hasMetaToken);
+    const isEmailConfigured = !!ownerEmail && emailEnabled && hasBrevoKey;
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "16px" }}>
@@ -480,6 +598,183 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                         </span>
                     </div>
                     <span style={{ fontFamily: "var(--font-geist-mono, monospace)", fontSize: "10.5px" }}>Multi-tenant terisolasi per properti hotel</span>
+                </div>
+            </div>
+
+            {/* CARD 1B: EMAIL NOTIFICATIONS TO OWNER & MANAGEMENT (BREVO CLOUD RELAY) */}
+            <div className={styles.waCard}>
+                <div className={styles.topRow}>
+                    <div className={styles.titleArea}>
+                        <div className={styles.iconCircle} style={{ background: "#f0fdf4", color: "#166534" }}>
+                            <Mail size={18} />
+                        </div>
+                        <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <h4 className={styles.titleText}>
+                                    Owner &amp; Management Email Alerts (Brevo Cloud Relay)
+                                </h4>
+                                {isEmailConfigured ? (
+                                    <span className={styles.badgeActive}>
+                                        <span className={`${styles.dot} ${styles.dotGreen}`} />
+                                        <span>Brevo Relay Active</span>
+                                    </span>
+                                ) : (
+                                    <span className={styles.badgeInactive}>
+                                        <span className={`${styles.dot} ${styles.dotGray}`} />
+                                        <span>Email Needed</span>
+                                    </span>
+                                )}
+                            </div>
+                            <p className={styles.subtitleText}>
+                                Mengirimkan notifikasi email HTML resmi &amp; detail secara instan ke Owner, GM, dan Front Desk untuk Reservasi Baru, Pembatalan, dan Perubahan Jadwal OTA.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Brevo Gateway Banner */}
+                <div className={styles.metaMasterBanner}>
+                    <div className={styles.metaMasterLeft}>
+                        <ShieldCheck size={16} color="#166534" />
+                        <div>
+                            <div style={{ fontWeight: 600, color: "#09090b" }}>
+                                Brevo Verified Relay: <b>{brevoSenderEmail}</b>
+                            </div>
+                            <div className={styles.metaMasterPills} style={{ marginTop: "4px" }}>
+                                <span className={styles.metaPill}>Service: Brevo REST API v3</span>
+                                <span className={hasBrevoKey ? styles.metaPillActive : styles.metaPill} style={hasBrevoKey ? { background: "#f0fdf4", color: "#166534", borderColor: "#bbf7d0" } : {}}>
+                                    {hasBrevoKey ? "API Key Connected & Active" : "API Key Missing"}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Form Fields: Owner & Management Email (Supports Multi-Email) */}
+                {(() => {
+                    const parsedEmailRecipients = ownerEmail
+                        .split(/[,;\s\n\r]+/)
+                        .map(e => e.trim().toLowerCase())
+                        .filter(e => e.length > 5 && e.includes("@"));
+
+                    return (
+                        <div style={{ width: "100%" }}>
+                            <div className={styles.waField}>
+                                <div className={styles.waLabelRow}>
+                                    <span className={styles.waLabel}>
+                                        <Mail size={13} style={{ color: "#166534" }} />
+                                        <span>Alamat Email Penerima Notifikasi (Mendukung Multi-Email):</span>
+                                    </span>
+                                    {parsedEmailRecipients.length > 1 && (
+                                        <span style={{ fontSize: "11px", color: "#166534", fontWeight: 600 }}>
+                                            {parsedEmailRecipients.length} Alamat Email Terdeteksi
+                                        </span>
+                                    )}
+                                </div>
+                                <input
+                                    type="text"
+                                    value={ownerEmail}
+                                    onChange={e => setOwnerEmail(e.target.value)}
+                                    placeholder="Contoh: owner@hotel.com, gm@hotel.com, reservation@hotel.com (pisahkan dengan koma)"
+                                    className={styles.waInput}
+                                    disabled={loadingEmail || savingEmail}
+                                    style={{ fontSize: "13px", fontWeight: 500 }}
+                                />
+                                {parsedEmailRecipients.length > 0 && (
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+                                        {parsedEmailRecipients.map((email, idx) => (
+                                            <span
+                                                key={idx}
+                                                className={styles.recipientTag}
+                                            >
+                                                <span style={{ color: "#71717a" }}>Penerima #{idx + 1}:</span>
+                                                <b>{email}</b>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* Bottom Row: Checkboxes on Left, Action Buttons on Right */}
+                <div className={styles.waBottomControls}>
+                    <div className={styles.waCheckboxes}>
+                        <label className={styles.waCheckboxLabel}>
+                            <input
+                                type="checkbox"
+                                checked={emailEnabled}
+                                onChange={e => setEmailEnabled(e.target.checked)}
+                            />
+                            <span><b>Aktifkan Notifikasi Email</b></span>
+                        </label>
+
+                        <label className={styles.waCheckboxLabel}>
+                            <input
+                                type="checkbox"
+                                checked={notifyEmailNewBooking}
+                                onChange={e => setNotifyEmailNewBooking(e.target.checked)}
+                                disabled={!emailEnabled}
+                            />
+                            <span>Booking Baru</span>
+                        </label>
+
+                        <label className={styles.waCheckboxLabel}>
+                            <input
+                                type="checkbox"
+                                checked={notifyEmailCancellation}
+                                onChange={e => setNotifyEmailCancellation(e.target.checked)}
+                                disabled={!emailEnabled}
+                            />
+                            <span>Pembatalan OTA</span>
+                        </label>
+
+                        <label className={styles.waCheckboxLabel}>
+                            <input
+                                type="checkbox"
+                                checked={notifyEmailModification}
+                                onChange={e => setNotifyEmailModification(e.target.checked)}
+                                disabled={!emailEnabled}
+                            />
+                            <span>Perubahan / Reschedule</span>
+                        </label>
+                    </div>
+
+                    <div className={styles.waBtnRow}>
+                        <button
+                            type="button"
+                            onClick={handleSaveEmailConfig}
+                            disabled={savingEmail || loadingEmail}
+                            className={styles.btnSuccess}
+                            title="Simpan pengaturan email notifikasi untuk properti ini"
+                        >
+                            <Save size={14} className={savingEmail ? "animate-spin" : ""} />
+                            <span>{savingEmail ? "Menyimpan..." : "Simpan Pengaturan Email"}</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleTestEmail}
+                            disabled={testingEmail || !ownerEmail}
+                            className={styles.btnSecondary}
+                            title="Kirim email uji coba Brevo ke alamat email di atas"
+                        >
+                            <Send size={13} className={testingEmail ? "animate-spin" : ""} />
+                            <span>{testingEmail ? "Mengirim..." : "Kirim Uji Coba Email"}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Info Bar at Bottom */}
+                <div className={styles.metaInfoBar}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <ShieldCheck size={14} style={{ color: "#166534" }} />
+                        <span>
+                            <b>Brevo Official Cloud Relay • High Deliverability (DKIM/SPF) • Sender: {brevoSenderEmail}</b>
+                        </span>
+                    </div>
+                    <span style={{ fontFamily: "var(--font-geist-mono, monospace)", fontSize: "10.5px" }}>Multi-recipient safe • Isolated per tenant</span>
                 </div>
             </div>
 
