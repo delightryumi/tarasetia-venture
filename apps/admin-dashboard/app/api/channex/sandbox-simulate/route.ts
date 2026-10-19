@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
                 }, { status: 400 });
             }
 
-            // Dispatch WhatsApp Notification to Hotel Owner (Auto-routed: Meta Official or Fonnte)
+            // Dispatch WhatsApp Notification to Hotel Owner (Meta Official Cloud API)
             let waResult: any = null;
             try {
                 const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");

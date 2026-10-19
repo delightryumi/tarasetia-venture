@@ -211,7 +211,7 @@ export async function POST(req: NextRequest) {
                     otaName
                 }).catch(err => console.warn("[Webhook Push] Warning:", err?.message));
 
-                // Dispatch WhatsApp Notification to Hotel Owner (Auto-routed: Meta Official or Fonnte)
+                // Dispatch WhatsApp Notification to Hotel Owner (Meta Official Cloud API)
                 try {
                     const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
                     dispatchWhatsAppNotification(hotelCode, {

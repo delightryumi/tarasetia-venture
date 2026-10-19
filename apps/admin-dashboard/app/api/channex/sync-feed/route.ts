@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
                             console.warn(`[Channex Feed Poll] Warning ACK failed for ${revisionId}:`, ackErr.message);
                         }
 
-                        // Dispatch WhatsApp Notification to Hotel Owner (Auto-routed: Meta Official or Fonnte)
+                        // Dispatch WhatsApp Notification to Hotel Owner (Meta Official Cloud API)
                         try {
                             const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
                             const customer = booking.customer || (booking as any)?.guest || {};
