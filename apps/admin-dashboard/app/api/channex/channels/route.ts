@@ -378,12 +378,41 @@ export async function POST(req: NextRequest) {
                     // 3. Check existing channels on Channex
                     const existingChannelsRes = await channexClient.getChannels(channexPropertyId, apiKey, env);
                     const existingList = existingChannelsRes?.data || [];
-                    const existing = existingList.find((c: any) => 
+                    let existing = existingList.find((c: any) => 
                         (channexChannelId && c.id === channexChannelId) ||
                         c?.attributes?.channel === adapterCode || 
                         c?.attributes?.channel_code === adapterCode ||
                         c?.attributes?.title?.toLowerCase().includes(channelCode.replace("_", ""))
                     );
+
+                    // If not found in property channel list, try direct ID check
+                    if (!existing && channexChannelId) {
+                        try {
+                            const directRes = await channexClient.getChannel(channexChannelId, apiKey, env);
+                            if (directRes?.data?.id) {
+                                existing = directRes.data;
+                            }
+                        } catch (e: any) {
+                            console.warn(`[Channex Channel Direct ID Check]: ${channexChannelId} lookup failed:`, e.message);
+                        }
+                    }
+
+                    // If still not found, check across all channels for this adapter
+                    if (!existing) {
+                        try {
+                            const adapterRes = await channexClient.request<any>(`/channels?filter[channel]=${adapterCode}`, { method: "GET" }, apiKey, env);
+                            const match = adapterRes?.data?.find((c: any) => 
+                                String(c?.attributes?.settings?.hotel_id) === String(hotelId) || 
+                                String(c?.attributes?.settings?.hotel_code) === String(hotelId) ||
+                                (channexChannelId && c?.id === channexChannelId)
+                            );
+                            if (match) {
+                                existing = match;
+                            }
+                        } catch (e: any) {
+                            console.warn(`[Channex Adapter Filter Check]:`, e.message);
+                        }
+                    }
 
                     const channelSettings = {
                         hotel_id: hotelId,
@@ -393,29 +422,32 @@ export async function POST(req: NextRequest) {
 
                     if (existing) {
                         channexChannelId = existing.id;
+                        // Ensure properties array includes this property
+                        const existingProps = existing.attributes?.properties || existing.relationships?.properties?.data?.map((p: any) => p.id) || [];
+                        const targetProperties = Array.from(new Set([...existingProps, channexPropertyId]));
+
                         // Update existing channel with rate_plans mapping & settings
                         try {
-                            const updatePayload = {
-                                channel: adapterCode,
+                            const updatePayload: any = {
                                 settings: channelSettings,
+                                properties: targetProperties,
                                 ...(ratePlansPayload.length > 0 ? { rate_plans: ratePlansPayload } : {})
                             };
                             await channexClient.updateChannel(existing.id, updatePayload, apiKey, env);
                         } catch (updErr: any) {
                             console.warn(`[Channex Channel Update Warning]:`, updErr.message);
+                            throw new Error(`Gagal update pemetaan di Channex: ${updErr.message}`);
                         }
 
                         // Activate if inactive
-                        if (!existing.attributes?.is_active) {
-                            try {
-                                await channexClient.activateChannel(existing.id, apiKey, env);
-                                channexStatus = "ACTIVE";
-                            } catch (actErr: any) {
-                                console.warn(`[Channex Activate Warning]:`, actErr.message);
-                                channexStatus = existing.attributes?.is_active ? "ACTIVE" : "PENDING";
-                            }
-                        } else {
+                        try {
+                            await channexClient.activateChannel(existing.id, apiKey, env);
                             channexStatus = "ACTIVE";
+                            channexSyncNote = "Tersinkronisasi dan Aktif di Channex";
+                        } catch (actErr: any) {
+                            console.warn(`[Channex Activate Warning]:`, actErr.message);
+                            channexStatus = existing.attributes?.is_active ? "ACTIVE" : "PENDING";
+                            channexSyncNote = `Channel tersimpan, tapi aktivasi: ${actErr.message}`;
                         }
                     } else {
                         // Create Channel Connection on Channex with official schema
@@ -435,13 +467,50 @@ export async function POST(req: NextRequest) {
                                 try {
                                     await channexClient.activateChannel(channexChannelId, apiKey, env);
                                     channexStatus = "ACTIVE";
+                                    channexSyncNote = "Tersinkronisasi dan Aktif di Channex";
                                 } catch (actErr: any) {
                                     console.warn(`[Channex Activate Warning]:`, actErr.message);
+                                    channexStatus = "PENDING";
+                                    channexSyncNote = `Channel dibuat, tapi aktivasi: ${actErr.message}`;
                                 }
                             }
                         } catch (createErr: any) {
-                            console.warn(`[Channex Direct Creation Notice]: ${createErr.message}.`);
-                            channexSyncNote = `Terkoneksi di TARA (Channex Staging: ${createErr.message})`;
+                            // If channel with same settings already exists in Channex, auto-recover by linking it
+                            if (createErr.message?.includes("already exists")) {
+                                console.log(`[Channex Recovery]: Channel already exists in Channex for hotel_id ${hotelId}. Linking...`);
+                                try {
+                                    const adapterRes = await channexClient.request<any>(`/channels?filter[channel]=${adapterCode}`, { method: "GET" }, apiKey, env);
+                                    const match = adapterRes?.data?.find((c: any) => 
+                                        String(c?.attributes?.settings?.hotel_id) === String(hotelId) || 
+                                        String(c?.attributes?.settings?.hotel_code) === String(hotelId)
+                                    );
+                                    if (match) {
+                                        channexChannelId = match.id;
+                                        const matchProps = match.attributes?.properties || match.relationships?.properties?.data?.map((p: any) => p.id) || [];
+                                        const targetProps = Array.from(new Set([...matchProps, channexPropertyId]));
+                                        await channexClient.updateChannel(match.id, {
+                                            settings: channelSettings,
+                                            properties: targetProps,
+                                            ...(ratePlansPayload.length > 0 ? { rate_plans: ratePlansPayload } : {})
+                                        }, apiKey, env);
+                                        await channexClient.activateChannel(match.id, apiKey, env);
+                                        channexStatus = "ACTIVE";
+                                        channexSyncNote = "Tersinkronisasi dan Aktif di Channex (Auto-Linked)";
+                                    } else {
+                                        channexStatus = "ERROR";
+                                        channexSyncNote = `Gagal sinkronisasi Channex: ${createErr.message}`;
+                                        throw createErr;
+                                    }
+                                } catch (recErr: any) {
+                                    channexStatus = "ERROR";
+                                    channexSyncNote = `Channex Error: ${recErr.message}`;
+                                    throw recErr;
+                                }
+                            } else {
+                                channexStatus = "ERROR";
+                                channexSyncNote = `Channex Error: ${createErr.message}`;
+                                throw createErr;
+                            }
                         }
                     }
                 } catch (channexErr: any) {
@@ -456,7 +525,7 @@ export async function POST(req: NextRequest) {
                     ...(cm.channels?.[channelCode] || {}),
                     ...channelData,
                     channelCode,
-                    isActive: true,
+                    isActive: channexStatus === "ACTIVE",
                     channexChannelId: channexChannelId || cm.channels?.[channelCode]?.channexChannelId || null,
                     channexStatus,
                     channexSyncNote,
@@ -470,6 +539,14 @@ export async function POST(req: NextRequest) {
                     lastSyncAt: new Date().toISOString()
                 }
             }, { merge: true });
+
+            if (channexStatus === "ERROR") {
+                return NextResponse.json({
+                    success: false,
+                    message: channexSyncNote,
+                    channel: updatedChannels[channelCode]
+                }, { status: 400 });
+            }
 
             return NextResponse.json({
                 success: true,
