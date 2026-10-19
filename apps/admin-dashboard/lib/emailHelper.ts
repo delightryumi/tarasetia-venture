@@ -8,7 +8,7 @@ interface SendEmailParams {
 
 export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultPassword }: SendEmailParams) {
   const pass = process.env.SMTP_PASS; // Brevo API/SMTP Key
-  const fromEmail = process.env.SMTP_FROM_EMAIL || "delightryumi@gmail.com";
+  const fromEmail = process.env.SMTP_FROM_EMAIL || "reservation@mytara.id";
 
   console.log("DEBUG emailHelper.ts (Brevo REST API) - sendWelcomeEmail dipanggil:");
   console.log("- From:", fromEmail);
@@ -217,7 +217,7 @@ interface SendOnboardingEmailParams {
 
 export async function sendOnboardingEmail({ toEmail, token, planName }: SendOnboardingEmailParams) {
   const pass = process.env.SMTP_PASS; // Brevo API/SMTP Key
-  const fromEmail = process.env.SMTP_FROM_EMAIL || "delightryumi@gmail.com";
+  const fromEmail = process.env.SMTP_FROM_EMAIL || "reservation@mytara.id";
 
   if (!pass) {
     console.warn("SMTP_PASS (Brevo API Key) tidak dikonfigurasi. Pengiriman email diabaikan.");

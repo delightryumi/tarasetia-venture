@@ -95,7 +95,8 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
     const [savingEmail, setSavingEmail] = useState<boolean>(false);
     const [testingEmail, setTestingEmail] = useState<boolean>(false);
     const [hasBrevoKey, setHasBrevoKey] = useState<boolean>(false);
-    const [brevoSenderEmail, setBrevoSenderEmail] = useState<string>("delightryumi@gmail.com");
+    const [brevoSenderEmail, setBrevoSenderEmail] = useState<string>("reservation@mytara.id");
+    const [customSenderEmail, setCustomSenderEmail] = useState<string>("");
 
     // Fetch hotel-specific Email notification settings
     useEffect(() => {
@@ -111,13 +112,14 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                 if (data.success && data.config) {
                     setEmailEnabled(data.config.enabled ?? true);
                     setOwnerEmail(data.config.ownerEmail || "");
+                    setCustomSenderEmail(data.config.senderEmail || "");
                     setNotifyEmailNewBooking(data.config.notifyOnNewBooking ?? true);
                     setNotifyEmailCancellation(data.config.notifyOnCancellation ?? true);
                     setNotifyEmailModification(data.config.notifyOnModification ?? true);
                 }
                 if (data.systemDefaults) {
                     setHasBrevoKey(Boolean(data.systemDefaults.hasBrevoKey));
-                    setBrevoSenderEmail(data.systemDefaults.senderEmail || "delightryumi@gmail.com");
+                    setBrevoSenderEmail(data.systemDefaults.senderEmail || "reservation@mytara.id");
                 }
             })
             .catch(err => {
@@ -257,6 +259,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                     config: {
                         enabled: emailEnabled,
                         ownerEmail: ownerEmail.trim(),
+                        senderEmail: customSenderEmail.trim() || undefined,
                         notifyOnNewBooking: notifyEmailNewBooking,
                         notifyOnCancellation: notifyEmailCancellation,
                         notifyOnModification: notifyEmailModification
@@ -697,6 +700,33 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                         </div>
                     );
                 })()}
+
+                {/* Form Field: Custom Sender Email (Optional, verified in Brevo) */}
+                <div style={{ width: "100%", marginTop: "2px" }}>
+                    <div className={styles.waField}>
+                        <div className={styles.waLabelRow}>
+                            <span className={styles.waLabel}>
+                                <Send size={13} style={{ color: "#166534" }} />
+                                <span>Email Pengirim Khusus (Custom Sender Email):</span>
+                            </span>
+                            <span style={{ fontSize: "11px", color: "#71717a" }}>
+                                Opsional (Wajib verifikasi di Brevo)
+                            </span>
+                        </div>
+                        <input
+                            type="email"
+                            value={customSenderEmail}
+                            onChange={e => setCustomSenderEmail(e.target.value)}
+                            placeholder={`Default: ${brevoSenderEmail || "reservation@mytara.id"} (atau contoh: reservation@hotelanda.com)`}
+                            className={styles.waInput}
+                            disabled={loadingEmail || savingEmail}
+                            style={{ fontSize: "13px" }}
+                        />
+                        <div style={{ fontSize: "11px", color: "#71717a", lineHeight: 1.4, marginTop: "2px" }}>
+                            💡 <b>Nama Pengirim:</b> Otomatis menggunakan default <b>My Tara</b> (disertai logo resmi My Tara &amp; identitas properti hotel). Jika ingin email pengirim menggunakan domain hotel sendiri (misal: <code>reservation@domainhotel.com</code>), pastikan alamat/domain tersebut sudah diverifikasi di menu <i>Senders &amp; Domains</i> Brevo.
+                        </div>
+                    </div>
+                </div>
 
                 {/* Bottom Row: Checkboxes on Left, Action Buttons on Right */}
                 <div className={styles.waBottomControls}>

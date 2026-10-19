@@ -8,8 +8,8 @@ admin.initializeApp();
 // Hardcoded or use environment variables for Brevo API Key
 // Here we use the key retrieved from your .env.local
 const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
-const SENDER_EMAIL = "delightryumi@gmail.com";
-const SENDER_NAME = "Setara Venture";
+const SENDER_EMAIL = process.env.SMTP_FROM_EMAIL || "reservation@mytara.id";
+const SENDER_NAME = "My Tara";
 
 /**
  * Returns a formatted date string (YYYY-MM-DD) for Asia/Jakarta

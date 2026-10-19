@@ -4,8 +4,8 @@ import { WhatsAppNotificationPayload as NotificationPayload } from "@/lib/notifi
 export type EmailNotificationPayload = NotificationPayload;
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
-const DEFAULT_SENDER_EMAIL = process.env.SMTP_FROM_EMAIL || "delightryumi@gmail.com";
-const DEFAULT_SENDER_NAME = "Tara Hotel System";
+const DEFAULT_SENDER_EMAIL = process.env.SMTP_FROM_EMAIL || "reservation@mytara.id";
+const DEFAULT_SENDER_NAME = "My Tara";
 
 /**
  * Normalizes and validates raw email inputs into an array of clean email addresses.
@@ -38,39 +38,43 @@ export function buildEmailNotificationHtml(
         ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(payload.totalPrice)
         : (payload.totalPrice ? String(payload.totalPrice) : "Rp 0");
 
-    let subject = `🛎️ [RESERVASI BARU] ${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
-    let badgeBg = "#ecfdf5";
-    let badgeColor = "#065f46";
-    let badgeText = "RESERVASI BARU";
-    let headerTitle = "Reservasi Baru Masuk";
-    let headerDesc = "Pemesanan baru telah berhasil diterima dan dikonfirmasi ke kalender kamar.";
+    let subject = `Konfirmasi Reservasi: #${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
+    let badgeBg = "#f0fdf4";
+    let badgeBorder = "#bbf7d0";
+    let badgeColor = "#166534";
+    let badgeText = "RESERVASI TERKONFIRMASI";
+    let headerTitle = "Reservasi Baru Diterima";
+    let headerDesc = "Pemesanan kamar baru telah masuk dan slot inventori kalender telah berhasil dialokasikan.";
 
     if (isCancel) {
-        subject = `🚨 [PEMBATALAN OTA] ${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
+        subject = `Pembatalan Reservasi: #${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
         badgeBg = "#fef2f2";
+        badgeBorder = "#fecaca";
         badgeColor = "#991b1b";
-        badgeText = "DIBATALKAN (CANCELLED)";
-        headerTitle = "Pembatalan Reservasi OTA";
-        headerDesc = "Tamu telah membatalkan pemesanan. Slot kamar telah otomatis dirilis kembali ke seluruh OTA.";
+        badgeText = "RESERVASI DIBATALKAN";
+        headerTitle = "Pembatalan Reservasi";
+        headerDesc = "Tamu telah membatalkan pemesanan melalui OTA. Kamar telah otomatis dirilis kembali ke ketersediaan sistem.";
     } else if (isModif) {
-        subject = `✏️ [RESCHEDULE OTA] ${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
-        badgeBg = "#eff6ff";
-        badgeColor = "#1e40af";
-        badgeText = "MODIFIKASI JADWAL (RESCHEDULE)";
+        subject = `Perubahan Jadwal: #${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
+        badgeBg = "#f1f5f9";
+        badgeBorder = "#cbd5e1";
+        badgeColor = "#334155";
+        badgeText = "MODIFIKASI JADWAL";
         headerTitle = "Perubahan Jadwal Reservasi";
-        headerDesc = "Jadwal menginap telah diubah oleh tamu/OTA. Kalender PMS dan ketersediaan telah disesuaikan otomatis.";
+        headerDesc = "Tamu telah melakukan modifikasi tanggal menginap. Jadwal PMS dan ketersediaan OTA telah diperbarui otomatis.";
     } else if (isTest) {
-        subject = `🧪 [UJI COBA EMAIL] Notifikasi Resmi Brevo Cloud Relay - ${hotelName}`;
-        badgeBg = "#f3e8ff";
-        badgeColor = "#6b21a8";
-        badgeText = "SYSTEM TEST";
-        headerTitle = "Uji Coba Pengiriman Email";
-        headerDesc = "Ini adalah email uji coba untuk memverifikasi integrasi Brevo Cloud Relay dengan My Tara CRS.";
+        subject = `Uji Coba Sistem Notifikasi: ${hotelName}`;
+        badgeBg = "#f5f5f4";
+        badgeBorder = "#d6d3d1";
+        badgeColor = "#44403c";
+        badgeText = "UJI COBA SISTEM";
+        headerTitle = "Uji Coba Pengiriman Notifikasi";
+        headerDesc = "Email ini merupakan verifikasi fungsionalitas pengiriman resmi dari sistem My Tara ke manajemen hotel.";
     }
 
     const mealLabel = payload.mealsIncluded !== undefined
-        ? (payload.mealsIncluded ? "Termasuk Sarapan (With Breakfast)" : "Hanya Kamar (Room Only)")
-        : "Sesuai Paket OTA";
+        ? (payload.mealsIncluded ? "Termasuk Sarapan" : "Hanya Kamar (Room Only)")
+        : "Sesuai Ketentuan Saluran";
 
     const hasRescheduleDiff = isModif && Boolean(payload.previousArrivalDate && payload.previousDepartureDate);
 
@@ -83,242 +87,341 @@ export function buildEmailNotificationHtml(
   <title>${subject}</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background-color: #f4f4f5;
-      color: #18181b;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f7f6f3;
+      color: #292524;
       margin: 0;
-      padding: 24px 12px;
+      padding: 32px 16px;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    .wrapper {
-      max-width: 620px;
+    .container {
+      max-width: 600px;
       margin: 0 auto;
       background: #ffffff;
-      border-radius: 12px;
+      border: 1px solid #e7e5e4;
+      border-radius: 8px;
       overflow: hidden;
-      border: 1px solid #e4e4e7;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
     }
-    .header-bar {
-      background: #5c0f1e;
-      color: #ffffff;
-      padding: 20px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .hotel-masthead {
+      background: #231618;
+      padding: 18px 24px;
+      border-bottom: 2px solid #5c0f1e;
     }
-    .header-bar h2 {
-      margin: 0;
-      font-size: 18px;
+    .masthead-tag {
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: -0.02em;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #d6b4b8;
+      margin-bottom: 4px;
     }
-    .header-bar span {
-      font-size: 12px;
-      opacity: 0.85;
+    .hotel-name {
+      font-family: Georgia, 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0;
+      letter-spacing: -0.01em;
     }
-    .content {
-      padding: 24px;
+    .body-content {
+      padding: 28px 28px 24px 28px;
     }
-    .badge {
+    .status-badge {
       display: inline-block;
       padding: 4px 10px;
-      border-radius: 9999px;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
+      border-radius: 4px;
       background: ${badgeBg};
+      border: 1px solid ${badgeBorder};
       color: ${badgeColor};
       margin-bottom: 12px;
     }
-    .title {
-      font-size: 20px;
+    .section-headline {
+      font-size: 19px;
       font-weight: 700;
-      color: #09090b;
+      color: #1c1917;
       margin: 0 0 6px 0;
+      letter-spacing: -0.02em;
     }
-    .subtitle {
+    .section-subtext {
       font-size: 13px;
-      color: #71717a;
-      margin: 0 0 20px 0;
+      color: #78716c;
+      margin: 0 0 22px 0;
       line-height: 1.5;
     }
-    .info-card {
-      background: #fafafa;
-      border: 1px solid #f4f4f5;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
+    .diff-container {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
     }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #f4f4f5;
-      font-size: 13px;
+    .diff-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 8px;
     }
-    .info-row:last-child {
-      border-bottom: none;
+    .diff-grid {
+      display: table;
+      width: 100%;
     }
-    .info-label {
-      color: #71717a;
-      font-weight: 500;
+    .diff-col {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+      font-size: 12.5px;
+      line-height: 1.4;
     }
-    .info-value {
-      color: #18181b;
-      font-weight: 600;
-      text-align: right;
+    .diff-col b {
+      color: #0f172a;
     }
-    .highlight-box {
-      background: ${isCancel ? "#fff1f2" : (isModif ? "#eff6ff" : "#fdf2f4")};
-      border-left: 4px solid ${isCancel ? "#e11d48" : (isModif ? "#2563eb" : "#5c0f1e")};
+    .cancel-notice {
+      background: #fef2f2;
+      border-left: 3px solid #dc2626;
       padding: 12px 16px;
       border-radius: 4px;
       font-size: 12.5px;
+      color: #991b1b;
       line-height: 1.5;
-      color: #27272a;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
-    .action-summary {
-      background: #f4f4f5;
-      border-radius: 8px;
-      padding: 14px 16px;
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 22px;
+      border: 1px solid #f0eee9;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .data-row {
+      border-bottom: 1px solid #f5f5f4;
+    }
+    .data-row:last-child {
+      border-bottom: none;
+    }
+    .data-row:nth-child(even) {
+      background: #fafaf9;
+    }
+    .data-cell-label {
+      padding: 10px 14px;
       font-size: 12px;
-      color: #52525b;
-      line-height: 1.6;
+      font-weight: 500;
+      color: #78716c;
+      width: 38%;
+      vertical-align: middle;
     }
-    .action-summary b {
-      color: #18181b;
+    .data-cell-value {
+      padding: 10px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #1c1917;
+      text-align: right;
+      vertical-align: middle;
     }
-    .footer {
-      background: #fafafa;
-      padding: 18px 24px;
-      text-align: center;
+    .mono-code {
+      font-family: SFMono-Regular, Consolas, Monaco, monospace;
+      font-size: 12px;
+      background: #f5f5f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid #e7e5e4;
+      color: #292524;
+    }
+    .price-value {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: ${isCancel ? '#991b1b' : '#166534'};
+    }
+    .guest-note-box {
+      background: #fafaf9;
+      border: 1px solid #e7e5e4;
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-bottom: 22px;
+    }
+    .guest-note-label {
       font-size: 11px;
-      color: #a1a1aa;
-      border-top: 1px solid #f4f4f5;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #78716c;
+      margin-bottom: 4px;
+    }
+    .guest-note-text {
+      font-size: 12.5px;
+      font-style: italic;
+      color: #44403c;
+      line-height: 1.45;
+    }
+    .operational-box {
+      background: #f7f7f6;
+      border: 1px solid #e7e5e4;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #57534e;
+      line-height: 1.55;
+    }
+    .operational-box b {
+      color: #292524;
+    }
+    .footer-masthead {
+      background: #fafaf9;
+      border-top: 1px solid #e7e5e4;
+      padding: 16px 28px;
+      font-size: 11px;
+      color: #a8a29e;
+      text-align: center;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <div class="wrapper">
-    <div class="header-bar">
-      <div>
-        <h2>${hotelName}</h2>
-        <span>My Tara Central Reservation System</span>
-      </div>
+  <div class="container">
+    <div class="hotel-masthead">
+      <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="vertical-align: middle;">
+            <img src="https://live.mytara.id/channels/6.png" alt="Tara" height="26" style="height: 26px; width: auto; max-height: 26px; display: block; border: 0;" />
+            <div style="font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #d6b4b8; margin-top: 4px;">
+              Central Reservation System
+            </div>
+          </td>
+          <td style="vertical-align: middle; text-align: right;">
+            <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #d6b4b8; opacity: 0.85;">Properti Hotel:</div>
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14.5px; font-weight: 600; color: #ffffff; letter-spacing: -0.01em; margin-top: 2px;">
+              ${hotelName}
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
-    <div class="content">
-      <div class="badge">${badgeText}</div>
-      <h1 class="title">${headerTitle}</h1>
-      <p class="subtitle">${headerDesc}</p>
+
+    <div class="body-content">
+      <div class="status-badge">${badgeText}</div>
+      <h2 class="section-headline">${headerTitle}</h2>
+      <p class="section-subtext">${headerDesc}</p>
 
       ${hasRescheduleDiff ? `
-      <div class="highlight-box">
-        <strong>Perubahan Jadwal Ditemukan:</strong><br>
-        📅 <b>Jadwal Baru:</b> ${payload.arrivalDate} s/d ${payload.departureDate} (${payload.nights || 1} Malam)<br>
-        ⏳ <b>Jadwal Lama:</b> ${payload.previousArrivalDate} s/d ${payload.previousDepartureDate}
+      <div class="diff-container">
+        <div class="diff-title">Perbandingan Perubahan Jadwal</div>
+        <div class="diff-grid">
+          <div class="diff-col" style="padding-right: 12px; border-right: 1px solid #e2e8f0;">
+            <span style="color: #64748b; font-size: 11px;">JADWAL SEMULA:</span><br>
+            <b>${payload.previousArrivalDate}</b> s/d <b>${payload.previousDepartureDate}</b>
+          </div>
+          <div class="diff-col" style="padding-left: 12px;">
+            <span style="color: #0369a1; font-size: 11px;">JADWAL BARU:</span><br>
+            <b>${payload.arrivalDate}</b> s/d <b>${payload.departureDate}</b> (${payload.nights || 1} Malam)
+          </div>
+        </div>
       </div>
       ` : ""}
 
       ${isCancel ? `
-      <div class="highlight-box">
-        <strong>Status Pembatalan:</strong><br>
-        Kamar telah dilepas dari sistem dan dikembalikan otomatis ke inventori seluruh saluran OTA.
-        ${payload.cancellationReason ? `<br><em>Alasan: ${payload.cancellationReason}</em>` : ""}
+      <div class="cancel-notice">
+        <strong>Pemberitahuan Pembatalan:</strong><br>
+        Reservasi ini telah dibatalkan di sistem. Seluruh unit kamar telah otomatis dikembalikan ke inventori penjualan channel manager.
+        ${payload.cancellationReason ? `<br><span style="margin-top: 4px; display: inline-block;">Catatan Saluran: <em>${payload.cancellationReason}</em></span>` : ""}
       </div>
       ` : ""}
 
-      <div class="info-card">
-        <div class="info-row">
-          <span class="info-label">Saluran Pemesanan</span>
-          <span class="info-value">${payload.channelName || "OTA Channel"}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Nomor Reservasi OTA</span>
-          <span class="info-value" style="font-family: monospace; font-size: 13.5px;">${payload.bookingRef}</span>
-        </div>
+      <table class="data-table" cellpadding="0" cellspacing="0">
+        <tr class="data-row">
+          <td class="data-cell-label">Saluran Pemesanan</td>
+          <td class="data-cell-value">${payload.channelName || "OTA Channel"}</td>
+        </tr>
+        <tr class="data-row">
+          <td class="data-cell-label">Nomor Reservasi</td>
+          <td class="data-cell-value"><span class="mono-code">${payload.bookingRef}</span></td>
+        </tr>
         ${payload.revisionId ? `
-        <div class="info-row">
-          <span class="info-label">ID Revisi Sistem</span>
-          <span class="info-value" style="font-family: monospace; font-size: 11.5px; color: #71717a;">${payload.revisionId}</span>
-        </div>
+        <tr class="data-row">
+          <td class="data-cell-label">ID Revisi OTA</td>
+          <td class="data-cell-value"><span class="mono-code" style="font-size: 11px;">${payload.revisionId}</span></td>
+        </tr>
         ` : ""}
-        <div class="info-row">
-          <span class="info-label">Nama Tamu</span>
-          <span class="info-value">${payload.guestName}</span>
-        </div>
+        <tr class="data-row">
+          <td class="data-cell-label">Nama Tamu</td>
+          <td class="data-cell-value">${payload.guestName}</td>
+        </tr>
         ${payload.guestPhone ? `
-        <div class="info-row">
-          <span class="info-label">No. Telepon Tamu</span>
-          <span class="info-value">${payload.guestPhone}</span>
-        </div>
+        <tr class="data-row">
+          <td class="data-cell-label">Kontak Telepon</td>
+          <td class="data-cell-value">${payload.guestPhone}</td>
+        </tr>
         ` : ""}
         ${payload.guestEmail ? `
-        <div class="info-row">
-          <span class="info-label">Email Tamu</span>
-          <span class="info-value">${payload.guestEmail}</span>
-        </div>
+        <tr class="data-row">
+          <td class="data-cell-label">Alamat Email</td>
+          <td class="data-cell-value">${payload.guestEmail}</td>
+        </tr>
         ` : ""}
-        <div class="info-row">
-          <span class="info-label">Tipe Kamar</span>
-          <span class="info-value">${payload.roomName}${payload.roomCount && payload.roomCount > 1 ? ` (${payload.roomCount} Kamar)` : ""}</span>
-        </div>
+        <tr class="data-row">
+          <td class="data-cell-label">Tipe Kamar</td>
+          <td class="data-cell-value">${payload.roomName}${payload.roomCount && payload.roomCount > 1 ? ` (${payload.roomCount} Kamar)` : ""}</td>
+        </tr>
         ${payload.pax ? `
-        <div class="info-row">
-          <span class="info-label">Jumlah Tamu</span>
-          <span class="info-value">${payload.pax} Tamu</span>
-        </div>
+        <tr class="data-row">
+          <td class="data-cell-label">Jumlah Tamu</td>
+          <td class="data-cell-value">${payload.pax} Orang</td>
+        </tr>
         ` : ""}
-        <div class="info-row">
-          <span class="info-label">Paket Sarapan</span>
-          <span class="info-value">${mealLabel}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Tanggal Check-in</span>
-          <span class="info-value">${payload.arrivalDate}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Tanggal Check-out</span>
-          <span class="info-value">${payload.departureDate} ${payload.nights ? `(${payload.nights} Malam)` : ""}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">${isCancel ? "Tarif Asal (Dibatalkan)" : "Total Tarif Tamu"}</span>
-          <span class="info-value" style="font-size: 15px; color: ${isCancel ? '#991b1b' : '#047857'};">${formattedPrice}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Metode Pembayaran</span>
-          <span class="info-value">${payload.paymentStatus || "Sesuai OTA"}</span>
-        </div>
-      </div>
+        <tr class="data-row">
+          <td class="data-cell-label">Paket Sarapan</td>
+          <td class="data-cell-value">${mealLabel}</td>
+        </tr>
+        <tr class="data-row">
+          <td class="data-cell-label">Tanggal Kedatangan (Check-in)</td>
+          <td class="data-cell-value">${payload.arrivalDate}</td>
+        </tr>
+        <tr class="data-row">
+          <td class="data-cell-label">Tanggal Kepulangan (Check-out)</td>
+          <td class="data-cell-value">${payload.departureDate} (${payload.nights || 1} Malam)</td>
+        </tr>
+        <tr class="data-row">
+          <td class="data-cell-label">${isCancel ? "Nilai Pemesanan Asal" : "Total Tagihan Tamu"}</td>
+          <td class="data-cell-value price-value">${formattedPrice}</td>
+        </tr>
+        <tr class="data-row">
+          <td class="data-cell-label">Ketentuan Pembayaran</td>
+          <td class="data-cell-value">${payload.paymentStatus || "Sesuai Kebijakan OTA"}</td>
+        </tr>
+      </table>
 
       ${(payload.customNote || payload.notes) ? `
-      <div style="margin-bottom: 20px;">
-        <span style="font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase;">Catatan / Permintaan Khusus Tamu:</span>
-        <div style="background: #fafafa; border: 1px solid #e4e4e7; padding: 12px; border-radius: 6px; font-size: 13px; color: #27272a; margin-top: 6px;">
-          "${payload.customNote || payload.notes}"
-        </div>
+      <div class="guest-note-box">
+        <div class="guest-note-label">Permintaan Khusus Tamu</div>
+        <div class="guest-note-text">"${payload.customNote || payload.notes}"</div>
       </div>
       ` : ""}
 
-      <div class="action-summary">
-        ⚡ <b>Tindakan Otomatis Sistem:</b><br>
+      <div class="operational-box">
+        <b>Catatan Operasional Front Desk:</b><br>
         ${isCancel
-          ? "• Status reservasi di Front Desk telah ditandai sebagai DIBATALKAN.<br>• Ketersediaan kamar telah dipulihkan dan disinkronkan ke seluruh OTA."
+          ? "Status reservasi pada PMS telah diperbarui menjadi DIBATALKAN. Tidak diperlukan persiapan kamar untuk kedatangan ini."
           : (isModif
-            ? "• Jadwal lama telah dilepas & kamar pada tanggal baru berhasil diblokir.<br>• Kalender inventori PMS & Channex telah diperbarui secara otomatis."
-            : "• Kamar telah diblokir di kalender PMS untuk tanggal kedatangan di atas.<br>• Pembaruan ketersediaan telah diteruskan ke Channex Channel Manager.")}
+            ? "Jadwal menginap telah berhasil disesuaikan pada kalender kamar PMS. Pastikan log catatan pemesanan telah sinkron dengan Front Desk."
+            : "Alokasi kamar telah dikunci pada kalender PMS. Mohon siapkan pendaftaran kedatangan tamu sesuai tanggal check-in.")}
       </div>
     </div>
-    <div class="footer">
-      <p style="margin: 0 0 4px 0;">Notifikasi Resmi Otomatis dikirim oleh <b>My Tara Central Reservation System</b> via Brevo Cloud Relay.</p>
-      <p style="margin: 0;">Waktu pengiriman: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB</p>
+
+    <div class="footer-masthead">
+      Notifikasi resmi dikirimkan secara otomatis oleh My Tara Central Reservation System.<br>
+      Waktu Pemrosesan: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB
     </div>
   </div>
 </body>
 </html>
-    `;
+`;
 
     return { subject, html };
 }
@@ -371,9 +474,9 @@ export async function sendEmailNotificationToOwner(
             return { success: false, error: "Brevo API Key (SMTP_PASS) belum dikonfigurasi di server (.env)." };
         }
 
-        const senderEmail = emailConfig.senderEmail || DEFAULT_SENDER_EMAIL;
-        const senderName = emailConfig.senderName || `${hotelData.name || "Tara PMS"} via Setara`;
         const hotelName = hotelData.name || hotelData.propertyName || `Hotel #${hotelCode}`;
+        const senderEmail = emailConfig.senderEmail || DEFAULT_SENDER_EMAIL;
+        const senderName = emailConfig.senderName || DEFAULT_SENDER_NAME;
 
         const { subject, html } = buildEmailNotificationHtml(hotelName, payload);
 

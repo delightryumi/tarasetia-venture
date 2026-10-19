@@ -27,11 +27,11 @@ export async function GET(req: NextRequest) {
             notifyOnNewBooking: true,
             notifyOnCancellation: true,
             notifyOnModification: true,
-            senderEmail: process.env.SMTP_FROM_EMAIL || "delightryumi@gmail.com",
-            senderName: `${hotelData.name || "Tara PMS"} via Setara`
+            senderEmail: process.env.SMTP_FROM_EMAIL || "reservation@mytara.id",
+            senderName: hotelData.emailNotification?.senderName || "My Tara"
         };
 
-        const defaultSender = process.env.SMTP_FROM_EMAIL || "delightryumi@gmail.com";
+        const defaultSender = process.env.SMTP_FROM_EMAIL || "reservation@mytara.id";
         const hasBrevoKey = !!(process.env.SMTP_PASS || process.env.BREVO_API_KEY);
 
         return NextResponse.json({
@@ -67,6 +67,10 @@ export async function POST(req: NextRequest) {
         // ACTION 1: SAVE CONFIG
         // ==========================================
         if (action === "save_config") {
+            const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
+            const hotelData = hotelDoc.data() || {};
+            const hotelName = hotelData.name || hotelData.propertyName || "Hotel Reservation";
+
             const updateData = {
                 emailNotification: {
                     enabled: config.enabled ?? true,
@@ -74,8 +78,8 @@ export async function POST(req: NextRequest) {
                     notifyOnNewBooking: config.notifyOnNewBooking ?? true,
                     notifyOnCancellation: config.notifyOnCancellation ?? true,
                     notifyOnModification: config.notifyOnModification ?? true,
-                    senderEmail: config.senderEmail || process.env.SMTP_FROM_EMAIL || "delightryumi@gmail.com",
-                    senderName: config.senderName || "Tara PMS Notifications",
+                    senderEmail: config.senderEmail || process.env.SMTP_FROM_EMAIL || "reservation@mytara.id",
+                    senderName: config.senderName || "My Tara",
                     updatedAt: new Date().toISOString()
                 }
             };
