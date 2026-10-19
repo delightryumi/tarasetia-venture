@@ -159,30 +159,52 @@ export async function POST(req: NextRequest) {
             if (hotelCode) {
                 const bookingData = payload.booking || payload;
                 const isCancel = payload.event === "booking_cancellation" || (bookingData as any)?.status === "cancelled";
-                const guestName = `${(bookingData as any)?.customer?.name || ""} ${(bookingData as any)?.customer?.surname || ""}`.trim() || "Tamu OTA";
+                const isModif = payload.event === "booking_modification" || (bookingData as any)?.status === "modified";
+                const customer = (bookingData as any)?.customer || (bookingData as any)?.guest || {};
+                const guestName = (customer.name || `${customer.first_name || ""} ${customer.last_name || ""}`).trim() || "Tamu OTA";
+                const guestPhone = customer.phone || customer.telephone || customer.mobile || "";
+                const guestEmail = customer.email || "";
                 const otaName = (bookingData as any)?.ota_name || (bookingData as any)?.channel_name || "OTA";
                 const roomsList = (bookingData as any)?.rooms || [];
-                const roomCount = roomsList.length;
+                const roomCount = roomsList.length || 1;
                 const primaryRoomName = roomsList[0]?.room_type_name || "Kamar Hotel";
                 const roomName = roomCount > 1 
                     ? `${primaryRoomName} (${roomCount} Kamar)` 
                     : primaryRoomName;
-                const bookingRef = (bookingData as any)?.channel_booking_id || (bookingData as any)?.ota_reservation_code || (bookingData as any)?.booking_id || result.bookingId || "Booking";
+                const bookingRef = (bookingData as any)?.channel_booking_id || (bookingData as any)?.ota_reservation_code || (bookingData as any)?.unique_id || (bookingData as any)?.booking_id || result.bookingId || "Booking";
                 const totalPrice = Number((bookingData as any)?.total_price || (bookingData as any)?.amount || (bookingData as any)?.total_amount) || 0;
+
+                const arrivalDate = (bookingData as any)?.arrival_date || "-";
+                const departureDate = (bookingData as any)?.departure_date || "-";
+                let nights = 0;
+                if (arrivalDate !== "-" && departureDate !== "-") {
+                    const diffMs = new Date(departureDate).getTime() - new Date(arrivalDate).getTime();
+                    nights = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                }
+
+                const adults = Number(roomsList[0]?.occupancy?.adults || roomsList[0]?.adults || customer.adults || (bookingData as any)?.occupancy || 2);
+                const isWithBreakfast = Boolean(
+                    (bookingData as any)?.meals?.breakfast ||
+                    roomsList[0]?.meals?.breakfast ||
+                    roomsList[0]?.rate_plan_name?.toLowerCase()?.includes("breakfast") ||
+                    roomsList[0]?.rate_plan_name?.toLowerCase()?.includes("bb")
+                );
+
+                const specialNotes = (bookingData as any)?.notes || (bookingData as any)?.special_requests || "";
 
                 const pushTitle = isCancel
                     ? `🚨 Pembatalan Reservasi! [${otaName}]`
-                    : `🛎️ Reservasi Baru Masuk! [${otaName}]`;
+                    : (isModif ? `✏️ Perubahan Jadwal Reservasi! [${otaName}]` : `🛎️ Reservasi Baru Masuk! [${otaName}]`);
 
                 const pushBody = isCancel
                     ? `Tamu ${guestName} membatalkan pesanan kamar ${roomName} (${bookingRef}). Segera cek ketersediaan!`
-                    : `Tamu ${guestName} memesan kamar ${roomName} (${bookingRef}). Check-in segera!`;
+                    : (isModif ? `Tamu ${guestName} mengubah tanggal reservasi kamar ${roomName} (${bookingRef}) ke ${arrivalDate} s/d ${departureDate}.` : `Tamu ${guestName} memesan kamar ${roomName} (${bookingRef}). Check-in segera!`);
 
                 const { sendPushNotificationToHotel } = await import("@/lib/notifications/webPushServer");
                 sendPushNotificationToHotel(hotelCode, {
                     title: pushTitle,
                     body: pushBody,
-                    type: isCancel ? "booking_cancelled" : "booking_new",
+                    type: isCancel ? "booking_cancelled" : (isModif ? "booking_modified" : "booking_new"),
                     tag: `booking-${bookingRef}`,
                     url: `/overview?module=front-office&bookingRef=${bookingRef}`,
                     bookingId: bookingRef,
@@ -193,17 +215,26 @@ export async function POST(req: NextRequest) {
                 try {
                     const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
                     dispatchWhatsAppNotification(hotelCode, {
-                        event: isCancel ? "booking_cancellation" : (payload.event === "booking_modification" ? "booking_modification" : "booking_new"),
+                        event: isCancel ? "booking_cancellation" : (isModif ? "booking_modification" : "booking_new"),
                         channelName: otaName,
                         bookingRef,
                         guestName,
+                        guestPhone,
+                        guestEmail,
                         roomName,
-                        arrivalDate: (bookingData as any)?.arrival_date || "-",
-                        departureDate: (bookingData as any)?.departure_date || "-",
-                        totalPrice: totalPrice,
-                        paymentStatus: (bookingData as any)?.payment_type || "Sesuai OTA",
-                        netToHotel: (result as any)?.financials?.netToHotel,
-                        otaCommission: (result as any)?.financials?.otaCommissionAmount
+                        roomCount,
+                        pax: adults,
+                        mealsIncluded: isWithBreakfast,
+                        arrivalDate,
+                        departureDate,
+                        nights,
+                        totalPrice,
+                        paymentStatus: (bookingData as any)?.payment_type || (bookingData as any)?.payment_collect || "Sesuai OTA",
+                        notes: specialNotes,
+                        customNote: specialNotes,
+                        revisionId: (payload as any).booking_revision_id || (bookingData as any)?.revision_id || "",
+                        previousArrivalDate: result.previousStay?.arrivalDate,
+                        previousDepartureDate: result.previousStay?.departureDate
                     }).catch(waErr => console.warn("[Webhook WhatsApp Notification Warning]:", waErr?.message));
                 } catch (waErr: any) {
                     console.warn("[Webhook WhatsApp Import Warning]:", waErr?.message);

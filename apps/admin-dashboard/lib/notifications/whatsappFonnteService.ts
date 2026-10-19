@@ -1,20 +1,8 @@
 import { adminDb } from "@/lib/firebaseAdmin";
 
-export interface WhatsAppNotificationPayload {
-    event: "booking_new" | "booking_cancellation" | "booking_modification" | "test";
-    channelName: string;
-    bookingRef: string;
-    guestName: string;
-    roomName: string;
-    arrivalDate: string;
-    departureDate: string;
-    totalPrice: number | string;
-    paymentStatus?: string;
-    nights?: number;
-    customNote?: string;
-    netToHotel?: number | string;
-    otaCommission?: number | string;
-}
+import { WhatsAppNotificationPayload, buildWhatsAppMessage } from "@/lib/notifications/whatsappMetaService";
+
+export type { WhatsAppNotificationPayload };
 
 const FONNTE_API_URL = "https://api.fonnte.com/send";
 const DEFAULT_FONNTE_TOKEN = process.env.FONNTE_API_TOKEN || "";
@@ -145,57 +133,8 @@ export async function sendWhatsAppNotificationToOwner(
         }
 
         const hotelName = hotelData.name || hotelData.propertyName || `Hotel #${hotelCode}`;
-        const isCancel = payload.event === "booking_cancellation";
-        const isModif = payload.event === "booking_modification";
-
-        const formattedPrice = typeof payload.totalPrice === "number"
-            ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(payload.totalPrice)
-            : payload.totalPrice;
-
-        // Build neat, rich, bilingual notification message
-        let header = "🛎️ *RESERVASI BARU MASUK / NEW RESERVATION ALERT*";
-        let actionNote = "";
-
-        if (isCancel) {
-            header = "🚨 *PEMBATALAN RESERVASI / RESERVATION CANCELLED*";
-            actionNote = "⚡ *Tindakan Sistem / Action*: Slot kamar otomatis dibuka kembali ke semua saluran OTA.\n_Room inventory has been automatically released back to all channels._";
-        } else if (isModif) {
-            header = "✏️ *PERUBAHAN JADWAL RESERVASI / BOOKING MODIFIED (RESCHEDULE)*";
-            actionNote = "📌 *Tindakan Sistem / Action*: Kalender ketersediaan telah disesuaikan otomatis di PMS.\n_Inventory and stay dates have been updated automatically in PMS._";
-        } else if (payload.event === "test") {
-            header = "🧪 *TES NOTIFIKASI WHATSAPP / SYSTEM INTEGRATION TEST*";
-            actionNote = "✅ *Status*: Integrasi WhatsApp Gateway Fonnte terhubung aktif ke My Tara PMS.";
-        }
-
-        const messageText = [
-            header,
-            "━━━━━━━━━━━━━━━━━━━━━━━━",
-            `🏨 *Properti / Property*: ${hotelName}`,
-            `🌐 *Saluran / Channel*: ${payload.channelName || "OTA Channel"}`,
-            `🔢 *No. Reservasi / Booking ID*: ${payload.bookingRef}`,
-            "",
-            `👤 *Nama Tamu / Guest*: ${payload.guestName}`,
-            `🛏️ *Tipe Kamar / Room*: ${payload.roomName}`,
-            `📅 *Check-in*: ${payload.arrivalDate}`,
-            `📅 *Check-out*: ${payload.departureDate}`,
-            `⏳ *Durasi / Duration*: ${payload.nights ? `${payload.nights} Malam / ${payload.nights} Night(s)` : "1 Malam"}`,
-            `💰 *Total Tarif / Total Amount*: ${formattedPrice}`,
-            ...(payload.netToHotel && Number(payload.netToHotel) !== Number(payload.totalPrice) ? [
-                `💵 *Net to Hotel (Est. Payout)*: ${typeof payload.netToHotel === 'number' ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(payload.netToHotel)) : payload.netToHotel}`
-            ] : []),
-            `💳 *Pembayaran / Payment*: ${payload.paymentStatus || "Sesuai OTA"}`,
-            ...(payload.customNote ? [
-                "━━━━━━━━━━━━━━━━━━━━━━━━",
-                `📝 *Catatan Khusus / Special Request*:`,
-                `"${payload.customNote}"`
-            ] : []),
-            ...(actionNote ? [
-                "━━━━━━━━━━━━━━━━━━━━━━━━",
-                actionNote
-            ] : []),
-            "━━━━━━━━━━━━━━━━━━━━━━━━",
-            `_Powered by Tara_`
-        ].filter(Boolean).join("\n");
+        // Build neat, rich notification message (omitting net to hotel & commission)
+        const messageText = buildWhatsAppMessage(hotelName, payload);
 
         const token = waConfig.fonnteToken || DEFAULT_FONNTE_TOKEN;
 

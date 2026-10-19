@@ -5,14 +5,26 @@ export interface WhatsAppNotificationPayload {
     channelName: string;
     bookingRef: string;
     guestName: string;
+    guestPhone?: string;
+    guestEmail?: string;
     roomName: string;
+    roomCount?: number;
+    pax?: number;
+    mealsIncluded?: boolean;
     arrivalDate: string;
     departureDate: string;
     totalPrice: number | string;
     paymentStatus?: string;
     nights?: number;
     customNote?: string;
+    notes?: string;
     customRecipient?: string | string[];
+    previousArrivalDate?: string;
+    previousDepartureDate?: string;
+    revisionId?: string;
+    cancellationReason?: string;
+    netToHotel?: number | string;
+    otaCommission?: number | string;
 }
 
 const META_API_VERSION = "v20.0";
@@ -205,35 +217,12 @@ export async function sendWhatsAppNotificationToOwner(
         }
 
         const hotelName = hotelData.name || hotelData.propertyName || `Hotel #${hotelCode}`;
-        const isCancel = payload.event === "booking_cancellation";
-        const isModif = payload.event === "booking_modification";
-
         const formattedPrice = typeof payload.totalPrice === "number"
             ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(payload.totalPrice)
-            : payload.totalPrice;
+            : (payload.totalPrice ? String(payload.totalPrice) : "Rp 0");
 
-        // Build elegant notification message
-        let header = "🛎️ *RESERVASI BARU MASUK!*";
-        if (isCancel) header = "🚨 *PEMBATALAN RESERVASI OTA!*";
-        if (isModif) header = "✏️ *PERUBAHAN RESERVASI OTA!*";
-        if (payload.event === "test") header = "🧪 *TES NOTIFIKASI WHATSAPP TARA*";
-
-        const messageText = [
-            header,
-            "━━━━━━━━━━━━━━━━━━━━",
-            `🏨 *Properti*: ${hotelName}`,
-            `🌐 *Saluran*: ${payload.channelName || "OTA Channel"}`,
-            `🔢 *No. Reservasi*: ${payload.bookingRef}`,
-            `👤 *Nama Tamu*: ${payload.guestName}`,
-            `🛏️ *Tipe Kamar*: ${payload.roomName}`,
-            `📅 *Check-in*: ${payload.arrivalDate}`,
-            `📅 *Check-out*: ${payload.departureDate} ${payload.nights ? `(${payload.nights} Malam)` : ""}`,
-            `💰 *Total Tarif*: ${formattedPrice}`,
-            `💳 *Pembayaran*: ${payload.paymentStatus || "Belum Bayar / Sesuai OTA"}`,
-            ...(payload.customNote ? [`📝 *Catatan*: ${payload.customNote}`] : []),
-            "━━━━━━━━━━━━━━━━━━━━",
-            `_Powered by Tara_`
-        ].filter(Boolean).join("\n");
+        // Build elegant, comprehensive notification message (Net to Hotel & Commission are strictly omitted)
+        const messageText = buildWhatsAppMessage(hotelName, payload);
 
         // Custom hotel credentials if configured per hotel, else default to system
         const accessToken = waConfig.accessToken || DEFAULT_ACCESS_TOKEN;
@@ -310,3 +299,129 @@ export async function sendWhatsAppNotificationToOwner(
         return { success: false, reason: err.message };
     }
 }
+
+/**
+ * Builds a structured, complete, and beautiful WhatsApp notification text.
+ * Strictly excludes any internal financial commission or net-to-hotel payout lines.
+ */
+export function buildWhatsAppMessage(hotelName: string, payload: WhatsAppNotificationPayload): string {
+    const isCancel = payload.event === "booking_cancellation";
+    const isModif = payload.event === "booking_modification";
+    const isTest = payload.event === "test";
+
+    const formattedPrice = typeof payload.totalPrice === "number"
+        ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(payload.totalPrice)
+        : (payload.totalPrice ? String(payload.totalPrice) : "Rp 0");
+
+    if (isTest) {
+        return [
+            "🧪 *TES NOTIFIKASI WHATSAPP TARA*",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            `🏨 *Properti*: ${hotelName}`,
+            `🌐 *Saluran*: ${payload.channelName || "Test Channel"}`,
+            `🔢 *No. Reservasi*: ${payload.bookingRef}`,
+            `👤 *Nama Tamu*: ${payload.guestName}`,
+            `🛏️ *Tipe Kamar*: ${payload.roomName}`,
+            `📅 *Check-in*: ${payload.arrivalDate}`,
+            `📅 *Check-out*: ${payload.departureDate}${payload.nights ? ` (${payload.nights} Malam)` : ""}`,
+            `💰 *Total Tarif*: ${formattedPrice}`,
+            `💳 *Pembayaran*: ${payload.paymentStatus || "Lunas (Test)"}`,
+            ...(payload.customNote ? [`📝 *Catatan*: ${payload.customNote}`] : []),
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            "✅ *Status*: Integrasi WhatsApp Gateway terhubung aktif ke My Tara PMS.",
+            "_Powered by Tara_"
+        ].filter(Boolean).join("\n");
+    }
+
+    if (isCancel) {
+        return [
+            "🚨 *PEMBATALAN RESERVASI OTA!*",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            `🏨 *Properti*: ${hotelName}`,
+            `🌐 *Saluran*: ${payload.channelName || "OTA Channel"}`,
+            `🔢 *No. Reservasi*: ${payload.bookingRef}`,
+            "⚠️ *Status*: DIBATALKAN (CANCELLED)",
+            "",
+            `👤 *Nama Tamu*: ${payload.guestName}`,
+            ...(payload.guestPhone ? [`📞 *No. Kontak*: ${payload.guestPhone}`] : []),
+            `🛏️ *Kamar Dibatalkan*: ${payload.roomName}${payload.roomCount && payload.roomCount > 1 ? ` (${payload.roomCount} Kamar)` : ""}`,
+            `📅 *Jadwal Dibatalkan*: ${payload.arrivalDate} s/d ${payload.departureDate}${payload.nights ? ` (${payload.nights} Malam)` : ""}`,
+            `💰 *Tarif Asal*: ${formattedPrice} (Dibatalkan / Void)`,
+            ...(payload.cancellationReason ? [`📝 *Alasan*: ${payload.cancellationReason}`] : []),
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            "⚡ *Tindakan Sistem*:",
+            "✅ Slot kamar telah otomatis dibuka kembali ke seluruh saluran OTA.",
+            "✅ Reservasi di PMS ditandai sebagai CANCELLED.",
+            "_Powered by Tara_"
+        ].filter(Boolean).join("\n");
+    }
+
+    if (isModif) {
+        const hasOldDates = Boolean(payload.previousArrivalDate && payload.previousDepartureDate);
+        return [
+            "✏️ *PERUBAHAN JADWAL RESERVASI (RESCHEDULE)*",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            `🏨 *Properti*: ${hotelName}`,
+            `🌐 *Saluran*: ${payload.channelName || "OTA Channel"}`,
+            `🔢 *No. Reservasi*: ${payload.bookingRef}`,
+            "🔄 *Status*: MODIFIKASI JADWAL",
+            "",
+            `👤 *Nama Tamu*: ${payload.guestName}`,
+            ...(payload.guestPhone ? [`📞 *No. Kontak*: ${payload.guestPhone}`] : []),
+            `🛏️ *Tipe Kamar*: ${payload.roomName}${payload.roomCount && payload.roomCount > 1 ? ` (${payload.roomCount} Kamar)` : ""}`,
+            ...(payload.mealsIncluded !== undefined ? [`🍳 *Paket*: ${payload.mealsIncluded ? "Termasuk Sarapan" : "Hanya Kamar"}`] : []),
+            "",
+            `📅 *Jadwal Baru*: ${payload.arrivalDate} s/d ${payload.departureDate}${payload.nights ? ` (${payload.nights} Malam)` : ""}`,
+            ...(hasOldDates ? [`⏳ *Jadwal Sebelumnya*: ${payload.previousArrivalDate} s/d ${payload.previousDepartureDate}`] : []),
+            "",
+            `💰 *Total Tarif Baru*: ${formattedPrice}`,
+            `💳 *Pembayaran*: ${payload.paymentStatus || "Sesuai OTA"}`,
+            ...(payload.customNote || payload.notes ? [
+                "",
+                `📝 *Catatan*:`,
+                `"${payload.customNote || payload.notes}"`
+            ] : []),
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            "⚡ *Tindakan Sistem*:",
+            "✅ Jadwal lama telah dilepas & kamar pada tanggal baru berhasil diblokir.",
+            "✅ Kalender inventori PMS & Channex telah diperbarui otomatis.",
+            "_Powered by Tara_"
+        ].filter(Boolean).join("\n");
+    }
+
+    // Default: booking_new
+    const mealLabel = payload.mealsIncluded !== undefined 
+        ? (payload.mealsIncluded ? "Termasuk Sarapan (With Breakfast)" : "Hanya Kamar (Room Only)")
+        : null;
+
+    return [
+        "🛎️ *RESERVASI BARU MASUK!*",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        `🏨 *Properti*: ${hotelName}`,
+        `🌐 *Saluran*: ${payload.channelName || "OTA Channel"}`,
+        `🔢 *No. Reservasi*: ${payload.bookingRef}`,
+        ...(payload.revisionId ? [`🆔 *ID Revisi*: ${payload.revisionId}`] : []),
+        "",
+        `👤 *Nama Tamu*: ${payload.guestName}`,
+        ...(payload.guestPhone ? [`📞 *No. Kontak*: ${payload.guestPhone}`] : []),
+        ...(payload.guestEmail ? [`📧 *Email*: ${payload.guestEmail}`] : []),
+        "",
+        `🛏️ *Kamar*: ${payload.roomName}${payload.roomCount && payload.roomCount > 1 ? ` (${payload.roomCount} Kamar)` : ""}`,
+        ...(payload.pax ? [`👥 *Jumlah Tamu*: ${payload.pax} Tamu`] : []),
+        ...(mealLabel ? [`🍳 *Paket*: ${mealLabel}`] : []),
+        `📅 *Check-in*: ${payload.arrivalDate}`,
+        `📅 *Check-out*: ${payload.departureDate}${payload.nights ? ` (${payload.nights} Malam)` : ""}`,
+        "",
+        `💰 *Total Tarif*: ${formattedPrice}`,
+        `💳 *Pembayaran*: ${payload.paymentStatus || "Sesuai OTA"}`,
+        ...(payload.customNote || payload.notes ? [
+            "",
+            `📝 *Permintaan Khusus*:`,
+            `"${payload.customNote || payload.notes}"`
+        ] : []),
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "⚡ *Status Sistem*: Kamar otomatis diblokir di PMS & kalender OTA telah disinkronkan.",
+        "_Powered by Tara_"
+    ].filter(Boolean).join("\n");
+}
+

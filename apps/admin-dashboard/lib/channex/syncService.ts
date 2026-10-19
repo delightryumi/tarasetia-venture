@@ -166,7 +166,13 @@ export class ChannexSyncService {
     /**
      * Processes incoming Booking Webhook from Channex (Booking.com, Agoda, Traveloka, Tiket.com, etc.)
      */
-    async processIncomingBookingWebhook(payload: ChannexWebhookPayload, explicitHotelCode?: string): Promise<{ success: boolean; message: string; bookingId?: string; financials?: any }> {
+    async processIncomingBookingWebhook(payload: ChannexWebhookPayload, explicitHotelCode?: string): Promise<{ 
+        success: boolean; 
+        message: string; 
+        bookingId?: string; 
+        previousStay?: { arrivalDate?: string; departureDate?: string };
+        financials?: any;
+    }> {
         const { event, property_id, booking } = payload;
 
         if (!booking || !property_id) {
@@ -337,6 +343,7 @@ export class ChannexSyncService {
 
         // 1. GHOST BOOKING CLEANUP & CANCELLATION RETENTION (Certification Stage 5B & Audit Requirement)
         const affectedDates = new Set<string>();
+        let previousStay: { arrivalDate?: string; departureDate?: string } | undefined = undefined;
         try {
             // Bound search window around arrival/departure date (-30 to +30 days) to avoid scanning entire multi-year collection
             const startWindow = new Date(arrivalDate || new Date().toISOString().split("T")[0]);
@@ -364,6 +371,12 @@ export class ChannexSyncService {
                     e.parentBookingId === booking.id
                 );
                 if (matchingEntry) {
+                    if (!previousStay && matchingEntry.checkInDate && matchingEntry.checkOutDate) {
+                        previousStay = {
+                            arrivalDate: matchingEntry.checkInDate,
+                            departureDate: matchingEntry.checkOutDate
+                        };
+                    }
                     const docDate = dayData.date || doc.id.replace(`${hotelCode}_`, "");
                     affectedDates.add(docDate);
                     
@@ -830,6 +843,7 @@ export class ChannexSyncService {
             success: true,
             message: `Booking ${otaBookingId} (${isCancelled ? 'CANCELLED' : event}) for ${guestName} processed successfully into Hotel [${hotelCode}].`,
             bookingId: otaBookingId,
+            previousStay,
             financials: {
                 guestPaidGross: totalGross,
                 otaCommissionPercent: finalCommissionPercent,

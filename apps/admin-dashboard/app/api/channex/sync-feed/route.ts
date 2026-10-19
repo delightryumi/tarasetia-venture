@@ -151,10 +151,12 @@ export async function POST(req: NextRequest) {
                         // Dispatch WhatsApp Notification to Hotel Owner (Auto-routed: Meta Official or Fonnte)
                         try {
                             const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
-                            const guestName = (booking.customer?.name || `${booking.customer?.first_name || ""} ${booking.customer?.last_name || ""}`).trim() || "Tamu OTA";
+                            const customer = booking.customer || (booking as any)?.guest || {};
+                            const guestName = (customer.name || `${customer.first_name || ""} ${customer.last_name || ""}`).trim() || "Tamu OTA";
                             const isCancel = rev.event === "booking_cancellation" || booking.status === "cancelled";
+                            const isModif = rev.event === "booking_modification" || booking.status === "modified";
                             const roomsList = booking.rooms || [];
-                            const roomCount = roomsList.length;
+                            const roomCount = roomsList.length || 1;
                             const primaryRoomName = roomsList[0]?.room_type_name || "Kamar Hotel";
                             const roomName = roomCount > 1 
                                 ? `${primaryRoomName} (${roomCount} Kamar)` 
@@ -162,18 +164,44 @@ export async function POST(req: NextRequest) {
                             const bookingRef = booking.channel_booking_id || booking.ota_reservation_code || booking.id || revisionId;
                             const totalPrice = Number(booking.total_price || booking.amount || (booking as any)?.total_amount) || 0;
 
+                            const arrDate = booking.arrival_date || "-";
+                            const depDate = booking.departure_date || "-";
+                            let nights = 0;
+                            if (arrDate !== "-" && depDate !== "-") {
+                                const diffMs = new Date(depDate).getTime() - new Date(arrDate).getTime();
+                                nights = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                            }
+
+                            const adults = Number(roomsList[0]?.occupancy?.adults || roomsList[0]?.adults || customer.adults || (booking as any)?.occupancy || 2);
+                            const isWithBreakfast = Boolean(
+                                (booking as any)?.meals?.breakfast ||
+                                roomsList[0]?.meals?.breakfast ||
+                                roomsList[0]?.rate_plan_name?.toLowerCase()?.includes("breakfast") ||
+                                roomsList[0]?.rate_plan_name?.toLowerCase()?.includes("bb")
+                            );
+                            const specialNotes = (booking as any)?.notes || (booking as any)?.special_requests || "";
+
                             dispatchWhatsAppNotification(hotelCode, {
-                                event: isCancel ? "booking_cancellation" : (rev.event === "booking_modification" ? "booking_modification" : "booking_new"),
+                                event: isCancel ? "booking_cancellation" : (isModif ? "booking_modification" : "booking_new"),
                                 channelName: booking.channel_name || "OTA Channel",
                                 bookingRef,
                                 guestName,
+                                guestPhone: customer.phone || customer.telephone || customer.mobile || "",
+                                guestEmail: customer.email || "",
                                 roomName,
-                                arrivalDate: booking.arrival_date || "-",
-                                departureDate: booking.departure_date || "-",
+                                roomCount,
+                                pax: adults,
+                                mealsIncluded: isWithBreakfast,
+                                arrivalDate: arrDate,
+                                departureDate: depDate,
+                                nights,
                                 totalPrice,
-                                paymentStatus: booking.payment_type || "Sesuai OTA",
-                                netToHotel: (ingestRes as any)?.financials?.netToHotel,
-                                otaCommission: (ingestRes as any)?.financials?.otaCommissionAmount
+                                paymentStatus: booking.payment_type || (booking as any)?.payment_collect || "Sesuai OTA",
+                                notes: specialNotes,
+                                customNote: specialNotes,
+                                revisionId: revisionId || "",
+                                previousArrivalDate: ingestRes.previousStay?.arrivalDate,
+                                previousDepartureDate: ingestRes.previousStay?.departureDate
                             }).catch(() => {});
                         } catch (waErr: any) {
                             console.warn("[Sync Feed WhatsApp Notification Warning]:", waErr?.message);

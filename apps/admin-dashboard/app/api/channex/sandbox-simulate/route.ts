@@ -184,18 +184,26 @@ export async function POST(req: NextRequest) {
                 const roomDoc = roomTypeId ? await adminDb.collection(`hotels/${hotelCode}/roomTypes`).doc(roomTypeId).get() : null;
                 const roomName = roomDoc?.data()?.name || "Standard Room";
 
+                const diffMs = new Date(checkout).getTime() - new Date(checkin).getTime();
+                const nights = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
                 waResult = await dispatchWhatsAppNotification(hotelCode, {
                     event: "booking_new",
                     channelName,
                     bookingRef: simulatedBookingId,
                     guestName,
+                    guestPhone,
+                    guestEmail,
                     roomName,
+                    roomCount: 1,
+                    pax: 2,
+                    mealsIncluded: true,
                     arrivalDate: checkin,
                     departureDate: checkout,
+                    nights,
                     totalPrice: Number(totalPrice) || 700000,
                     paymentStatus: paymentCollect === "property" ? "Property Collect (Pay at Hotel)" : "Channel Collect (OTA VCC)",
-                    netToHotel: (result as any)?.financials?.netToHotel,
-                    otaCommission: (result as any)?.financials?.otaCommissionAmount
+                    notes: "Permintaan simulasi kamar bebas asap rokok"
                 });
                 console.log(`[Sandbox WA Notification] Sent to owner for ${hotelCode} (${waResult.gateway}):`, waResult);
             } catch (waErr: any) {
@@ -270,12 +278,41 @@ export async function POST(req: NextRequest) {
 
             const result = await channexSyncService.processIncomingBookingWebhook(payload, hotelCode);
 
+            let waModifResult: any = null;
+            try {
+                const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
+                const diffMs = new Date(shiftedCheckout).getTime() - new Date(shiftedCheckin).getTime();
+                const nights = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+                waModifResult = await dispatchWhatsAppNotification(hotelCode, {
+                    event: "booking_modification",
+                    channelName,
+                    bookingRef: bookingId,
+                    guestName: `${guestName} (Shifted Dates)`,
+                    guestPhone,
+                    guestEmail,
+                    roomName: "Standard Room",
+                    roomCount: 1,
+                    arrivalDate: shiftedCheckin,
+                    departureDate: shiftedCheckout,
+                    nights,
+                    previousArrivalDate: origCheckin,
+                    previousDepartureDate: origCheckout,
+                    totalPrice: Number(totalPrice) || 1350000,
+                    paymentStatus: "Channel Collect (OTA Reschedule)"
+                });
+            } catch (waErr: any) {
+                console.warn("[Sandbox WA Modif Warning]:", waErr?.message);
+                waModifResult = { success: false, error: waErr.message };
+            }
+
             return NextResponse.json({
                 success: true,
                 stage: 4,
                 title: "Booking Modification & Anti-Ghost Date Shift",
                 message: `Reservasi ${bookingId} berhasil dimodifikasi dari rentang [${origCheckin} - ${origCheckout}] ke [${shiftedCheckin} - ${shiftedCheckout}]. Tanggal lama dirilis dan tanggal baru diblokir tanpa ghost booking!`,
                 result,
+                whatsapp: waModifResult,
                 shiftedDates: { oldRange: `${origCheckin} s/d ${origCheckout}`, newRange: `${shiftedCheckin} s/d ${shiftedCheckout}` }
             });
         }
@@ -319,12 +356,15 @@ export async function POST(req: NextRequest) {
                     event: "booking_cancellation",
                     channelName,
                     bookingRef: bookingIdToCancel,
-                    guestName: "Tamu OTA (Simulasi)",
-                    roomName: "Kamar Hotel",
+                    guestName: guestName || "Tamu OTA (Simulasi)",
+                    guestPhone,
+                    roomName: "Standard Room",
+                    roomCount: 1,
                     arrivalDate: arrivalDate || new Date().toISOString().split("T")[0],
                     departureDate: departureDate || new Date().toISOString().split("T")[0],
                     totalPrice: 0,
-                    paymentStatus: "CANCELLED"
+                    paymentStatus: "CANCELLED (Dibatalkan)",
+                    cancellationReason: "Dibatalkan oleh Tamu via OTA Portal"
                 });
             } catch (waErr: any) {
                 console.warn("[Sandbox WA Cancel Warning]:", waErr?.message);
