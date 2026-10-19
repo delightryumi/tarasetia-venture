@@ -840,7 +840,12 @@ export function ChannelManagerSection() {
                 }
             }
 
-            toast.success("Channel credentials, API key & webhook saved successfully.");
+            toast.success("Pengaturan saluran berhasil disimpan ke database.");
+
+            // Otomatis sinkronkan channel yang sedang diedit langsung ke Channex
+            if (selectedChannelCode && channelConfigs[selectedChannelCode]?.hotelId) {
+                await handleSyncSingleChannelToChannex(selectedChannelCode);
+            }
 
             // Log event to Channel Events with current user
             const currentChan = selectedChannelCode ? channelConfigs[selectedChannelCode] : null;
@@ -2997,35 +3002,27 @@ export function ChannelManagerSection() {
                                 )}
                             </div>
 
-                            {/* Mapping Action Footer */}
+                            {/* Mapping Action Footer - Single Authoritative Action */}
                             <div className={styles.mappingFooter}>
                                 <div className={styles.mappingFooterText}>
-                                    Enter Room IDs and Rate IDs from your OTA Extranet, then click <strong>Save &amp; Sync Channel</strong> to activate 2-way real-time ARI.
+                                    Klik tombol ini untuk menyimpan seluruh pemetaan kamar &amp; rate plan, sekaligus mendaftarkan dan mengaktifkan koneksi 2 arah di Channex secara otomatis.
                                 </div>
                                 <div className={styles.mappingFooterButtons}>
                                     <button
                                         type="button"
-                                        onClick={handleSaveAll}
-                                        disabled={savingSettings}
-                                        className={styles.btnActionSecondary}
-                                        style={{ padding: "8px 16px", fontSize: "12px" }}
-                                    >
-                                        <Save size={13} />
-                                        <span>{savingSettings ? "Saving..." : "Save Mappings"}</span>
-                                    </button>
-                                    <button
-                                        type="button"
                                         onClick={async () => {
                                             await handleSaveAll();
-                                            await handleSyncSingleChannelToChannex(selectedChannelCode);
+                                            if (selectedChannelCode) {
+                                                await handleSyncSingleChannelToChannex(selectedChannelCode);
+                                            }
                                         }}
                                         disabled={savingSettings || syncingChannex}
                                         className={styles.btnActionPrimary}
-                                        style={{ padding: "8px 18px", fontSize: "12px" }}
-                                        title="Save mappings and sync rate plans to Channel Manager server"
+                                        style={{ padding: "10px 24px", fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center", gap: "8px" }}
+                                        title="Simpan pemetaan dan sinkronkan langsung ke Channex"
                                     >
-                                        <RefreshCw size={13} className={syncingChannex ? "animate-spin" : ""} />
-                                        <span>{syncingChannex ? "Syncing Channel..." : "Save & Sync Channel"}</span>
+                                        <RefreshCw size={14} className={(syncingChannex || savingSettings) ? "animate-spin" : ""} />
+                                        <span>{(syncingChannex || savingSettings) ? "Menyimpan & Sinkronkan ke Channex..." : "Simpan & Sinkronkan ke Channex"}</span>
                                     </button>
                                 </div>
                             </div>
