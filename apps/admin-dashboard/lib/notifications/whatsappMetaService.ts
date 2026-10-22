@@ -136,18 +136,6 @@ export async function sendMetaWhatsAppMessage({
                 raw: data
             };
         } else {
-            // Auto-fallback: If blocked by 24-hour customer service window, fallback to official pre-approved template
-            if (data.error?.code === 131047 && !templateName) {
-                console.log("[Meta WhatsApp] Outside 24h customer window. Retrying with official template hello_world...");
-                return sendMetaWhatsAppMessage({
-                    to: cleanTo,
-                    templateName: "hello_world",
-                    templateLanguage: "en_US",
-                    accessToken: activeToken,
-                    phoneNumberId: activePhoneId
-                });
-            }
-
             const errorMsg = data.error?.message || data.error?.error_user_msg || JSON.stringify(data);
             console.error(`[Meta WhatsApp API Error] HTTP ${response.status}:`, data);
             return {
@@ -181,7 +169,7 @@ export function parsePhoneNumbers(rawPhone: string | string[]): string[] {
 // ── NOTIFICATION IDEMPOTENCY / DEDUPLICATION CACHE ──
 // Prevents duplicate notifications when Channex retries webhooks or sync-feed triggers concurrently
 const NOTIFICATION_DEDUP_CACHE = new Map<string, number>();
-const DEDUP_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown window
+const DEDUP_COOLDOWN_MS = 60 * 1000; // 60 seconds cooldown window
 
 /**
  * High-level function: Reads hotel-specific owner phone number(s) from Firestore and dispatches notification.
@@ -194,14 +182,15 @@ export async function sendWhatsAppNotificationToOwner(
     if (!hotelCode) return { success: false, reason: "hotelCode is required" };
 
     // 0. Idempotency Check: Prevent duplicate messages for identical booking events within cooldown
+    const isTestEvent = payload.event === "test";
     const dedupKey = `${hotelCode}_${payload.bookingRef}_${payload.event}_${payload.revisionId || ""}`;
     const now = Date.now();
     const lastDispatched = NOTIFICATION_DEDUP_CACHE.get(dedupKey);
-    if (lastDispatched && (now - lastDispatched) < DEDUP_COOLDOWN_MS) {
+    if (!isTestEvent && lastDispatched && (now - lastDispatched) < DEDUP_COOLDOWN_MS) {
         console.log(`[WhatsApp Meta] 🛡️ Duplicate dispatch suppressed for [${dedupKey}] (${Math.round((now - lastDispatched)/1000)}s since last send)`);
         return {
             success: true,
-            reason: `Duplicate dispatch suppressed within 5-minute cooldown window for booking ${payload.bookingRef}.`
+            reason: `Duplicate dispatch suppressed within 60s cooldown window for booking ${payload.bookingRef}.`
         };
     }
 
@@ -214,17 +203,13 @@ export async function sendWhatsAppNotificationToOwner(
         const hotelData = hotelDoc.data() || {};
         const waConfig = hotelData.whatsappNotification || {};
 
-        // Check if WhatsApp notification is enabled for this hotel
-        const isEnabled = waConfig.enabled !== false; // Default true if configured
-        const rawTarget = payload.customRecipient || waConfig.ownerPhone || waConfig.phones || hotelData.phone || "";
+        // Check if WhatsApp notification is explicitly enabled for this hotel
+        const isEnabled = waConfig.enabled === true; // Strictly require explicit enabled: true
+        const rawTarget = payload.customRecipient || waConfig.ownerPhone || waConfig.phones || "";
         const targetPhones = parsePhoneNumbers(rawTarget);
 
-        if (!isEnabled) {
-            return { success: false, reason: `Notifikasi WhatsApp dinonaktifkan untuk hotel ${hotelCode}.` };
-        }
-
-        if (targetPhones.length === 0) {
-            return { success: false, reason: `Nomor WhatsApp Owner belum diatur untuk hotel ${hotelCode}.` };
+        if (!isEnabled || targetPhones.length === 0) {
+            return { success: false, reason: `Notifikasi WhatsApp dinonaktifkan atau nomor belum diatur untuk hotel ${hotelCode}. (Biaya Meta Rp 0)` };
         }
 
         const isCancel = payload.event === "booking_cancellation" || payload.event === "booking_cancelled";
@@ -280,45 +265,111 @@ export async function sendWhatsAppNotificationToOwner(
             ? `${formattedPrice}${modeBadge} (CANCELLED)`.slice(0, 30) 
             : `${formattedPrice}${modeBadge}`.slice(0, 30);
 
-        const templateComponents = [
+        const sanitizeParam = (val: any, maxLen: number, fallback = "-"): string => {
+            if (val === undefined || val === null) return fallback;
+            const cleaned = String(val).replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
+            if (!cleaned) return fallback;
+            return cleaned.slice(0, maxLen);
+        };
+
+        // 1. Legacy 8-parameter Indonesian approved template
+        const legacyTemplateComponents = [
             {
                 type: "body",
                 parameters: [
-                    { type: "text", text: String(hotelName || "Hotel").slice(0, 60) },
-                    { type: "text", text: String(templateChannel).slice(0, 40) },
-                    { type: "text", text: String(payload.bookingRef || "-").slice(0, 40) },
-                    { type: "text", text: String(templateGuest).slice(0, 60) },
-                    { type: "text", text: String(payload.roomName || "-").slice(0, 60) },
-                    { type: "text", text: String(templateCheckIn).slice(0, 30) },
-                    { type: "text", text: String(`${payload.departureDate || "-"} ${payload.nights ? `(${payload.nights} Malam)` : ""}`).slice(0, 30) },
-                    { type: "text", text: String(templatePrice).slice(0, 30) }
+                    { type: "text", text: sanitizeParam(`${hotelName} (#${hotelCode})`, 60, "Hotel") },
+                    { type: "text", text: sanitizeParam(templateChannel, 40, "OTA Channel") },
+                    { type: "text", text: sanitizeParam(payload.bookingRef, 40, "-") },
+                    { type: "text", text: sanitizeParam(templateGuest, 60, "-") },
+                    { type: "text", text: sanitizeParam(payload.roomName, 60, "-") },
+                    { type: "text", text: sanitizeParam(templateCheckIn, 30, "-") },
+                    { type: "text", text: sanitizeParam(`${payload.departureDate || "-"} ${payload.nights ? `(${payload.nights} Malam)` : ""}`, 30, "-") },
+                    { type: "text", text: sanitizeParam(templatePrice, 30, "-") }
+                ]
+            }
+        ];
+
+        // 2. New 11-parameter International Hotelier template with Interactive Buttons
+        const guestContactDisplay = `${payload.guestName || "-"}${payload.guestPhone ? ` (${payload.guestPhone})` : ""}`;
+        const planPaxDisplay = `${payload.mealsIncluded !== undefined ? (payload.mealsIncluded ? "With Breakfast Included" : "Room Only") : "Standard Plan"} • ${payload.pax || 2} Guests`;
+        const paymentLabel = payload.paymentStatus || "Collect by OTA (Prepaid)";
+        const notesSummary = payload.customNote || payload.notes || "No special request";
+
+        const newTemplateComponents = [
+            {
+                type: "body",
+                parameters: [
+                    { type: "text", text: sanitizeParam(`${hotelName} (#${hotelCode})`, 60, "Hotel") },
+                    { type: "text", text: sanitizeParam(templateChannel, 40, "OTA Channel") },
+                    { type: "text", text: sanitizeParam(payload.bookingRef, 40, "-") },
+                    { type: "text", text: sanitizeParam(guestContactDisplay, 60, "-") },
+                    { type: "text", text: sanitizeParam(payload.roomName, 60, "-") },
+                    { type: "text", text: sanitizeParam(templateCheckIn, 30, "-") },
+                    { type: "text", text: sanitizeParam(`${payload.departureDate || "-"} ${payload.nights ? `(${payload.nights} Nights)` : ""}`, 30, "-") },
+                    { type: "text", text: sanitizeParam(planPaxDisplay, 40, "-") },
+                    { type: "text", text: sanitizeParam(templatePrice, 30, "-") },
+                    { type: "text", text: sanitizeParam(paymentLabel, 35, "-") },
+                    { type: "text", text: sanitizeParam(notesSummary, 80, "No special request") }
                 ]
             }
         ];
 
         // Send to all target phone numbers in parallel
         const sendPromises = targetPhones.map(async (phone) => {
-            // Priority 1: Direct text message (delivers full English, rich formatting, guest notes)
+            // Priority 1: Try New International 11-parameter Template with Interactive Buttons
             let res = await sendMetaWhatsAppMessage({
                 to: phone,
+                templateName: "crs_reservation_notification",
+                templateLanguage: "en_US",
+                templateComponents: newTemplateComponents,
                 message: messageText,
                 accessToken,
                 phoneNumberId
             });
 
-            // Priority 2: Fallback to Meta approved template if outside 24h customer window (131047)
-            const errorCode = res.raw?.error?.code;
-            if (!res.success && (errorCode === 131047 || errorCode === 132001 || errorCode === 132000)) {
-                console.log(`[Meta WhatsApp] Direct text restricted (${errorCode}), falling back to approved template for ${phone}...`);
-                res = await sendMetaWhatsAppMessage({
+            let usedTemplate = "crs_reservation_notification";
+
+            // Priority 2: Fallback to existing Approved 8-parameter Template if new template is still PENDING
+            if (!res.success) {
+                console.log(`[Meta WhatsApp] Primary template [crs_reservation_notification] unready (${res.error}), falling back to approved template [crs_booking_notification]...`);
+                const fallbackTemplateRes = await sendMetaWhatsAppMessage({
                     to: phone,
                     templateName: "crs_booking_notification",
                     templateLanguage: "id",
-                    templateComponents,
+                    templateComponents: legacyTemplateComponents,
                     message: messageText,
                     accessToken,
                     phoneNumberId
                 });
+
+                if (fallbackTemplateRes.success) {
+                    res = fallbackTemplateRes;
+                    usedTemplate = "crs_booking_notification";
+                } else {
+                    // Priority 3: Fallback to direct text if both templates fail
+                    const directRes = await sendMetaWhatsAppMessage({
+                        to: phone,
+                        message: messageText,
+                        accessToken,
+                        phoneNumberId
+                    });
+                    if (directRes.success) {
+                        res = directRes;
+                        usedTemplate = "direct_text";
+                    }
+                }
+            } else if (payload.notes || payload.customNote) {
+                // Priority 4: If template succeeded and guest provided extra long notes,
+                // try sending additional detail via text (delivers if customer 24h window is open)
+                const specialNotes = (payload.notes || payload.customNote || "").replace(/[\r\n]+/g, " ").trim();
+                if (specialNotes && specialNotes.length > 50) {
+                    sendMetaWhatsAppMessage({
+                        to: phone,
+                        message: `📝 *Guest Remark (${payload.bookingRef}):*\n"${specialNotes}"`,
+                        accessToken,
+                        phoneNumberId
+                    }).catch(() => {});
+                }
             }
 
             // Audit logging in Firestore per recipient
@@ -331,7 +382,8 @@ export async function sendWhatsAppNotificationToOwner(
                 channelName: payload.channelName,
                 status: res.success ? "DELIVERED" : "FAILED",
                 messageId: res.messageId || null,
-                error: res.error || null
+                error: res.error || null,
+                templateUsed: res.success ? usedTemplate : null
             }).catch(() => {});
 
             return { phone, ...res };

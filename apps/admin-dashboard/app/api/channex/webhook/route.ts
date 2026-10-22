@@ -251,13 +251,20 @@ export async function POST(req: NextRequest) {
                 const specialNotes = (bookingData as any)?.notes || (bookingData as any)?.special_requests || "";
                 const cancellationReason = (bookingData as any)?.cancellation_reason || (payload as any)?.cancellation_reason || (specialNotes ? specialNotes : (isCancel ? "Dibatalkan melalui portal OTA" : undefined));
 
-                const pushTitle = isCancel
-                    ? `📋 Pembatalan Reservasi [${otaName}]`
-                    : (isModif ? `🔄 Perubahan Reservasi [${otaName}]` : `🛎️ Reservasi Baru [${otaName}]`);
+                const formattedPriceStr = `${currency || "IDR"} ${Number(recordedPrice || 0).toLocaleString("id-ID")}${revenueMode === "NET" ? " (Nett)" : " (Gross)"}`;
+                const mealStr = isWithBreakfast ? "🍳 Termasuk Sarapan" : "Hanya Kamar (Room Only)";
+                const contactStr = guestPhone ? ` • 📞 ${guestPhone}` : "";
+                const noteStr = specialNotes ? `\n📝 Catatan: "${specialNotes}"` : "";
 
-                const pushBody = isCancel
-                    ? `Tamu ${guestName} membatalkan reservasi kamar ${roomName} (${bookingRef}). Alokasi kamar telah dirilis kembali ke sistem.`
-                    : (isModif ? `Tamu ${guestName} mengubah tanggal menginap kamar ${roomName} (${bookingRef}) ke ${arrivalDate} s/d ${departureDate}.` : `Tamu ${guestName} memesan kamar ${roomName} (${bookingRef}). Check-in: ${arrivalDate}.`);
+                const pushTitle = isCancel
+                    ? `❌ Pembatalan: #${bookingRef} - ${guestName} [${otaName}]`
+                    : (isModif ? `🔄 Perubahan: #${bookingRef} - ${guestName} [${otaName}]` : `🛎️ Reservasi Baru: #${bookingRef} - ${guestName} [${otaName}]`);
+
+                const pushBody = [
+                    `🛏️ ${roomName} | 📅 ${arrivalDate} s/d ${departureDate} (${nights} Malam)`,
+                    `💰 Rate: ${formattedPriceStr} • ${mealStr} (${adults} Tamu)`,
+                    `💳 Pembayaran: ${(bookingData as any)?.payment_type || (bookingData as any)?.payment_collect || "Sesuai OTA"}${contactStr}${noteStr}`
+                ].filter(Boolean).join("\n");
 
                 const { sendPushNotificationToHotel } = await import("@/lib/notifications/webPushServer");
                 sendPushNotificationToHotel(hotelCode, {
@@ -265,7 +272,7 @@ export async function POST(req: NextRequest) {
                     body: pushBody,
                     type: isCancel ? "booking_cancelled" : (isModif ? "booking_modified" : "booking_new"),
                     tag: `booking-${bookingRef}`,
-                    url: `/overview?module=front-office&bookingRef=${bookingRef}`,
+                    url: `/channel-manager?tab=logs&bookingRef=${bookingRef}`,
                     bookingId: bookingRef,
                     otaName
                 }).catch(err => console.warn("[Webhook Push] Warning:", err?.message));

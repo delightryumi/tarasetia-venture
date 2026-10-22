@@ -37,14 +37,39 @@ export async function POST(req: NextRequest) {
         // Generate a deterministic ID based on the subscription endpoint hash to prevent duplicates
         const subId = Buffer.from(subscription.endpoint).toString("base64").slice(-32).replace(/[^a-zA-Z0-9]/g, "_");
 
+        const isSuperadminUser = Boolean(
+            body.isSuperadmin === true ||
+            (userEmail && (
+                userEmail.toLowerCase().includes("superadmin") ||
+                userEmail.toLowerCase().includes("admin@") ||
+                userEmail.toLowerCase() === "superadmin@setara.co.id" ||
+                userEmail.toLowerCase() === "admin@setara.co.id"
+            )) ||
+            hotelCode === "0" ||
+            hotelCode === "root"
+        );
+
+        // 1. Save to hotel-specific subscription
         await adminDb.collection(`hotels/${hotelCode}/push_subscriptions`).doc(subId).set({
             subscription,
             userAgent: userAgent || "Unknown Device",
             userEmail: userEmail || "anonymous",
             preferences: preferences || null,
+            isSuperadmin: isSuperadminUser,
             updatedAt: new Date().toISOString(),
             createdAt: new Date().toISOString()
         }, { merge: true });
+
+        // 2. If Superadmin, also register to global superadmin_push_subscriptions (receives booking alerts from all hotels)
+        if (isSuperadminUser) {
+            await adminDb.collection("superadmin_push_subscriptions").doc(subId).set({
+                subscription,
+                userAgent: userAgent || "Superadmin Device",
+                userEmail: userEmail || "superadmin",
+                updatedAt: new Date().toISOString(),
+                createdAt: new Date().toISOString()
+            }, { merge: true });
+        }
 
         // Also save preferences snapshot per-user
         if (preferences && userEmail) {
@@ -58,6 +83,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: true,
             id: subId,
+            isSuperadmin: isSuperadminUser,
             message: "Push subscription successfully registered"
         });
     } catch (err: any) {
@@ -77,7 +103,8 @@ export async function DELETE(req: NextRequest) {
         }
 
         const subId = Buffer.from(endpoint).toString("base64").slice(-32).replace(/[^a-zA-Z0-9]/g, "_");
-        await adminDb.collection(`hotels/${hotelCode}/push_subscriptions`).doc(subId).delete();
+        await adminDb.collection(`hotels/${hotelCode}/push_subscriptions`).doc(subId).delete().catch(() => {});
+        await adminDb.collection("superadmin_push_subscriptions").doc(subId).delete().catch(() => {});
 
         return NextResponse.json({
             success: true,

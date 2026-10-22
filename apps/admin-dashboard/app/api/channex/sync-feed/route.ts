@@ -203,8 +203,35 @@ export async function POST(req: NextRequest) {
                                 previousArrivalDate: ingestRes.previousStay?.arrivalDate,
                                 previousDepartureDate: ingestRes.previousStay?.departureDate
                             }).catch(() => {});
+
+                            // Dispatch Rich PWA Web Push Notification (Zero-Cost, No looping)
+                            const { sendPushNotificationToHotel } = await import("@/lib/notifications/webPushServer");
+                            const guestPhoneStr = customer.phone || customer.telephone || customer.mobile || "";
+                            const contactStr = guestPhoneStr ? ` • 📞 ${guestPhoneStr}` : "";
+                            const noteStr = specialNotes ? `\n📝 Catatan: "${specialNotes}"` : "";
+                            const otaLabel = booking.channel_name || "OTA Channel";
+
+                            const pushTitle = isCancel
+                                ? `❌ Pembatalan: #${bookingRef} - ${guestName} [${otaLabel}]`
+                                : (isModif ? `🔄 Perubahan: #${bookingRef} - ${guestName} [${otaLabel}]` : `🛎️ Reservasi Baru: #${bookingRef} - ${guestName} [${otaLabel}]`);
+
+                            const pushBody = [
+                                `🛏️ ${roomName} | 📅 ${arrDate} s/d ${depDate} (${nights} Malam)`,
+                                `💰 Total: IDR ${Number(totalPrice || 0).toLocaleString("id-ID")} • ${isWithBreakfast ? "🍳 Termasuk Sarapan" : "Hanya Kamar"} (${adults} Tamu)`,
+                                `💳 Pembayaran: ${booking.payment_type || (booking as any)?.payment_collect || "Sesuai OTA"}${contactStr}${noteStr}`
+                            ].filter(Boolean).join("\n");
+
+                            sendPushNotificationToHotel(hotelCode, {
+                                title: pushTitle,
+                                body: pushBody,
+                                type: isCancel ? "booking_cancelled" : (isModif ? "booking_modified" : "booking_new"),
+                                tag: `booking-${bookingRef}`,
+                                url: `/channel-manager?tab=logs&bookingRef=${bookingRef}`,
+                                bookingId: bookingRef,
+                                otaName: otaLabel
+                            }).catch(() => {});
                         } catch (waErr: any) {
-                            console.warn("[Sync Feed WhatsApp Notification Warning]:", waErr?.message);
+                            console.warn("[Sync Feed Notification Warning]:", waErr?.message);
                         }
 
                         results.push({
