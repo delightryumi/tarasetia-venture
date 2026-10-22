@@ -6,7 +6,7 @@
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding: 2px 4px 32px 4px;
+  padding: 2px 4px calc(100px + env(safe-area-inset-bottom, 16px)) 4px;
   gap: 16px;
   box-sizing: border-box;
   font-family: inherit;
@@ -90,8 +90,8 @@
 }
 
 .iconBtn3D {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
@@ -225,8 +225,8 @@
 }
 
 .dateStepperEdgeBtn {
-  width: 38px;
-  height: 70px;
+  width: 42px;
+  height: 72px;
   border-radius: 14px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -334,6 +334,12 @@
   border-radius: 6px;
 }
 
+.datePillStopDot {
+  color: #dc2626 !important;
+  background: #fee2e2 !important;
+  font-weight: 800 !important;
+}
+
 .datePillActive .datePillDay {
   color: rgba(255, 255, 255, 0.85);
 }
@@ -345,6 +351,11 @@
 .datePillActive .datePillDot {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.25);
+}
+
+.datePillActive .datePillStopDot {
+  color: #ffffff !important;
+  background: #dc2626 !important;
 }
 
 /* ── Room Cards Container ── */
@@ -442,6 +453,54 @@
   color: #f87171;
   border-color: #7f1d1d;
   box-shadow: 0 2px 0 #280505;
+}
+
+.badgeStopSell {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  box-shadow: 0 2px 0 #f87171;
+}
+
+:global(.dark) .badgeStopSell {
+  background: #450a0a;
+  color: #f87171;
+  border-color: #7f1d1d;
+  box-shadow: 0 2px 0 #280505;
+}
+
+.badgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.stepperWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stopSellNoticeBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+:global(.dark) .stopSellNoticeBanner {
+  background: #3b0d14;
+  border-color: #7f1d1d;
+  color: #fca5a5;
 }
 
 /* ── 3D Stepper Section for Allotment ── */
@@ -550,7 +609,8 @@
 }
 
 .stopSellToggleBtn {
-  padding: 8px 16px;
+  padding: 10px 16px;
+  min-height: 44px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 800;
@@ -597,6 +657,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 10px 12px;
+  gap: 8px;
 }
 
 :global(.dark) .ratePlanRow {
@@ -604,26 +665,62 @@
   border-color: #1e293b;
 }
 
+.ratePlanRowStopSell {
+  border-color: #fca5a5 !important;
+  background: #fff8f8 !important;
+}
+
+:global(.dark) .ratePlanRowStopSell {
+  border-color: #7f1d1d !important;
+  background: #250a10 !important;
+}
+
 .ratePlanInfo {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
 }
 
 .ratePlanName {
   font-size: 13px;
   font-weight: 700;
   color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 :global(.dark) .ratePlanName {
   color: #f1f5f9;
 }
 
+.stopSellInlineTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  width: fit-content;
+}
+
+:global(.dark) .stopSellInlineTag {
+  background: #450a0a;
+  color: #f87171;
+  border-color: #7f1d1d;
+}
+
 .ratePriceBox {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .priceTag3D {
@@ -645,9 +742,23 @@
   box-shadow: 0 2px 0 #0a0e16;
 }
 
+.priceTagStopSell {
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
+  background: #fff1f2 !important;
+}
+
+:global(.dark) .priceTagStopSell {
+  border-color: #7f1d1d !important;
+  color: #fca5a5 !important;
+  background: #380a13 !important;
+}
+
 .priceEditBtn {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
   border-radius: 10px;
   background: #fdf2f4;
   border: 1px solid #f3d5dc;

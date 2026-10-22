@@ -160,31 +160,62 @@
     color: #94a3af;
 }
 
+/* Weekend Columns (Sat & Sun) — Red indicator per hotel calendar standard */
 .colWeekend {
-    background-color: #ffffff;
+    background-color: #fff1f2;
+    border-bottom: 2px solid #f43f5e;
+}
+
+.colWeekend .dayOfWeek {
+    color: #e11d48;
+    font-weight: 600;
+}
+
+.colWeekend .dayNumber {
+    color: #be123c;
+    font-weight: 700;
 }
 
 :global(.dark) .colWeekend {
-    background-color: #1e293b;
+    background-color: #3b0d18;
+    border-bottom-color: #fb7185;
 }
 
+:global(.dark) .colWeekend .dayOfWeek {
+    color: #fda4af;
+}
+
+:global(.dark) .colWeekend .dayNumber {
+    color: #fecdd3;
+}
+
+/* Today Column — Fresh soft green/emerald highlight (clean & distinctly non-alert) */
 .colToday {
-    background-color: #fdf2f4 !important;
-    border-bottom: 2px solid #72263d !important;
+    background-color: #ecfdf5 !important;
+    border-bottom: 2px solid #10b981 !important;
 }
 
-:global(.dark) .colToday {
-    background-color: #36121e !important;
-    border-bottom-color: #e07a93 !important;
+.colToday .dayOfWeek {
+    color: #059669 !important;
+    font-weight: 600 !important;
 }
 
 .colToday .dayNumber {
-    color: #72263d !important;
-    font-weight: 700 !important;
+    color: #047857 !important;
+    font-weight: 800 !important;
+}
+
+:global(.dark) .colToday {
+    background-color: #062e24 !important;
+    border-bottom-color: #34d399 !important;
+}
+
+:global(.dark) .colToday .dayOfWeek {
+    color: #6ee7b7 !important;
 }
 
 :global(.dark) .colToday .dayNumber {
-    color: #fce7eb !important;
+    color: #a7f3d0 !important;
 }
 
 /* Jump Forward Column */

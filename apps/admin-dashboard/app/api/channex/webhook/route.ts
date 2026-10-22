@@ -45,13 +45,18 @@ export async function POST(req: NextRequest) {
         // Standardize event name if passed in nested format
         payload.event = eventType;
 
-        // 1. Handle Booking Events (new, modification, cancellation)
+        // 1. Handle Booking Events (new, modification, cancellation, revision)
         const isBookingEvent = payload.event === "booking" || 
             payload.event === "booking_new" || 
             payload.event === "booking_modification" || 
+            payload.event === "booking_modified" ||
             payload.event === "booking_cancellation" || 
+            payload.event === "booking_cancelled" || 
+            payload.event === "booking_revision" ||
             Boolean(payload.booking) || 
-            Boolean((payload as any)?.payload?.booking_id);
+            Boolean((payload as any)?.payload?.booking_id) ||
+            Boolean((payload as any)?.data?.booking_id) ||
+            Boolean((payload as any)?.booking_revision_id);
 
         if (isBookingEvent) {
             // Extract revision ID and property ID across all Channex webhook formats (data, payload, root)
@@ -64,7 +69,11 @@ export async function POST(req: NextRequest) {
             
             const propertyId = payload.property_id || 
                 nestedPayload.property_id || 
-                (payload.booking as any)?.property_id;
+                nestedPayload.attributes?.property_id ||
+                (nestedPayload as any)?.relationships?.property?.data?.id ||
+                (payload as any)?.relationships?.property?.data?.id ||
+                (payload.booking as any)?.property_id ||
+                (payload.booking as any)?.attributes?.property_id;
 
             if (propertyId) {
                 payload.property_id = propertyId;
@@ -84,9 +93,9 @@ export async function POST(req: NextRequest) {
             }
 
             // Hydrate authoritative full booking payload via GET /booking_revisions/:id if payload.booking is missing or incomplete
+            let resolvedHotel = propertyId ? await channexSyncService.findHotelCodeByChannexPropertyId(propertyId) : null;
             if (revisionId && (!payload.booking || !payload.booking.rooms || payload.booking.rooms.length === 0)) {
                 try {
-                    const resolvedHotel = propertyId ? await channexSyncService.findHotelCodeByChannexPropertyId(propertyId) : null;
                     let customApiKey = process.env.CHANNEX_API_KEY;
                     let env: "staging" | "production" = (process.env.CHANNEX_ENV as any) || "staging";
 
@@ -95,6 +104,17 @@ export async function POST(req: NextRequest) {
                         const hData = hDoc.data();
                         customApiKey = hData?.channelManager?.apiKey || customApiKey;
                         env = hData?.channelManager?.environment || hData?.channelManager?.env || env;
+                    } else if (!customApiKey) {
+                        // Fallback: search hotel documents with configured channelManager.apiKey
+                        const hotelsWithKey = await adminDb.collection("hotels").where("channelManager.apiKey", "!=", null).limit(10).get();
+                        for (const hDoc of hotelsWithKey.docs) {
+                            const hData = hDoc.data();
+                            if (hData?.channelManager?.apiKey) {
+                                customApiKey = hData.channelManager.apiKey;
+                                env = hData?.channelManager?.environment || hData?.channelManager?.env || env;
+                                break;
+                            }
+                        }
                     }
 
                     console.log(`[Channex Webhook Hydration] Pulling authoritative revision ${revisionId} from Channex...`);
@@ -103,13 +123,18 @@ export async function POST(req: NextRequest) {
                     const bookingAttrs = revData?.attributes || revData;
 
                     if (bookingAttrs) {
-                        payload.property_id = payload.property_id || bookingAttrs.property_id;
+                        payload.property_id = payload.property_id || bookingAttrs.property_id || revData?.relationships?.property?.data?.id;
                         payload.booking_revision_id = revisionId;
                         payload.booking = {
                             id: bookingAttrs.id || nestedPayload.booking_id || revisionId,
                             property_id: payload.property_id,
                             ...bookingAttrs
                         };
+
+                        if (!resolvedHotel && payload.property_id) {
+                            resolvedHotel = await channexSyncService.findHotelCodeByChannexPropertyId(payload.property_id);
+                        }
+
                         console.log(`[Channex Webhook Hydration] Successfully hydrated revision ${revisionId} for Guest: ${(bookingAttrs as any)?.customer?.name}`);
                     }
                 } catch (hydrErr: any) {
@@ -117,7 +142,7 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            const result = await channexSyncService.processIncomingBookingWebhook(payload);
+            const result = await channexSyncService.processIncomingBookingWebhook(payload, resolvedHotel || undefined);
 
             // ============================================================
             // CHANNEX CERTIFICATION STAGE 5 — MANDATORY BOOKING ACK
@@ -150,34 +175,42 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            // Broadcast Web Push to staff devices
+            // Broadcast Web Push & Dispatches (WhatsApp & Email) to staff and management
             const targetPropertyId = payload.property_id || (payload.booking as any)?.property_id || propertyId;
-            const hotelCode = targetPropertyId 
+            const hotelCode = (targetPropertyId 
                 ? await channexSyncService.findHotelCodeByChannexPropertyId(targetPropertyId)
-                : null;
+                : null) || resolvedHotel;
 
             if (hotelCode) {
                 const bookingData = payload.booking || payload;
-                const isCancel = payload.event === "booking_cancellation" || (bookingData as any)?.status === "cancelled";
-                const isModif = payload.event === "booking_modification" || (bookingData as any)?.status === "modified";
+                const isCancel = payload.event === "booking_cancellation" || 
+                    payload.event === "booking_cancelled" || 
+                    (bookingData as any)?.status === "cancelled" ||
+                    Boolean((result as any)?.isCancelled);
+                const isModif = payload.event === "booking_modification" || 
+                    payload.event === "booking_modified" || 
+                    (bookingData as any)?.status === "modified" ||
+                    Boolean((result as any)?.isModified);
+
                 const customer = (bookingData as any)?.customer || (bookingData as any)?.guest || {};
-                const guestName = (customer.name || `${customer.first_name || ""} ${customer.last_name || ""}`).trim() || "Tamu OTA";
-                const guestPhone = customer.phone || customer.telephone || customer.mobile || "";
-                const guestEmail = customer.email || "";
-                const otaName = (bookingData as any)?.ota_name || (bookingData as any)?.channel_name || "OTA";
+                const fallbackDetails = (result as any)?.bookingDetails || {};
+                const guestName = (customer.name || `${customer.first_name || ""} ${customer.last_name || ""}`).trim() || fallbackDetails.guestName || "Tamu OTA";
+                const guestPhone = customer.phone || customer.telephone || customer.mobile || fallbackDetails.guestPhone || "";
+                const guestEmail = customer.email || fallbackDetails.guestEmail || "";
+                const otaName = (bookingData as any)?.ota_name || (bookingData as any)?.channel_name || fallbackDetails.channelName || "OTA";
                 const roomsList = (bookingData as any)?.rooms || [];
-                const roomCount = roomsList.length || 1;
-                const primaryRoomName = roomsList[0]?.room_type_name || "Kamar Hotel";
+                const roomCount = roomsList.length || fallbackDetails.roomCount || 1;
+                const primaryRoomName = roomsList[0]?.room_type_name || fallbackDetails.roomName || "Kamar Hotel";
                 const roomName = roomCount > 1 
                     ? `${primaryRoomName} (${roomCount} Kamar)` 
                     : primaryRoomName;
                 const bookingRef = (bookingData as any)?.channel_booking_id || (bookingData as any)?.ota_reservation_code || (bookingData as any)?.unique_id || (bookingData as any)?.booking_id || result.bookingId || "Booking";
-                const totalPrice = Number((bookingData as any)?.total_price || (bookingData as any)?.amount || (bookingData as any)?.total_amount) || 0;
+                const totalPrice = Number((bookingData as any)?.total_price || (bookingData as any)?.amount || (bookingData as any)?.total_amount) || fallbackDetails.totalPrice || 0;
 
-                const arrivalDate = (bookingData as any)?.arrival_date || "-";
-                const departureDate = (bookingData as any)?.departure_date || "-";
-                let nights = 0;
-                if (arrivalDate !== "-" && departureDate !== "-") {
+                const arrivalDate = (bookingData as any)?.arrival_date || fallbackDetails.arrivalDate || result.previousStay?.arrivalDate || "-";
+                const departureDate = (bookingData as any)?.departure_date || fallbackDetails.departureDate || result.previousStay?.departureDate || "-";
+                let nights = fallbackDetails.nights || 0;
+                if (!nights && arrivalDate !== "-" && departureDate !== "-") {
                     const diffMs = new Date(departureDate).getTime() - new Date(arrivalDate).getTime();
                     nights = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
                 }
@@ -191,6 +224,7 @@ export async function POST(req: NextRequest) {
                 );
 
                 const specialNotes = (bookingData as any)?.notes || (bookingData as any)?.special_requests || "";
+                const cancellationReason = (bookingData as any)?.cancellation_reason || (payload as any)?.cancellation_reason || (specialNotes ? specialNotes : (isCancel ? "Dibatalkan melalui portal OTA" : undefined));
 
                 const pushTitle = isCancel
                     ? `🚨 Pembatalan Reservasi! [${otaName}]`
@@ -211,7 +245,7 @@ export async function POST(req: NextRequest) {
                     otaName
                 }).catch(err => console.warn("[Webhook Push] Warning:", err?.message));
 
-                // Dispatch WhatsApp Notification to Hotel Owner (Meta Official Cloud API)
+                // Dispatch WhatsApp Notification to Hotel Owner & Brevo Email Notification concurrently
                 try {
                     const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
                     dispatchWhatsAppNotification(hotelCode, {
@@ -233,11 +267,12 @@ export async function POST(req: NextRequest) {
                         notes: specialNotes,
                         customNote: specialNotes,
                         revisionId: (payload as any).booking_revision_id || (bookingData as any)?.revision_id || "",
-                        previousArrivalDate: result.previousStay?.arrivalDate,
-                        previousDepartureDate: result.previousStay?.departureDate
-                    }).catch(waErr => console.warn("[Webhook WhatsApp Notification Warning]:", waErr?.message));
+                        previousArrivalDate: result.previousStay?.arrivalDate || fallbackDetails.previousArrivalDate,
+                        previousDepartureDate: result.previousStay?.departureDate || fallbackDetails.previousDepartureDate,
+                        cancellationReason
+                    }).catch(waErr => console.warn("[Webhook Notification Warning]:", waErr?.message));
                 } catch (waErr: any) {
-                    console.warn("[Webhook WhatsApp Import Warning]:", waErr?.message);
+                    console.warn("[Webhook Notification Import Warning]:", waErr?.message);
                 }
             }
 

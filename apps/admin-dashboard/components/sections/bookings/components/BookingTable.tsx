@@ -41,6 +41,16 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
         }
     };
 
+    const getSafeDisplay = (val: any, fallback = "-"): string => {
+        if (!val) return fallback;
+        if (typeof val === "string") return val;
+        if (typeof val === "number") return String(val);
+        if (typeof val === "object") {
+            return val.number || val.name || val.title || val.roomType || val.id || fallback;
+        }
+        return String(val);
+    };
+
     const getStatusClass = (booking: BookingRecord) => {
         if (booking.isCancelled) return s.statusCancelled;
         if (booking.status === "CHECKED_IN" || booking.guestStatus === "in_house") return s.statusCheckedIn;
@@ -122,7 +132,7 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
                                 <td className={s.td}>
                                     <div className={s.guestCell}>
                                         <span className={s.guestName} style={{ textDecoration: booking.isCancelled ? "line-through" : "none" }}>
-                                            {booking.guestName}
+                                            {getSafeDisplay(booking.guestName, "Tamu")}
                                         </span>
                                         <span className={s.guestSubtext}>
                                             {booking.phone || booking.nationality || `${booking.pax || 2} Tamu`}
@@ -133,10 +143,10 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
                                 {/* Room Type & Room Number */}
                                 <td className={s.td}>
                                     <div style={{ fontWeight: 600, color: "#334155" }}>
-                                        {booking.roomType}
+                                        {getSafeDisplay(booking.roomType, "Standard Room")}
                                     </div>
                                     <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
-                                        Kamar: <strong style={{ color: "#0f172a" }}>{booking.roomNumber || "AUTO"}</strong>
+                                        Kamar: <strong style={{ color: "#0f172a" }}>{getSafeDisplay(booking.roomNumber, "AUTO")}</strong>
                                         {booking.hasBreakfast ? " · Termasuk Sarapan" : ""}
                                     </div>
                                 </td>

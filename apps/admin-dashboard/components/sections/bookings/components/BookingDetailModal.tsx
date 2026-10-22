@@ -65,6 +65,16 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
         setTimeout(() => setCopiedKey(null), 2000);
     };
 
+    const getSafeDisplay = (val: any, fallback = "-"): string => {
+        if (!val) return fallback;
+        if (typeof val === "string") return val;
+        if (typeof val === "number") return String(val);
+        if (typeof val === "object") {
+            return val.number || val.name || val.title || val.roomType || val.id || fallback;
+        }
+        return String(val);
+    };
+
     const formatDateDisplay = (dateStr: string) => {
         if (!dateStr) return "-";
         try {
@@ -100,7 +110,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                                 {booking.channel} · Reservasi Masuk
                             </div>
                             <div className={s.channelSubtitle}>
-                                <span>Ref: {booking.voucherCode || booking.reservationId}</span>
+                                <span>Ref: {getSafeDisplay(booking.voucherCode || booking.reservationId, "-")}</span>
                                 <button 
                                     type="button"
                                     onClick={handleCopyVoucher} 
@@ -142,7 +152,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                         <div className={s.grid2}>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Nama Lengkap</span>
-                                <span className={s.fieldValue}>{booking.guestName}</span>
+                                <span className={s.fieldValue}>{getSafeDisplay(booking.guestName, "Tamu")}</span>
                             </div>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>No. Telepon / WhatsApp</span>
@@ -183,11 +193,11 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                         <div className={s.grid3} style={{ marginTop: 14 }}>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Tipe Kamar</span>
-                                <span className={s.fieldValue}>{booking.roomType}</span>
+                                <span className={s.fieldValue}>{getSafeDisplay(booking.roomType, "Standard Room")}</span>
                             </div>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>No. Kamar Fisik</span>
-                                <span className={s.fieldValue}>{booking.roomNumber || "Belum Ditetapkan (AUTO)"}</span>
+                                <span className={s.fieldValue}>{getSafeDisplay(booking.roomNumber, "Belum Ditetapkan (AUTO)")}</span>
                             </div>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Paket Sarapan</span>
@@ -362,7 +372,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                             <div className={s.field} style={{ marginTop: 10 }}>
                                 <span className={s.fieldLabel}>Catatan Khusus</span>
                                 <span className={s.fieldValue} style={{ fontWeight: 500, color: "#475569" }}>
-                                    {booking.note}
+                                    {getSafeDisplay(booking.note, "")}
                                 </span>
                             </div>
                         )}

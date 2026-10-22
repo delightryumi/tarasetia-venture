@@ -1,7 +1,7 @@
 import { adminDb } from "@/lib/firebaseAdmin";
 
 export interface WhatsAppNotificationPayload {
-    event: "booking_new" | "booking_cancellation" | "booking_modification" | "test";
+    event: "booking_new" | "booking_cancellation" | "booking_cancelled" | "booking_modification" | "booking_modified" | "test";
     channelName: string;
     bookingRef: string;
     guestName: string;
@@ -194,7 +194,7 @@ export async function sendWhatsAppNotificationToOwner(
 
         // Check if WhatsApp notification is enabled for this hotel
         const isEnabled = waConfig.enabled !== false; // Default true if configured
-        const rawTarget = payload.customRecipient || waConfig.ownerPhone || hotelData.phone || "";
+        const rawTarget = payload.customRecipient || waConfig.ownerPhone || waConfig.phones || hotelData.phone || "";
         const targetPhones = parsePhoneNumbers(rawTarget);
 
         if (!isEnabled) {
@@ -205,14 +205,17 @@ export async function sendWhatsAppNotificationToOwner(
             return { success: false, reason: `Nomor WhatsApp Owner belum diatur untuk hotel ${hotelCode}.` };
         }
 
+        const isCancel = payload.event === "booking_cancellation" || payload.event === "booking_cancelled";
+        const isModif = payload.event === "booking_modification" || payload.event === "booking_modified";
+
         // Check event toggle
-        if (payload.event === "booking_cancellation" && waConfig.notifyOnCancellation === false) {
+        if (isCancel && waConfig.notifyOnCancellation === false) {
             return { success: false, reason: "Notifikasi pembatalan dimatikan oleh owner." };
         }
         if (payload.event === "booking_new" && waConfig.notifyOnNewBooking === false) {
             return { success: false, reason: "Notifikasi booking baru dimatikan oleh owner." };
         }
-        if (payload.event === "booking_modification" && waConfig.notifyOnModification === false) {
+        if (isModif && waConfig.notifyOnModification === false) {
             return { success: false, reason: "Notifikasi perubahan reservasi dimatikan oleh owner." };
         }
 
@@ -229,18 +232,28 @@ export async function sendWhatsAppNotificationToOwner(
         const phoneNumberId = waConfig.phoneNumberId || DEFAULT_PHONE_NUMBER_ID;
 
         // Dispatch message via Meta Official Template
+        const templateChannel = isCancel 
+            ? `[BATAL] ${payload.channelName || "OTA"}` 
+            : (isModif ? `[REVISI] ${payload.channelName || "OTA"}` : (payload.channelName || "OTA Channel"));
+        const templateGuest = isCancel 
+            ? `${payload.guestName || "-"} (BATAL)` 
+            : (isModif ? `${payload.guestName || "-"} (REVISI)` : (payload.guestName || "-"));
+        const templatePrice = isCancel 
+            ? `${formattedPrice} (BATAL)` 
+            : (formattedPrice || "0");
+
         const templateComponents = [
             {
                 type: "body",
                 parameters: [
                     { type: "text", text: String(hotelName || "Hotel").slice(0, 60) },
-                    { type: "text", text: String(payload.channelName || "OTA Channel").slice(0, 40) },
+                    { type: "text", text: String(templateChannel).slice(0, 40) },
                     { type: "text", text: String(payload.bookingRef || "-").slice(0, 40) },
-                    { type: "text", text: String(payload.guestName || "-").slice(0, 60) },
+                    { type: "text", text: String(templateGuest).slice(0, 60) },
                     { type: "text", text: String(payload.roomName || "-").slice(0, 60) },
                     { type: "text", text: String(payload.arrivalDate || "-").slice(0, 30) },
                     { type: "text", text: String(`${payload.departureDate || "-"} ${payload.nights ? `(${payload.nights} Malam)` : ""}`).slice(0, 30) },
-                    { type: "text", text: String(formattedPrice || "0").slice(0, 30) }
+                    { type: "text", text: String(templatePrice).slice(0, 30) }
                 ]
             }
         ];
@@ -257,8 +270,9 @@ export async function sendWhatsAppNotificationToOwner(
                 phoneNumberId
             });
 
-            // If template is still pending or not found, fallback to direct text message
-            if (!res.success && res.raw?.error?.code === 132001) {
+            // If template is still pending, not found, or param mismatch, fallback to direct text message
+            const errorCode = res.raw?.error?.code;
+            if (!res.success && (errorCode === 132001 || errorCode === 132000 || errorCode === 132005 || errorCode === 100 || errorCode?.toString()?.startsWith("132"))) {
                 res = await sendMetaWhatsAppMessage({
                     to: phone,
                     message: messageText,
@@ -305,8 +319,8 @@ export async function sendWhatsAppNotificationToOwner(
  * Strictly excludes any internal financial commission or net-to-hotel payout lines.
  */
 export function buildWhatsAppMessage(hotelName: string, payload: WhatsAppNotificationPayload): string {
-    const isCancel = payload.event === "booking_cancellation";
-    const isModif = payload.event === "booking_modification";
+    const isCancel = payload.event === "booking_cancellation" || payload.event === "booking_cancelled";
+    const isModif = payload.event === "booking_modification" || payload.event === "booking_modified";
     const isTest = payload.event === "test";
 
     const formattedPrice = typeof payload.totalPrice === "number"

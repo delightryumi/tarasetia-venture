@@ -198,6 +198,12 @@ export function RateInventoryMobileView({
                         const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
                         const isSelected = dStr === selectedDate;
 
+                        // Check if any room or rate plan in hotel has stop sell on this date
+                        const isDateStopSell = matrix.some((rt: any) => {
+                            if (rt.days?.[dStr]?.stopSell) return true;
+                            return (rt.ratePlans || []).some((rp: any) => !!rp.days?.[dStr]?.stopSell);
+                        });
+
                         return (
                             <button
                                 key={dStr}
@@ -207,7 +213,11 @@ export function RateInventoryMobileView({
                             >
                                 <span className={s.datePillDay}>{dayName}</span>
                                 <span className={s.datePillNum}>{d}</span>
-                                <span className={s.datePillDot}>Active</span>
+                                {isDateStopSell ? (
+                                    <span className={`${s.datePillDot} ${s.datePillStopDot}`}>STOP</span>
+                                ) : (
+                                    <span className={s.datePillDot}>Active</span>
+                                )}
                             </button>
                         );
                     })}
@@ -230,7 +240,7 @@ export function RateInventoryMobileView({
                     const dayData = rt.days?.[selectedDate] || {};
                     const availableRooms = dayData.availableRooms ?? (rt.totalPhysicalRooms || 1);
                     const isSoldOut = availableRooms <= 0;
-                    const isStopSell = !!dayData.isStopSell;
+                    const isStopSell = !!dayData.stopSell || (rt.ratePlans || []).some((rp: any) => !!rp.days?.[selectedDate]?.stopSell);
 
                     const invKey = channelFilter && channelFilter !== "all"
                         ? `channelAllotment_${channelFilter}_${rt.roomTypeId}_${selectedDate}`
@@ -263,35 +273,53 @@ export function RateInventoryMobileView({
                                     <span className={s.roomMetaTag}>{rt.roomTypeCode || "ROOM"}</span>
                                     <h3 className={s.roomName}>{rt.roomTypeName}</h3>
                                 </div>
-                                <span className={`${s.roomBadge3D} ${isSoldOut ? s.badgeSoldOut : s.badgeAvailable}`}>
-                                    {isSoldOut ? "Sold Out" : `${availableRooms} Available`}
-                                </span>
+                                <div className={s.badgeGroup}>
+                                    {isStopSell && (
+                                        <span className={`${s.roomBadge3D} ${s.badgeStopSell}`}>
+                                            <Ban size={11} strokeWidth={2.5} />
+                                            <span>Stop Sell</span>
+                                        </span>
+                                    )}
+                                    <span className={`${s.roomBadge3D} ${isSoldOut ? s.badgeSoldOut : s.badgeAvailable}`}>
+                                        {isSoldOut ? "Sold Out" : `${availableRooms} Available`}
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Section: Allotment Stepper (Mode 1) */}
                             {mobileMode === "allotment" && (
-                                <div className={s.stepperSection}>
-                                    <div className={s.stepperLabelGroup}>
-                                        <span className={s.stepperLabel}>Room Inventory</span>
-                                        <span className={s.stepperSub}>Sellable allotment</span>
-                                    </div>
-                                    <div className={s.stepperControl}>
-                                        <button 
-                                            type="button" 
-                                            onClick={handleDecrementInv} 
-                                            className={s.stepBtn3D}
-                                            disabled={availableRooms <= 0}
-                                        >
-                                            -
-                                        </button>
-                                        <span className={s.stepValue}>{availableRooms}</span>
-                                        <button 
-                                            type="button" 
-                                            onClick={handleIncrementInv} 
-                                            className={s.stepBtn3D}
-                                        >
-                                            +
-                                        </button>
+                                <div className={s.stepperWrapper}>
+                                    {isStopSell && (
+                                        <div className={s.stopSellNoticeBanner}>
+                                            <ShieldAlert size={15} style={{ flexShrink: 0 }} />
+                                            <span>Stop Sell Aktif: Kamar ini ditutup untuk penjualan pada tanggal ini</span>
+                                        </div>
+                                    )}
+                                    <div className={s.stepperSection}>
+                                        <div className={s.stepperLabelGroup}>
+                                            <span className={s.stepperLabel}>Room Inventory</span>
+                                            <span className={s.stepperSub}>Sellable allotment</span>
+                                        </div>
+                                        <div className={s.stepperControl}>
+                                            <button 
+                                                type="button" 
+                                                onClick={handleDecrementInv} 
+                                                className={s.stepBtn3D}
+                                                disabled={availableRooms <= 0}
+                                                aria-label="Decrease allotment"
+                                            >
+                                                -
+                                            </button>
+                                            <span className={s.stepValue}>{availableRooms}</span>
+                                            <button 
+                                                type="button" 
+                                                onClick={handleIncrementInv} 
+                                                className={s.stepBtn3D}
+                                                aria-label="Increase allotment"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -302,14 +330,20 @@ export function RateInventoryMobileView({
                                     {(rt.ratePlans || []).map((rp: any) => {
                                         const rpDay = rp.days?.[selectedDate] || {};
                                         const currentPrice = rpDay.rate || rt.basePrice || 0;
+                                        const rpStopSell = !!rpDay.stopSell;
 
                                         return (
-                                            <div key={rp.ratePlanId} className={s.ratePlanRow}>
+                                            <div key={rp.ratePlanId} className={`${s.ratePlanRow} ${rpStopSell ? s.ratePlanRowStopSell : ""}`}>
                                                 <div className={s.ratePlanInfo}>
                                                     <span className={s.ratePlanName}>{rp.ratePlanName}</span>
+                                                    {rpStopSell && (
+                                                        <span className={s.stopSellInlineTag}>
+                                                            <Ban size={10} strokeWidth={2.5} /> STOP SELL
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className={s.ratePriceBox}>
-                                                    <span className={s.priceTag3D}>
+                                                    <span className={`${s.priceTag3D} ${rpStopSell ? s.priceTagStopSell : ""}`}>
                                                         {currConfig.code} {formatCurrency(currentPrice)}
                                                     </span>
                                                     <button
@@ -317,8 +351,9 @@ export function RateInventoryMobileView({
                                                         onClick={() => openPriceModal(rt.roomTypeId, rp.ratePlanId, rp.ratePlanName, currentPrice, selectedDate)}
                                                         className={s.priceEditBtn}
                                                         title="Edit Rate"
+                                                        aria-label={`Edit Rate for ${rp.ratePlanName}`}
                                                     >
-                                                        <Edit3 size={15} />
+                                                        <Edit3 size={16} />
                                                     </button>
                                                 </div>
                                             </div>
@@ -352,6 +387,7 @@ export function RateInventoryMobileView({
                                                     type="button"
                                                     onClick={handleToggleStopSell}
                                                     className={`${s.stopSellToggleBtn} ${rpStopSell ? s.stopSellActive : ""}`}
+                                                    aria-label={`Toggle Stop Sell for ${rp.ratePlanName}`}
                                                 >
                                                     <Ban size={14} />
                                                     <span>{rpStopSell ? "Stop Sell (Closed)" : "Open Sell"}</span>

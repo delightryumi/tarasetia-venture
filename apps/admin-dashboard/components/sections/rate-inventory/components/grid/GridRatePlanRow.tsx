@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Check, Ban, Utensils, Bed } from "lucide-react";
+import { Check, Ban, Utensils, Bed, X } from "lucide-react";
 import { RateInventoryTab, RatePlanGridRow, GridFeatureId, GRID_FEATURES } from "../../RateInventoryTypes";
 import styles from "./GridRatePlanRow.module.css";
 import cellStyles from "./GridCellInput.module.css";
@@ -233,15 +233,31 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
                     ? `channelRate_${channelFilter}_${roomTypeId}_${rp.ratePlanId}_${dateStr}` 
                     : `rate_${roomTypeId}_${rp.ratePlanId}_${dateStr}`;
 
+                const rateCellClasses = [
+                    cellClasses,
+                    isStopSell ? cellStyles.cellStopSold : ""
+                ].filter(Boolean).join(" ");
+
                 return (
-                    <td key={dateStr} className={cellClasses}>
-                        <RateCellInput
-                            value={currentRate}
-                            disabled={!canEdit}
-                            isChannelCustom={dayStat?.isChannelCustom}
-                            currencyCode={currConfig.code}
-                            onSave={val => stageEdit(rateKey, val)}
-                        />
+                    <td key={dateStr} className={rateCellClasses}>
+                        <div className={cellStyles.rateCellWrapper}>
+                            <RateCellInput
+                                value={currentRate}
+                                disabled={!canEdit}
+                                isChannelCustom={dayStat?.isChannelCustom}
+                                currencyCode={currConfig.code}
+                                onSave={val => stageEdit(rateKey, val)}
+                            />
+                            {isStopSell && (
+                                <span
+                                    className={cellStyles.stopSellBadge}
+                                    title="Stop Sell Aktif: Penjualan kamar ditutup pada tanggal ini"
+                                >
+                                    <X size={8} strokeWidth={3} />
+                                    <span>STOP</span>
+                                </span>
+                            )}
+                        </div>
                     </td>
                 );
             }

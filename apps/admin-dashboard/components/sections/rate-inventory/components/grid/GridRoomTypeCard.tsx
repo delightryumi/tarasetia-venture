@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Bed, RefreshCw, Check, Ban } from "lucide-react";
+import { Bed, RefreshCw, Check, Ban, X } from "lucide-react";
 import { RateInventoryTab, RoomTypeInventoryRow, GridFeatureId } from "../../RateInventoryTypes";
 import { GridRatePlanRow } from "./GridRatePlanRow";
 import styles from "./GridRoomTypeCard.module.css";
@@ -129,10 +129,13 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                         ? `channelAllotment_${channelFilter}_${rt.roomTypeId}_${dateStr}`
                         : `inv_${rt.roomTypeId}_${dateStr}`;
 
+                    const isStopSell = !!dayStat?.stopSell || (rt.ratePlans && rt.ratePlans.length > 0 && rt.ratePlans.some(rp => !!rp.days[dateStr]?.stopSell));
+
                     const cellClasses = [
                         cellStyles.cell,
                         isWeekend ? cellStyles.cellWeekend : "",
-                        isToday ? cellStyles.cellToday : ""
+                        isToday ? cellStyles.cellToday : "",
+                        isStopSell ? cellStyles.cellStopSold : ""
                     ].filter(Boolean).join(" ");
 
                     // AVAILABILITY FEATURE: Editable room allotment input
@@ -141,33 +144,44 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
 
                         return (
                             <td key={dateStr} className={cellClasses}>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    value={avail}
-                                    disabled={!canEditCellInv}
-                                    onChange={e => {
-                                        if (!canEditCellInv) return;
-                                        const val = Math.max(0, parseInt(e.target.value, 10) || 0);
-                                        stageEdit(invKey, val);
-                                    }}
-                                    onWheel={e => e.currentTarget.blur()}
-                                    className={[
-                                        cellStyles.numberInput,
-                                        isZero ? cellStyles.inputZero : "",
-                                        dayStat?.isCapped ? cellStyles.inputCapped : "",
-                                        !canEditCellInv ? cellStyles.inputDisabled : ""
-                                    ].filter(Boolean).join(" ")}
-                                    title={
-                                        !canChangeInventory 
-                                            ? "No permission to edit inventory" 
-                                            : (isChannelSpecific && !isAllotmentSeparated)
-                                                ? `[Merged] Allotment for ${chConfig?.channelName || channelFilter} follows Common Pool`
-                                                : (dayStat?.isCapped 
-                                                    ? `[Quota Capped] ${chConfig?.channelName || channelFilter}: ${avail} units` 
-                                                    : `Available Capacity: ${avail} / ${rt.totalPhysicalRooms}`)
-                                    }
-                                />
+                                <div className={cellStyles.rateCellWrapper}>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={avail}
+                                        disabled={!canEditCellInv}
+                                        onChange={e => {
+                                            if (!canEditCellInv) return;
+                                            const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                            stageEdit(invKey, val);
+                                        }}
+                                        onWheel={e => e.currentTarget.blur()}
+                                        className={[
+                                            cellStyles.numberInput,
+                                            isZero ? cellStyles.inputZero : "",
+                                            dayStat?.isCapped ? cellStyles.inputCapped : "",
+                                            !canEditCellInv ? cellStyles.inputDisabled : ""
+                                        ].filter(Boolean).join(" ")}
+                                        title={
+                                            !canChangeInventory 
+                                                ? "No permission to edit inventory" 
+                                                : (isChannelSpecific && !isAllotmentSeparated)
+                                                    ? `[Merged] Allotment for ${chConfig?.channelName || channelFilter} follows Common Pool`
+                                                    : (dayStat?.isCapped 
+                                                        ? `[Quota Capped] ${chConfig?.channelName || channelFilter}: ${avail} units` 
+                                                        : `Available Capacity: ${avail} / ${rt.totalPhysicalRooms}`)
+                                        }
+                                    />
+                                    {isStopSell && (
+                                        <span
+                                            className={cellStyles.stopSellBadge}
+                                            title="Stop Sell Aktif: Penjualan kamar ditutup pada tanggal ini"
+                                        >
+                                            <X size={8} strokeWidth={3} />
+                                            <span>STOP</span>
+                                        </span>
+                                    )}
+                                </div>
                             </td>
                         );
                     }
@@ -264,10 +278,21 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
 
                     // Standard Category available count badge
                     return (
-                        <td key={dateStr} className={styles.categoryCell}>
-                            <span className={`${styles.categoryAvailText} ${isZero ? styles.categoryAvailZero : ""}`}>
-                                {avail}
-                            </span>
+                        <td key={dateStr} className={`${styles.categoryCell} ${isStopSell ? cellStyles.cellStopSold : ""}`}>
+                            <div className={cellStyles.rateCellWrapper}>
+                                <span className={`${styles.categoryAvailText} ${isZero ? styles.categoryAvailZero : ""}`}>
+                                    {avail}
+                                </span>
+                                {isStopSell && (
+                                    <span
+                                        className={cellStyles.stopSellBadge}
+                                        title="Stop Sell Aktif: Penjualan kamar ditutup pada tanggal ini"
+                                    >
+                                        <X size={8} strokeWidth={3} />
+                                        <span>STOP</span>
+                                    </span>
+                                )}
+                            </div>
                         </td>
                     );
                 })}

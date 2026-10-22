@@ -206,7 +206,8 @@ export class ChannexSyncService {
         const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
 
         // Handle Booking Status
-        const isCancelled = event === "booking_cancellation" || booking.status === "cancelled";
+        const isCancelled = event === "booking_cancellation" || event === "booking_cancelled" || booking.status === "cancelled";
+        const isModified = event === "booking_modification" || event === "booking_modified" || booking.status === "modified";
         const finalStatus = isCancelled ? "CANCELLED" : "CONFIRMED";
         const paymentStatus = isCancelled ? "CANCELLED" : (isChannelCollect ? "Lunas" : "Belum Bayar");
 
@@ -344,15 +345,30 @@ export class ChannexSyncService {
         // 1. GHOST BOOKING CLEANUP & CANCELLATION RETENTION (Certification Stage 5B & Audit Requirement)
         const affectedDates = new Set<string>();
         let previousStay: { arrivalDate?: string; departureDate?: string } | undefined = undefined;
+        let matchedOriginalBooking: any = null;
         try {
-            // Bound search window around arrival/departure date (-30 to +30 days) to avoid scanning entire multi-year collection
-            const startWindow = new Date(arrivalDate || new Date().toISOString().split("T")[0]);
-            startWindow.setDate(startWindow.getDate() - 30);
-            const startStr = startWindow.toISOString().split("T")[0];
+            // Check explicit previous stay fields from payload or booking if present
+            const rawPrevArr = (booking as any)?.previous_arrival_date || (payload as any)?.previous_arrival_date || (booking as any)?.original_arrival_date;
+            const rawPrevDep = (booking as any)?.previous_departure_date || (payload as any)?.previous_departure_date || (booking as any)?.original_departure_date;
 
-            const endWindow = new Date(departureDate || arrivalDate || new Date().toISOString().split("T")[0]);
-            endWindow.setDate(endWindow.getDate() + 30);
-            const endStr = endWindow.toISOString().split("T")[0];
+            // Robust search window: bound -90 to +90 days around arrival, departure, and any previous stay dates
+            let minSearchDate = new Date(arrivalDate || new Date().toISOString().split("T")[0]);
+            minSearchDate.setDate(minSearchDate.getDate() - 90);
+            if (rawPrevArr) {
+                const pArr = new Date(rawPrevArr);
+                pArr.setDate(pArr.getDate() - 15);
+                if (pArr < minSearchDate) minSearchDate = pArr;
+            }
+            const startStr = minSearchDate.toISOString().split("T")[0];
+
+            let maxSearchDate = new Date(departureDate || arrivalDate || new Date().toISOString().split("T")[0]);
+            maxSearchDate.setDate(maxSearchDate.getDate() + 90);
+            if (rawPrevDep) {
+                const pDep = new Date(rawPrevDep);
+                pDep.setDate(pDep.getDate() + 15);
+                if (pDep > maxSearchDate) maxSearchDate = pDep;
+            }
+            const endStr = maxSearchDate.toISOString().split("T")[0];
 
             const existingRevenueSnap = await adminDb.collection(`hotels/${hotelCode}/daily_revenue`)
                 .where("date", ">=", startStr)
@@ -371,6 +387,9 @@ export class ChannexSyncService {
                     e.parentBookingId === booking.id
                 );
                 if (matchingEntry) {
+                    if (!matchedOriginalBooking) {
+                        matchedOriginalBooking = matchingEntry;
+                    }
                     if (!previousStay && matchingEntry.checkInDate && matchingEntry.checkOutDate) {
                         previousStay = {
                             arrivalDate: matchingEntry.checkInDate,
@@ -463,6 +482,7 @@ export class ChannexSyncService {
                 const rPlans = hotelRatePlans.filter((rp: any) => 
                     rp.roomTypeId === mappedRoomType?.id || 
                     (Array.isArray(rp.roomTypeIds) && rp.roomTypeIds.includes(mappedRoomType?.id)) ||
+                    (rp.channexRatePlanIds && typeof rp.channexRatePlanIds === "object" && Boolean(rp.channexRatePlanIds[mappedRoomType?.id])) ||
                     (rp.roomTypeName && rp.roomTypeName.trim().toLowerCase() === (mappedRoomType?.name || "").trim().toLowerCase())
                 );
 
@@ -660,8 +680,8 @@ export class ChannexSyncService {
                         breakfastAmount: breakfastAmount,
                         breakfastRate: dynamicBreakfastRate,
                         pax: adults,
-                        roomCount: 1,
-                        roomsCount: 1,
+                        roomCount: isCancelled ? 0 : 1,
+                        roomsCount: isCancelled ? 0 : 1,
                         roomNumber: assignedRoomNumber,
                         nights: 1,
                         amount: isCancelled ? 0 : netRoomAmount,
@@ -837,13 +857,33 @@ export class ChannexSyncService {
         const totalPromo = finalPromoAmount;
         const totalDeductions = finalTotalDeductions;
         const totalNetToHotel = finalNetToHotel;
-        const totalRecordedRevenue = revenueRecordingMode === "net" ? totalNetToHotel : totalGross;
+        const effectiveGuestName = guestName || matchedOriginalBooking?.guestName || "Tamu OTA";
+        const effectiveRoomName = primaryRoomTypeName || matchedOriginalBooking?.roomType || "Standard Room";
+        const effectiveTotalPrice = totalPrice || Number(matchedOriginalBooking?.grossAmount || matchedOriginalBooking?.totalAmount || matchedOriginalBooking?.amount) || 0;
 
         return {
             success: true,
-            message: `Booking ${otaBookingId} (${isCancelled ? 'CANCELLED' : event}) for ${guestName} processed successfully into Hotel [${hotelCode}].`,
+            message: `Booking ${otaBookingId} (${isCancelled ? 'CANCELLED' : (isModified ? 'MODIFIED' : event)}) for ${effectiveGuestName} processed successfully into Hotel [${hotelCode}].`,
             bookingId: otaBookingId,
+            isCancelled,
+            isModified,
             previousStay,
+            bookingDetails: {
+                guestName: effectiveGuestName,
+                guestPhone: guest.phone || matchedOriginalBooking?.phone || "",
+                guestEmail: guest.email || matchedOriginalBooking?.email || "",
+                channelName,
+                roomName: effectiveRoomName,
+                roomCount: booking.rooms?.length || 1,
+                arrivalDate,
+                departureDate,
+                totalPrice: effectiveTotalPrice,
+                nights,
+                isCancelled,
+                isModified,
+                previousArrivalDate: previousStay?.arrivalDate,
+                previousDepartureDate: previousStay?.departureDate
+            },
             financials: {
                 guestPaidGross: totalGross,
                 otaCommissionPercent: finalCommissionPercent,

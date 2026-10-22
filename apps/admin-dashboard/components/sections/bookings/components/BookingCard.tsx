@@ -46,6 +46,16 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
         }
     };
 
+    const getSafeDisplay = (val: any, fallback = "-"): string => {
+        if (!val) return fallback;
+        if (typeof val === "string") return val;
+        if (typeof val === "number") return String(val);
+        if (typeof val === "object") {
+            return val.number || val.name || val.title || val.roomType || val.id || fallback;
+        }
+        return String(val);
+    };
+
     const getStatusClass = () => {
         if (booking.isCancelled) return s.statusCancelled;
         if (booking.status === "CHECKED_IN" || booking.guestStatus === "in_house") return s.statusCheckedIn;
@@ -101,7 +111,7 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
             {/* Guest Name & Voucher */}
             <div className={s.guestSection}>
                 <div className={`${s.guestName} ${booking.isCancelled ? s.guestNameCancelled : ""}`}>
-                    {booking.guestName}
+                    {getSafeDisplay(booking.guestName, "Tamu")}
                 </div>
                 
                 <div 
@@ -109,7 +119,7 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
                     onClick={handleCopyVoucher}
                     title="Klik untuk menyalin nomor voucher"
                 >
-                    <span>{booking.voucherCode || booking.reservationId}</span>
+                    <span>{getSafeDisplay(booking.voucherCode || booking.reservationId, "-")}</span>
                     {copied ? (
                         <Check size={11} weight="bold" color="#16a34a" />
                     ) : (
@@ -137,14 +147,14 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
 
             {/* Room & Service Details */}
             <div className={s.detailsList}>
-                <div className={s.detailItem} title={booking.roomType}>
+                <div className={s.detailItem} title={getSafeDisplay(booking.roomType, "Standard Room")}>
                     <Bed size={13} className={s.detailIcon} />
-                    <span>{booking.roomType}</span>
+                    <span>{getSafeDisplay(booking.roomType, "Standard Room")}</span>
                 </div>
 
                 <div className={s.detailItem}>
                     <Door size={13} className={s.detailIcon} />
-                    <span>Room: {booking.roomNumber || "AUTO"}</span>
+                    <span>Room: {getSafeDisplay(booking.roomNumber, "AUTO")}</span>
                 </div>
 
                 <div className={s.detailItem}>

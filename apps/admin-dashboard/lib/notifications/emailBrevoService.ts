@@ -30,8 +30,8 @@ export function buildEmailNotificationHtml(
     hotelName: string,
     payload: EmailNotificationPayload
 ): { subject: string; html: string } {
-    const isCancel = payload.event === "booking_cancellation";
-    const isModif = payload.event === "booking_modification";
+    const isCancel = payload.event === "booking_cancellation" || payload.event === "booking_cancelled";
+    const isModif = payload.event === "booking_modification" || payload.event === "booking_modified";
     const isTest = payload.event === "test";
 
     const formattedPrice = typeof payload.totalPrice === "number"
@@ -451,18 +451,26 @@ export async function sendEmailNotificationToOwner(
             return { success: false, reason: `Notifikasi email dinonaktifkan untuk hotel ${hotelCode}.` };
         }
 
+        const isCancel = payload.event === "booking_cancellation" || payload.event === "booking_cancelled";
+        const isModif = payload.event === "booking_modification" || payload.event === "booking_modified";
+
         // Check event toggle
-        if (payload.event === "booking_cancellation" && emailConfig.notifyOnCancellation === false) {
+        if (isCancel && emailConfig.notifyOnCancellation === false) {
             return { success: false, reason: "Notifikasi pembatalan via email dimatikan oleh owner." };
         }
         if (payload.event === "booking_new" && emailConfig.notifyOnNewBooking === false) {
             return { success: false, reason: "Notifikasi booking baru via email dimatikan oleh owner." };
         }
-        if (payload.event === "booking_modification" && emailConfig.notifyOnModification === false) {
+        if (isModif && emailConfig.notifyOnModification === false) {
             return { success: false, reason: "Notifikasi perubahan reservasi via email dimatikan oleh owner." };
         }
 
-        const rawTargets = payload.customRecipient || emailConfig.ownerEmail || hotelData.email || "";
+        const rawTargets = payload.customRecipient || 
+            emailConfig.ownerEmail || 
+            emailConfig.recipients || 
+            emailConfig.emails || 
+            hotelData.email || 
+            "";
         const targetEmails = parseEmailRecipients(rawTargets);
 
         if (targetEmails.length === 0) {

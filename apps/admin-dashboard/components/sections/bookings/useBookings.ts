@@ -115,7 +115,38 @@ export function useBookings({
                 }
 
                 const ids = resolveBookingIdentifiers(entry);
-                const guestName = (entry.guestName || "Tamu").trim();
+
+                // Safely sanitize string fields that might be stored as objects in Firestore
+                const guestName = (() => {
+                    if (!entry.guestName) return "Tamu";
+                    if (typeof entry.guestName === "string") return entry.guestName.trim() || "Tamu";
+                    if (typeof entry.guestName === "object") {
+                        return (entry.guestName.name || `${entry.guestName.first_name || ""} ${entry.guestName.last_name || ""}`).trim() || "Tamu";
+                    }
+                    return String(entry.guestName);
+                })();
+
+                const safeRoomType = (() => {
+                    const raw = entry.roomType || entry.roomTypeName;
+                    if (!raw) return "Standard Room";
+                    if (typeof raw === "string") return raw.trim() || "Standard Room";
+                    if (typeof raw === "object") {
+                        return raw.name || raw.title || raw.roomType || raw.id || "Standard Room";
+                    }
+                    return String(raw);
+                })();
+
+                const safeRoomNumber = (() => {
+                    const raw = entry.roomNumber;
+                    if (!raw) return "AUTO";
+                    if (typeof raw === "string") return raw.trim() || "AUTO";
+                    if (typeof raw === "number") return String(raw);
+                    if (typeof raw === "object") {
+                        return raw.number || raw.name || raw.id || "AUTO";
+                    }
+                    return String(raw);
+                })();
+
                 const checkInDate = entry.checkInDate || entry.checkIn || entry.arrivalDate || entry.arrival_date || entry.effectiveDate || docDate || "";
                 let checkOutDate = entry.checkOutDate || entry.checkOut || entry.departureDate || entry.departure_date || "";
                 const nightsCount = Number(entry.nights || entry.totalStayNights || 1);
@@ -206,9 +237,9 @@ export function useBookings({
                         bookingDate: bookingDateStr || docDate,
                         timestamp: entry.timestamp || new Date().toISOString(),
                         nights: nightsCount,
-                        roomType: entry.roomType || entry.roomTypeName || "Standard Room",
+                        roomType: safeRoomType,
                         roomTypeId: entry.roomTypeId || "",
-                        roomNumber: entry.roomNumber || "AUTO",
+                        roomNumber: safeRoomNumber,
                         pax: Number(entry.pax || entry.adults || 2),
                         adults: Number(entry.adults || entry.pax || 2),
                         ratePlanName: entry.ratePlanName || (entry.hasBreakfast ? "With Breakfast" : "Room Only"),

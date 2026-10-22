@@ -19,19 +19,62 @@
 }
 
 .cellWeekend {
-    background-color: #ffffff;
+    background-color: #fff8f8;
 }
 
 :global(.dark) .cellWeekend {
-    background-color: #1e293b;
+    background-color: #260a12;
 }
 
 .cellToday {
-    background-color: #fdf5f7;
+    background-color: #f0fdf4;
 }
 
 :global(.dark) .cellToday {
-    background-color: #260c14;
+    background-color: #04241c;
+}
+
+.cellStopSold {
+    background-color: #fef2f2 !important;
+}
+
+:global(.dark) .cellStopSold {
+    background-color: #3b1219 !important;
+}
+
+.rateCellWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.stopSellBadge {
+    position: absolute;
+    top: -6px;
+    right: -2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 1.5px;
+    padding: 1px 3.5px;
+    font-size: 7.5px;
+    font-weight: 800;
+    line-height: 1;
+    background-color: #dc2626;
+    color: #ffffff;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.35);
+    z-index: 3;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+}
+
+:global(.dark) .stopSellBadge {
+    background-color: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .cellDirty {

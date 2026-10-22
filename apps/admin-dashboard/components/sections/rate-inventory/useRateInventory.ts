@@ -701,6 +701,14 @@ export const useRateInventory = () => {
                 };
             });
 
+            // Update room-level stop sell flag: true if any rate plan has stopSell active for this date
+            dateList.forEach(dateStr => {
+                if (roomTypeDaysStatus[dateStr]) {
+                    const anyStop = ratePlanRows.some(rp => !!rp.days[dateStr]?.stopSell);
+                    roomTypeDaysStatus[dateStr].stopSell = anyStop;
+                }
+            });
+
             return {
                 roomTypeId: rt.id,
                 roomTypeName: rt.name,

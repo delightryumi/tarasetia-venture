@@ -352,17 +352,19 @@ export async function POST(req: NextRequest) {
             let waCancelResult: any = null;
             try {
                 const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
+                const bDetails = (result as any)?.bookingDetails || {};
+                const cancelPrice = Number(totalPrice) || bDetails.totalPrice || 1200000;
                 waCancelResult = await dispatchWhatsAppNotification(hotelCode, {
                     event: "booking_cancellation",
                     channelName,
                     bookingRef: bookingIdToCancel,
-                    guestName: guestName || "Tamu OTA (Simulasi)",
-                    guestPhone,
-                    roomName: "Standard Room",
-                    roomCount: 1,
-                    arrivalDate: arrivalDate || new Date().toISOString().split("T")[0],
-                    departureDate: departureDate || new Date().toISOString().split("T")[0],
-                    totalPrice: 0,
+                    guestName: guestName || bDetails.guestName || "Tamu OTA (Simulasi)",
+                    guestPhone: guestPhone || bDetails.guestPhone || "",
+                    roomName: bDetails.roomName || "Standard Room",
+                    roomCount: bDetails.roomCount || 1,
+                    arrivalDate: arrivalDate || bDetails.arrivalDate || new Date().toISOString().split("T")[0],
+                    departureDate: departureDate || bDetails.departureDate || new Date().toISOString().split("T")[0],
+                    totalPrice: cancelPrice,
                     paymentStatus: "CANCELLED (Dibatalkan)",
                     cancellationReason: "Dibatalkan oleh Tamu via OTA Portal"
                 });
