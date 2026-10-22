@@ -135,10 +135,10 @@
 }
 
 .btnPrimary:hover {
-  background-color: #5c0f1e;
-  border-color: #5c0f1e;
+  background-color: #2563eb;
+  border-color: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(92, 15, 30, 0.2);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .btnPrimary:disabled {
@@ -303,7 +303,7 @@
 }
 
 .cardBookingLink:hover {
-  color: #5c0f1e;
+  color: #2563eb;
 }
 
 .cardTitle {
@@ -462,7 +462,7 @@
 }
 
 .btnEdit:hover {
-  background-color: #5c0f1e;
+  background-color: #2563eb;
 }
 
 .btnDelete {
@@ -574,7 +574,7 @@
 }
 
 .stepNumActive {
-  background-color: #5c0f1e;
+  background-color: #2563eb;
   color: #ffffff;
 }
 
@@ -886,7 +886,7 @@
 }
 
 .galleryTileMain {
-  border: 2px solid #5c0f1e;
+  border: 2px solid #2563eb;
   padding: 2px;
   background-color: #ffffff;
 }
@@ -903,7 +903,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #5c0f1e;
+  color: #2563eb;
   text-align: center;
   border-top: 1px solid #e5e5ea;
 }
@@ -946,8 +946,8 @@
 }
 
 .galleryBtnActive {
-  background-color: #5c0f1e;
-  border-color: #5c0f1e;
+  background-color: #2563eb;
+  border-color: #2563eb;
   color: #ffffff;
 }
 
@@ -984,7 +984,7 @@
 }
 
 .amenityCardSelected .amenityCardIcon {
-  color: #5c0f1e;
+  color: #2563eb;
 }
 
 .amenityCardLabel {
@@ -1017,8 +1017,8 @@
 }
 
 .amenityCardSelected .amenityCheckbox {
-  background-color: #5c0f1e;
-  border-color: #5c0f1e;
+  background-color: #2563eb;
+  border-color: #2563eb;
   color: #ffffff;
 }
 

@@ -851,7 +851,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                             {selectedEvent.result}
                                         </span>
                                         {selectedEvent.is_live_synced && (
-                                            <span style={{ fontSize: "11px", color: "#5c0f1e", background: "#fdf2f4", border: "1px solid #f3cfd6", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                            <span style={{ fontSize: "11px", color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
                                                 ✓ Channex API Live
                                             </span>
                                         )}
@@ -859,7 +859,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
                                 </div>
                                 <div className={styles.metaRow}>
                                     <span className={styles.metaLabel}>Channel:</span>
-                                    <span className={styles.metaValue} style={{ color: "#5c0f1e", fontWeight: 600 }}>
+                                    <span className={styles.metaValue} style={{ color: "#2563eb", fontWeight: 600 }}>
                                         {selectedEvent.channelName}
                                     </span>
                                 </div>

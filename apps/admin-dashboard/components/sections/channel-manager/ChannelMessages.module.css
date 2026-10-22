@@ -59,7 +59,7 @@
 }
 
 .searchInput:focus {
-    border-color: #5c0f1e;
+    border-color: #2563eb;
     background: #ffffff;
 }
 
@@ -83,8 +83,8 @@
 }
 
 .threadItemActive {
-    background: #fdf2f4 !important;
-    border-left: 3px solid #5c0f1e;
+    background: #eff6ff !important;
+    border-left: 3px solid #2563eb;
 }
 
 .threadHeader {
@@ -104,8 +104,8 @@
     font-weight: 600;
     padding: 2px 6px;
     border-radius: 4px;
-    background: #fdf2f4;
-    color: #5c0f1e;
+    background: #eff6ff;
+    color: #2563eb;
 }
 
 .channelAirbnb {
@@ -235,9 +235,9 @@
 }
 
 .btnQuick:hover {
-    background: #5c0f1e;
+    background: #2563eb;
     color: #ffffff;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 .inputArea {
@@ -261,7 +261,7 @@
 }
 
 .messageInput:focus {
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 .btnSend {
@@ -281,7 +281,7 @@
 }
 
 .btnSend:hover:not(:disabled) {
-    background: #5c0f1e;
+    background: #2563eb;
 }
 
 .btnSend:disabled {

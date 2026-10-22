@@ -1,4 +1,4 @@
-/* ChannelReviews.module.css — Clean Monochrome & Subtle Burgundy Reviews */
+/* ChannelReviews.module.css — Clean Monochrome & Subtle Executive Slate & Royal Sapphire Reviews */
 
 .container {
     width: 100%;
@@ -267,5 +267,5 @@
 }
 
 .btnReply:hover {
-    background: #5c0f1e;
+    background: #2563eb;
 }

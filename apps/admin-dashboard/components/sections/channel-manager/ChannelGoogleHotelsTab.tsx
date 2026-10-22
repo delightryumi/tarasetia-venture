@@ -177,7 +177,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
                     <span className={styles.statLabel}>Google Hotel Center Status</span>
-                    <span className={styles.statValue} style={{ fontSize: "16px", color: config.isEnabled ? "#5c0f1e" : "#71717a" }}>
+                    <span className={styles.statValue} style={{ fontSize: "16px", color: config.isEnabled ? "#2563eb" : "#71717a" }}>
                         {config.isEnabled ? (config.googleHotelCenterId ? "Verified" : "Pending Account ID") : "Disconnected"}
                     </span>
                 </div>

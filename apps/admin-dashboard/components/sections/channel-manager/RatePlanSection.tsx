@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { useRatePlans } from "@/lib/rate-plans/useRatePlans";
 import { useRoomTypes } from "../rooms/useRoomTypes";
 import { MyTaraRatePlan } from "@/lib/channex/types";
@@ -55,14 +55,13 @@ export const RatePlanSection: React.FC<RatePlanSectionProps> = ({ embedded = fal
             setChannexPropertyId("");
             return;
         }
-        const unsub = onSnapshot(doc(db, "hotels", activeHotelCode), (docSnap) => {
+        getDoc(doc(db, "hotels", activeHotelCode)).then((docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 const pId = data.channexPropertyId || data.channelManager?.channexPropertyId || data.channelManager?.propertyId || "";
                 setChannexPropertyId(pId);
             }
-        });
-        return () => unsub();
+        }).catch(err => console.warn("RatePlan load property id note:", err));
     }, [activeHotelCode]);
 
     const handlePingRatePlan = async (plan: MyTaraRatePlan) => {

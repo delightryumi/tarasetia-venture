@@ -131,7 +131,7 @@ export function ChannelVccViewerModal({
                 {/* Header */}
                 <div className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <ShieldCheck size={18} color="#f3cfd6" />
+                        <ShieldCheck size={18} color="#bfdbfe" />
                         <div>
                             <div className={styles.title}>PCI Virtual Credit Card (VCC) Viewer</div>
                             <div style={{ fontSize: "10px", opacity: 0.8 }}>PCI-DSS Level 1 Compliance &amp; Security Standard</div>
@@ -291,7 +291,7 @@ export function ChannelVccViewerModal({
                                         Active from {cardData?.activation_date || "-"} to {cardData?.expiration_date || "-"}
                                     </div>
                                 </div>
-                                <span style={{ fontSize: "11px", fontWeight: 700, background: "#fdf2f4", color: "#5c0f1e", border: "1px solid #f3cfd6", padding: "3px 8px", borderRadius: "4px" }}>
+                                <span style={{ fontSize: "11px", fontWeight: 700, background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "3px 8px", borderRadius: "4px" }}>
                                     READY FOR POS / EDC TERMINAL CHARGE
                                 </span>
                             </div>

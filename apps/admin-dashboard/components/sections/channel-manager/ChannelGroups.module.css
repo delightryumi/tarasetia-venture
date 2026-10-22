@@ -1,4 +1,4 @@
-/* ChannelGroups.module.css — Clean Monochrome & Subtle Burgundy Aesthetics */
+/* ChannelGroups.module.css — Clean Monochrome & Subtle Executive Slate & Royal Sapphire Aesthetics */
 
 .container {
     display: flex;
@@ -52,9 +52,9 @@
     width: 40px;
     height: 40px;
     border-radius: 6px;
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -137,8 +137,8 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
     transform: translateY(-1px);
 }
 
@@ -191,9 +191,9 @@
     font-weight: 600;
     padding: 2px 8px;
     border-radius: 4px;
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 
 .groupChannexBadge {
@@ -242,7 +242,7 @@
 }
 
 .activeHotelRow {
-    background: #fdf2f4 !important;
+    background: #eff6ff !important;
 }
 
 .hotelName {
@@ -421,9 +421,9 @@
 }
 
 .groupSelectBtnActive {
-    background: #fdf2f4;
-    border-color: #5c0f1e;
-    color: #5c0f1e;
+    background: #eff6ff;
+    border-color: #2563eb;
+    color: #2563eb;
 }
 
 .groupDropdownMenu {
@@ -483,8 +483,8 @@
 }
 
 .groupDropdownItem:hover {
-    background: #fdf2f4;
-    color: #5c0f1e;
+    background: #eff6ff;
+    color: #2563eb;
 }
 
 /* Custom Confirmation Modal (Delete Group Alert) */
@@ -523,9 +523,9 @@
     width: 40px;
     height: 40px;
     border-radius: 6px;
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -575,16 +575,16 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #5c0f1e;
+    background: #2563eb;
     color: #ffffff;
-    border: 1px solid #5c0f1e;
+    border: 1px solid #2563eb;
     border-radius: 6px;
     padding: 8px 14px;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
-    box-shadow: 0 1px 3px rgba(92, 15, 30, 0.2);
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
 }
 
 .btnDeleteConfirm:hover:not(:disabled) {

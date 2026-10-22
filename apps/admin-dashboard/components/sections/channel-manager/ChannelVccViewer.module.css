@@ -185,8 +185,8 @@
 }
 
 .pinInput:focus {
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .btnAction {
@@ -203,6 +203,6 @@
 }
 
 .btnAction:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }

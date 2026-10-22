@@ -76,7 +76,7 @@ import { TravelAgentTab } from "./TravelAgentTab";
 import { ChannelGroupsTab } from "./ChannelGroupsTab";
 import { SUPPORTED_CURRENCIES, formatCurrencyAmount, DEFAULT_CURRENCY } from "@/lib/currency-utils";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, setDoc, deleteField, onSnapshot } from "firebase/firestore";
+import { doc, updateDoc, setDoc, deleteField, onSnapshot } from "firebase/firestore";
 import { toast } from "sonner";
 
 import { ChannelSeparationMode } from "@/lib/channex/types";
@@ -88,7 +88,9 @@ export interface ChannelMappingConfig {
     hotelId: string; // Extranet Hotel ID
     currency: string;
     pricingModel: "gross" | "net"; // Gross (Sell Rate) or Net Rate
+    extranetRateModel?: "gross" | "net"; // Does the OTA extranet send Gross (Sell Rate) or Net (Payout Rate)
     commissionPercent: number; // e.g. 18% for Traveloka, 15% for Booking.com
+    marketingAdsPercent?: number; // Marketing / Ads Booster % (e.g. Agoda Growth Express 3%)
     markupPercent: number; // Custom markup %
     isActive: boolean;
     separationMode?: ChannelSeparationMode; // "merged" | "separated_rate" | "separated_allotment" | "separated_both"
@@ -240,21 +242,21 @@ export function ChannelManagerSection() {
             subtitle: "Kelola jaringan hotel, kelola grup properti untuk distribusi OTA serentak, dan pantau status koneksi terpusat.",
             icon: Building2,
             badge: "Multi-Hotel Chain",
-            badgeColor: "#5c0f1e"
+            badgeColor: "#2563eb"
         },
         tutorial: {
             title: "Production Go-Live Roadmap",
             subtitle: "Step-by-step rollout guide: from account verification, pilot property testing, to full multi-property production deployment.",
             icon: Compass,
             badge: "5-Stage Roadmap",
-            badgeColor: "#5c0f1e"
+            badgeColor: "#2563eb"
         },
         mapping: {
             title: "Channel Mapping & Rate Parity",
             subtitle: "Manage PMS-to-OTA room mapping, rate plan codes, commission structures, and channel-level rate & inventory separation rules.",
             icon: Key,
             badge: "Active Mapping",
-            badgeColor: "#5c0f1e"
+            badgeColor: "#2563eb"
         },
         catalog: {
             title: "OTA Channel Catalog & Global Distribution",
@@ -318,17 +320,17 @@ export function ChannelManagerSection() {
         },
         booking_engine: {
             title: "Direct Booking Engine & Payment Gateway Suite",
-            subtitle: "Pengaturan identitas visual, tema warna Burgundy, alamat website kembali, preferensi form tamu, analitik tracking, promo voucher, dan multi-tenant payment gateway.",
+            subtitle: "Pengaturan identitas visual, tema warna Executive Slate & Royal Sapphire, alamat website kembali, preferensi form tamu, analitik tracking, promo voucher, dan multi-tenant payment gateway.",
             icon: CreditCard,
             badge: "Direct Suite",
-            badgeColor: "#6D2B35"
+            badgeColor: "#2563eb"
         },
         payment_gateway: {
             title: "Direct Booking Engine & Payment Gateway Suite",
-            subtitle: "Pengaturan identitas visual, tema warna Burgundy, alamat website kembali, preferensi form tamu, analitik tracking, promo voucher, dan multi-tenant payment gateway.",
+            subtitle: "Pengaturan identitas visual, tema warna Executive Slate & Royal Sapphire, alamat website kembali, preferensi form tamu, analitik tracking, promo voucher, dan multi-tenant payment gateway.",
             icon: CreditCard,
             badge: "Direct Suite",
-            badgeColor: "#6D2B35"
+            badgeColor: "#2563eb"
         },
         payments: {
             title: "PCI Card Vault & Payment Processing",
@@ -367,7 +369,7 @@ export function ChannelManagerSection() {
             subtitle: "Manage contracted offline travel agencies, corporate accounts, wholesale partners, and connected distribution channels.",
             icon: Users,
             badge: "B2B Partners",
-            badgeColor: "#5c0f1e"
+            badgeColor: "#2563eb"
         }
     };
     
@@ -526,90 +528,67 @@ export function ChannelManagerSection() {
     useEffect(() => {
         if (!activeHotelCode || activeHotelCode === "0") return;
 
-        const loadSettings = async () => {
-            try {
-                const docRef = doc(db, "hotels", activeHotelCode);
-                const snap = await getDoc(docRef);
-                if (snap.exists()) {
-                    const data = snap.data();
-                    const cm = data.channelManager || {};
-                    setChannexEnv(cm.env || "staging");
-                    setChannexApiKey(cm.apiKey || "");
-                    const resolvedPropId = data.channexPropertyId || cm.channexPropertyId || cm.propertyId || "";
-                    setChannexPropertyId(resolvedPropId);
-                    setChannexWebhookSecret(cm.webhookSecret || "");
-                    const resolvedCurrency = data.currency || cm.currency || data.baseCurrency || "IDR";
-                    setHotelCurrency(resolvedCurrency);
-                    if (typeof window !== "undefined") {
-                        localStorage.setItem(`hotel_currency_${activeHotelCode}`, resolvedCurrency);
-                        localStorage.setItem("shopCurrency", resolvedCurrency);
-                    }
-
-                    if (cm.webhookId) {
-                        setWebhookRegistrationStatus({
-                            isRegistered: true,
-                            webhookId: cm.webhookId,
-                            webhookUrl: cm.webhookUrl,
-                            webhookRegisteredAt: cm.webhookRegisteredAt
-                        });
-                    } else {
-                        setWebhookRegistrationStatus(null);
-                    }
-
-                    // Load only genuine configured channels from Firestore (no dummy defaults)
-                    const initialChannels: Record<string, ChannelMappingConfig> = {};
-                    const savedChannels = cm.channels || {};
-
-                    Object.entries(savedChannels).forEach(([code, conf]: [string, any]) => {
-                        if (conf && conf.channelCode) {
-                            initialChannels[code] = {
-                                ...conf,
-                                isActive: conf.isActive ?? true
-                            };
-                        }
-                    });
-
-                    setChannelConfigs(initialChannels);
-
-                    // Initialize Global PMS & Ledger Pricing Model (Net vs Gross)
-                    const initialPricing: "net" | "gross" = (cm.pricingModel || data.settings?.revenueRecordingMode || "net").toLowerCase() === "gross" ? "gross" : "net";
-                    setGlobalPricingModel(initialPricing);
-
-                    // Auto-select first active channel if available
-                    const activeChannels = Object.values(initialChannels).filter(c => c.isActive);
-                    if (activeChannels.length > 0) {
-                        setSelectedChannelCode(prev => (prev && initialChannels[prev]?.isActive ? prev : activeChannels[0].channelCode));
-                    } else {
-                        setSelectedChannelCode("");
-                    }
-                }
-            } catch (err) {
-                console.error("Error loading channel settings:", err);
-            }
-        };
-
-        loadSettings();
-
-        // Real-time synchronization for currency across modules (Profile <-> Channel Manager 2-way)
+        // Zero-waste single subscription: 
+        // 1 single Firestore read on initial mount (no redundant getDoc),
+        // and instantly synchronizes changes across tabs or other staff sessions.
         const hotelDocRef = doc(db, "hotels", activeHotelCode);
         const unsubHotel = onSnapshot(hotelDocRef, (snap) => {
             if (snap.exists()) {
                 const data = snap.data();
                 const cm = data.channelManager || {};
+                setChannexEnv(cm.env || "staging");
+                setChannexApiKey(cm.apiKey || "");
+                const resolvedPropId = data.channexPropertyId || cm.channexPropertyId || cm.propertyId || "";
+                setChannexPropertyId(resolvedPropId);
+                setChannexWebhookSecret(cm.webhookSecret || "");
+
                 const resolvedCurr = (data.currency || cm.currency || data.baseCurrency || data.settings?.currency || "IDR").toUpperCase().trim();
-                setHotelCurrency(prev => {
-                    if (prev !== resolvedCurr) {
-                        return resolvedCurr;
-                    }
-                    return prev;
-                });
+                setHotelCurrency(resolvedCurr);
                 if (typeof window !== "undefined") {
                     localStorage.setItem(`hotel_currency_${activeHotelCode}`, resolvedCurr);
                     localStorage.setItem("shopCurrency", resolvedCurr);
                 }
+
+                if (cm.webhookId) {
+                    setWebhookRegistrationStatus({
+                        isRegistered: true,
+                        webhookId: cm.webhookId,
+                        webhookUrl: cm.webhookUrl,
+                        webhookRegisteredAt: cm.webhookRegisteredAt
+                    });
+                } else {
+                    setWebhookRegistrationStatus(null);
+                }
+
+                // Load only genuine configured channels from Firestore (no dummy defaults)
+                const initialChannels: Record<string, ChannelMappingConfig> = {};
+                const savedChannels = cm.channels || {};
+
+                Object.entries(savedChannels).forEach(([code, conf]: [string, any]) => {
+                    if (conf && conf.channelCode) {
+                        initialChannels[code] = {
+                            ...conf,
+                            isActive: conf.isActive ?? true
+                        };
+                    }
+                });
+
+                setChannelConfigs(initialChannels);
+
+                // Initialize Global PMS & Ledger Pricing Model (Net vs Gross)
+                const initialPricing: "net" | "gross" = (cm.pricingModel || data.settings?.revenueRecordingMode || "net").toLowerCase() === "gross" ? "gross" : "net";
+                setGlobalPricingModel(initialPricing);
+
+                // Auto-select first active channel if available
+                const activeChannels = Object.values(initialChannels).filter(c => c.isActive);
+                if (activeChannels.length > 0) {
+                    setSelectedChannelCode(prev => (prev && initialChannels[prev]?.isActive ? prev : activeChannels[0].channelCode));
+                } else {
+                    setSelectedChannelCode("");
+                }
             }
         }, (err) => {
-            console.warn("Currency real-time listener note:", err);
+            console.warn("Channel Manager hotel settings listener error:", err);
         });
 
         const handleCurrencyChangedEvent = () => {
@@ -691,81 +670,104 @@ export function ChannelManagerSection() {
     const syncSuccessCount = useMemo(() => syncLog.filter(l => l.status === "SUCCESS").length, [syncLog]);
     const syncErrorCount = useMemo(() => syncLog.filter(l => l.status === "ERROR").length, [syncLog]);
 
-    // ── TWO-TIER CATEGORIZED NAVIGATION SYSTEM ──
-    type ChannelCategoryType = "inventory" | "distribution" | "guest" | "system";
+    // ── TWO-TIER CATEGORIZED NAVIGATION SYSTEM (OPSI A: 5 BARIS TEMA) ──
+    type ChannelThemeLine = "line1_setup" | "line2_inventory" | "line3_distribution" | "line4_direct" | "line5_security";
 
-    const activeCategory = useMemo<ChannelCategoryType>(() => {
-        if (["rooms", "rateplans", "matrix", "mapping", "dynamic_pricing"].includes(activeTab)) return "inventory";
-        if (["catalog", "travel_agents", "rules", "google", "promotions", "content"].includes(activeTab)) return "distribution";
-        if (["messages", "reviews"].includes(activeTab)) return "guest";
-        return "system";
+    const activeThemeLine = useMemo<ChannelThemeLine>(() => {
+        if (["groups", "golive", "iframe", "tutorial", "sandbox"].includes(activeTab)) return "line1_setup";
+        if (["rooms", "rateplans", "matrix"].includes(activeTab)) return "line2_inventory";
+        if (["mapping", "catalog", "dynamic_pricing", "rules", "promotions", "google", "travel_agents", "content"].includes(activeTab)) return "line3_distribution";
+        if (["booking_engine", "payment_gateway", "messages", "reviews"].includes(activeTab)) return "line4_direct";
+        return "line5_security";
     }, [activeTab]);
 
-    const CATEGORY_DEFINITIONS = useMemo<Array<{
-        id: ChannelCategoryType;
-        label: string;
+    const THEME_LINES = useMemo<Array<{
+        id: ChannelThemeLine;
+        title: string;
+        shortTitle: string;
+        description: string;
+        icon: React.ElementType;
         badge?: string;
-        tabs: Array<{ id: ChannelTabType; label: string }>;
+        tabs: Array<{ id: ChannelTabType; label: string; icon: React.ElementType; badge?: string }>;
     }>>(() => [
         {
-            id: "inventory",
-            label: "Inventory & Pricing",
-            badge: "5",
+            id: "line1_setup",
+            title: "Line 1: Setup & Koneksi",
+            shortTitle: "1. Setup & Koneksi",
+            description: "Fondasi Kredensial & Ekosistem Global",
+            icon: Lock,
+            badge: "Fondasi",
             tabs: [
-                { id: "rooms", label: "Room Types & Allotment" },
-                { id: "rateplans", label: "Rate Plans & Packages" },
-                { id: "matrix", label: "Rate Matrix (Net / Gross)" },
-                { id: "mapping", label: "Channel Mapping" },
-                { id: "dynamic_pricing", label: "Dynamic Pricing (RMS)" }
+                { id: "groups", label: "Jaringan Hotel & Grup", icon: Building2 },
+                { id: "golive", label: "Kredensial API & Go-Live", icon: Lock, badge: "Step 1" },
+                { id: "iframe", label: "Konsol Ekstranet SSO", icon: LayoutGrid }
             ]
         },
         {
-            id: "distribution",
-            label: "OTA Distribution",
-            badge: `${activeChannelsList.length} Channels`,
+            id: "line2_inventory",
+            title: "Line 2: Kamar & Harga",
+            shortTitle: "2. Kamar & Harga",
+            description: "Master Inventori & Base Rate PMS",
+            icon: BedDouble,
+            badge: "PMS Base",
             tabs: [
-                { id: "catalog", label: `Channel Catalog (${activeChannelsList.length})` },
-                { id: "travel_agents", label: "Travel Agents & Wholesalers" },
-                { id: "rules", label: "Yield & Allocation Rules" },
-                { id: "google", label: "Google Hotel Free Links" },
-                { id: "promotions", label: "OTA Promotions & Deals" },
-                { id: "content", label: "Property Content & Amenities" }
+                { id: "rooms", label: "Tipe Kamar & Alotmen", icon: BedDouble },
+                { id: "rateplans", label: "Master Rate Plans", icon: Sliders },
+                { id: "matrix", label: "Kalkulator Rate Matrix", icon: Table, badge: "Nett/Gross" }
             ]
         },
         {
-            id: "guest",
-            label: "Guest Communications",
-            badge: "2",
+            id: "line3_distribution",
+            title: "Line 3: Distribusi OTA & RMS",
+            shortTitle: "3. Distribusi OTA",
+            description: "Saluran OTA Global, Diskon & Yield",
+            icon: Globe,
+            badge: `${activeChannelsList.length} Aktif`,
             tabs: [
-                { id: "messages", label: "Guest Messaging Inbox" },
-                { id: "reviews", label: "Guest Reviews & Ratings" }
+                { id: "mapping", label: "Pemetaan Saluran & OTA", icon: Key, badge: "68+ OTA" },
+                { id: "dynamic_pricing", label: "Yield & Dynamic RMS", icon: TrendingUp },
+                { id: "promotions", label: "Promosi & Diskon OTA", icon: Tag },
+                { id: "google", label: "Google Hotel Free Links", icon: Search, badge: "0%" },
+                { id: "travel_agents", label: "Travel Agent & B2B", icon: Users },
+                { id: "content", label: "Konten & Foto Kamar", icon: UploadCloud }
             ]
         },
         {
-            id: "system",
-            label: "System & Connectivity",
-            badge: "8",
+            id: "line4_direct",
+            title: "Line 4: Direct & Tamu",
+            shortTitle: "4. Direct & Tamu",
+            description: "Pemesanan Langsung & Interaksi Tamu",
+            icon: MessageSquare,
+            badge: "Guest Suite",
             tabs: [
-                { id: "groups", label: "Hotel Groups & Properties" },
-                { id: "tutorial", label: "Peta Alur Go-Live" },
-                { id: "payments", label: "Stripe & PCI Card Vault" },
-                { id: "sandbox", label: "Certification Sandbox" },
-                { id: "logs", label: "ARI Transmission Logs" },
-                { id: "iframe", label: "Channel Console (SSO)" },
-                { id: "golive", label: "API Credentials & Production" },
-                { id: "sync", label: "Distribution Sync Feed" }
+                { id: "booking_engine", label: "Direct Booking Engine & Payment", icon: Globe, badge: "Web Suite" },
+                { id: "messages", label: "Kotak Masuk Pesan Tamu", icon: MessageSquare },
+                { id: "reviews", label: "Ulasan & Reputasi Tamu", icon: Star }
+            ]
+        },
+        {
+            id: "line5_security",
+            title: "Line 5: Log & Monitoring",
+            shortTitle: "5. Log & Monitoring",
+            description: "Audit Trail, Real-Time Sync & PCI Vault",
+            icon: Terminal,
+            badge: "Diagnostik",
+            tabs: [
+                { id: "logs", label: "Log Transmisi & Webhook", icon: Terminal },
+                { id: "sync", label: "Live ARI Sync Feed", icon: RefreshCw },
+                { id: "payments", label: "PCI Card Vault & VCC", icon: CreditCard }
             ]
         }
     ], [activeChannelsList.length]);
 
-    const handleSelectCategory = (catId: ChannelCategoryType) => {
-        const cat = CATEGORY_DEFINITIONS.find(c => c.id === catId);
-        if (cat && !cat.tabs.some(t => t.id === activeTab)) {
-            handleSelectTab(cat.tabs[0].id);
+    const activeLineDef = THEME_LINES.find(l => l.id === activeThemeLine) || THEME_LINES[0];
+
+    const handleSelectThemeLine = (lineId: ChannelThemeLine) => {
+        const line = THEME_LINES.find(l => l.id === lineId);
+        if (line && !line.tabs.some(t => t.id === activeTab)) {
+            handleSelectTab(line.tabs[0].id);
         }
     };
-
-    const activeCategoryDef = CATEGORY_DEFINITIONS.find(c => c.id === activeCategory) || CATEGORY_DEFINITIONS[0];
 
     // 2. Global Pricing Model Synchronization (Net vs Gross)
     const handleUpdateGlobalPricingModel = async (newModel: "net" | "gross") => {
@@ -1156,7 +1158,9 @@ export function ChannelManagerSection() {
             hotelId: "",
             currency: "IDR",
             pricingModel: "gross",
+            extranetRateModel: catalogItem.category === "wholesaler" ? "net" : "gross",
             commissionPercent: catalogItem.defaultCommission,
+            marketingAdsPercent: 0,
             markupPercent: 0,
             isActive: true,
             separationMode: "merged",
@@ -1825,7 +1829,7 @@ export function ChannelManagerSection() {
                 </div>
             </div>
 
-            {/* 2. DEDICATED MODULE CONTEXT HEADER */}
+            {/* 2. DEDICATED MODULE CONTEXT HEADER & TWO-TIER NAVIGATION BAR (OPSI A: 5 BARIS TEMA) */}
             {(() => {
                 const currentMeta = TAB_METADATA[activeTab] || {
                     title: "Channel Manager Suite",
@@ -1835,24 +1839,349 @@ export function ChannelManagerSection() {
                 const CurrentTabIcon = currentMeta.icon;
 
                 return (
-                    <div className={styles.moduleHeaderBar}>
-                        <div className={styles.moduleHeaderInfo}>
-                            <div className={styles.moduleHeaderIconWrap}>
-                                <CurrentTabIcon size={20} />
-                            </div>
-                            <div>
-                                <div className={styles.moduleTitleRow}>
-                                    <h2 className={styles.moduleTitle}>{currentMeta.title}</h2>
-                                    {currentMeta.badge && (
-                                        <span 
-                                            className={styles.moduleBadge}
-                                            style={currentMeta.badgeColor ? { color: currentMeta.badgeColor, borderColor: `${currentMeta.badgeColor}40`, backgroundColor: `${currentMeta.badgeColor}15` } : undefined}
-                                        >
-                                            {currentMeta.badge}
-                                        </span>
-                                    )}
+                    <div style={{
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        padding: "16px 18px",
+                        marginBottom: "16px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
+                    }}>
+                        {/* Module Context Header */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "12px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "6px",
+                                    background: "#eff6ff",
+                                    color: "#2563eb",
+                                    border: "1px solid #bfdbfe",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0
+                                }}>
+                                    <CurrentTabIcon size={20} />
                                 </div>
-                                <p className={styles.moduleSubtitle}>{currentMeta.subtitle}</p>
+                                <div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>
+                                            {currentMeta.title}
+                                        </h2>
+                                        {currentMeta.badge && (
+                                            <span style={{
+                                                fontSize: "10.5px",
+                                                fontWeight: 700,
+                                                padding: "2px 8px",
+                                                borderRadius: "6px",
+                                                background: "#eff6ff",
+                                                color: "#2563eb",
+                                                border: "1px solid #bfdbfe"
+                                            }}>
+                                                {currentMeta.badge}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+                                        {currentMeta.subtitle}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span style={{
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    padding: "4px 10px",
+                                    borderRadius: "6px",
+                                    background: "#eff6ff",
+                                    color: "#1d4ed8",
+                                    border: "1px solid #bfdbfe"
+                                }}>
+                                    Grup Aktif: <b>{activeLineDef.title}</b>
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* TIER 1: 5 BARIS TEMA (THEME LINES SELECTOR) */}
+                        <div style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                            gap: "8px",
+                            paddingBottom: "12px",
+                            borderBottom: "1px solid #f1f5f9"
+                        }}>
+                            {THEME_LINES.map(line => {
+                                const isLineActive = activeThemeLine === line.id;
+                                const LineIcon = line.icon;
+                                return (
+                                    <button
+                                        key={line.id}
+                                        type="button"
+                                        onClick={() => handleSelectThemeLine(line.id)}
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "10px",
+                                            padding: "9px 12px",
+                                            borderRadius: "6px",
+                                            border: isLineActive ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
+                                            background: isLineActive ? "#f0f7ff" : "#ffffff",
+                                            color: isLineActive ? "#1e40af" : "#475569",
+                                            cursor: "pointer",
+                                            textAlign: "left",
+                                            transition: "all 0.15s ease",
+                                            boxShadow: isLineActive ? "0 1px 3px rgba(37, 99, 235, 0.08)" : "none"
+                                        }}
+                                    >
+                                        <div style={{
+                                            color: isLineActive ? "#2563eb" : "#64748b",
+                                            display: "flex",
+                                            alignItems: "center"
+                                        }}>
+                                            <LineIcon size={16} />
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{
+                                                fontSize: "11.5px",
+                                                fontWeight: isLineActive ? 700 : 600,
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                color: isLineActive ? "#1e40af" : "#0f172a"
+                                            }}>
+                                                {line.shortTitle}
+                                            </div>
+                                            <div style={{
+                                                fontSize: "10px",
+                                                color: isLineActive ? "#2563eb" : "#64748b",
+                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis"
+                                            }}>
+                                                {line.tabs.length} Sub-Menu
+                                            </div>
+                                        </div>
+                                        {isLineActive && (
+                                            <span style={{
+                                                fontSize: "9px",
+                                                fontWeight: 700,
+                                                padding: "1px 6px",
+                                                borderRadius: "6px",
+                                                background: "#dbeafe",
+                                                color: "#1e40af",
+                                                border: "1px solid #bfdbfe"
+                                            }}>
+                                                Aktif
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* TIER 2: SUB-TABS DARI BARIS TEMA AKTIF */}
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            paddingTop: "12px",
+                            flexWrap: "wrap"
+                        }}>
+                            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginRight: "4px" }}>
+                                Sub-Menu:
+                            </span>
+                            {activeLineDef.tabs.map(tab => {
+                                const isTabActive = activeTab === tab.id;
+                                const TabIcon = tab.icon;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => handleSelectTab(tab.id)}
+                                        style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "6px",
+                                            padding: "6px 13px",
+                                            borderRadius: "6px",
+                                            border: isTabActive ? "1.5px solid #2563eb" : "1px solid #e2e8f0",
+                                            background: isTabActive ? "#eff6ff" : "#ffffff",
+                                            color: isTabActive ? "#1d4ed8" : "#475569",
+                                            fontSize: "11.5px",
+                                            fontWeight: isTabActive ? 600 : 500,
+                                            cursor: "pointer",
+                                            transition: "all 0.15s ease",
+                                            boxShadow: isTabActive ? "0 1px 2px rgba(37, 99, 235, 0.08)" : "none"
+                                        }}
+                                    >
+                                        <TabIcon size={13} color={isTabActive ? "#2563eb" : "#64748b"} />
+                                        <span>{tab.label}</span>
+                                        {tab.badge && (
+                                            <span style={{
+                                                fontSize: "9px",
+                                                fontWeight: 700,
+                                                padding: "1px 5px",
+                                                borderRadius: "6px",
+                                                background: isTabActive ? "#dbeafe" : "#f1f5f9",
+                                                color: isTabActive ? "#1d4ed8" : "#64748b",
+                                                border: isTabActive ? "1px solid #bfdbfe" : "1px solid #e2e8f0"
+                                            }}>
+                                                {tab.badge}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {/* QUICK ONBOARDING WIZARD: 4 LANGKAH CEPAT GO-LIVE (SIMPLIFIED JOINER WORKFLOW) */}
+            {(() => {
+                const isStep1Done = Boolean(channexApiKey && channexPropertyId);
+                const activeChannels = Object.values(channelConfigs).filter(c => c.isActive);
+                const isStep2Done = activeChannels.length > 0;
+                const mappedRoomsCount = activeChannels.reduce((acc, c) => acc + Object.keys(c.roomMappings || {}).length, 0);
+                const isStep3Done = mappedRoomsCount > 0;
+
+                return (
+                    <div style={{
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        padding: "14px 18px",
+                        marginBottom: "16px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.03)"
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ background: "#eff6ff", color: "#2563eb", padding: "6px", borderRadius: "6px", display: "flex" }}>
+                                    <Sparkles size={16} />
+                                </div>
+                                <div>
+                                    <h4 style={{ margin: 0, fontSize: "13.5px", fontWeight: 700, color: "#0f172a" }}>
+                                        Panduan Kilat Integrasi Saluran (Quick Onboarding &amp; Mapping Wizard)
+                                    </h4>
+                                    <p style={{ margin: 0, fontSize: "11.5px", color: "#64748b" }}>
+                                        4 Langkah mudah menghubungkan properti Anda ke seluruh jaringan OTA &amp; Wholesaler global.
+                                    </p>
+                                </div>
+                            </div>
+                            <span style={{
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                padding: "3px 10px",
+                                borderRadius: "6px",
+                                background: isStep1Done && isStep2Done && isStep3Done ? "#dcfce7" : "#fef3c7",
+                                color: isStep1Done && isStep2Done && isStep3Done ? "#166534" : "#92400e",
+                                border: isStep1Done && isStep2Done && isStep3Done ? "1px solid #bbf7d0" : "1px solid #fde68a"
+                            }}>
+                                {isStep1Done && isStep2Done && isStep3Done ? "✓ Siap Sinkronisasi Penuh" : "Dalam Proses Setup"}
+                            </span>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px" }}>
+                            {/* Step 1 */}
+                            <div 
+                                onClick={() => handleSelectTab("tutorial")}
+                                style={{
+                                    border: `1px solid ${isStep1Done ? "#bbf7d0" : "#fecaca"}`,
+                                    background: isStep1Done ? "#f0fdf4" : "#fff5f5",
+                                    borderRadius: "8px",
+                                    padding: "10px 12px",
+                                    cursor: "pointer",
+                                    transition: "all 0.15s ease"
+                                }}
+                            >
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: isStep1Done ? "#166534" : "#991b1b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                        Langkah 1
+                                    </span>
+                                    {isStep1Done ? <CheckCircle2 size={14} color="#16a34a" /> : <AlertTriangle size={14} color="#dc2626" />}
+                                </div>
+                                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#18181b" }}>Kredensial API</div>
+                                <div style={{ fontSize: "11px", color: "#52525b", marginTop: "2px" }}>
+                                    {isStep1Done ? "API Key & Property Terhubung" : "Isi Channex API Key & ID"}
+                                </div>
+                            </div>
+
+                            {/* Step 2 */}
+                            <div 
+                                onClick={() => setIsAddChannelModalOpen(true)}
+                                style={{
+                                    border: `1px solid ${isStep2Done ? "#bbf7d0" : "#bfdbfe"}`,
+                                    background: isStep2Done ? "#f0fdf4" : "#eff6ff",
+                                    borderRadius: "8px",
+                                    padding: "10px 12px",
+                                    cursor: "pointer",
+                                    transition: "all 0.15s ease"
+                                }}
+                            >
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: isStep2Done ? "#166534" : "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                        Langkah 2
+                                    </span>
+                                    {isStep2Done ? <CheckCircle2 size={14} color="#16a34a" /> : <Plus size={14} color="#2563eb" />}
+                                </div>
+                                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0f172a" }}>Hubungkan Saluran OTA</div>
+                                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                                    {isStep2Done ? `${activeChannels.length} Saluran Aktif (Atur Komisi)` : "+ Tambah Agoda, Booking, dll"}
+                                </div>
+                            </div>
+
+                            {/* Step 3 */}
+                            <div 
+                                onClick={() => handleSelectTab("mapping")}
+                                style={{
+                                    border: `1px solid ${isStep3Done ? "#bbf7d0" : "#fde68a"}`,
+                                    background: isStep3Done ? "#f0fdf4" : "#fffbeb",
+                                    borderRadius: "8px",
+                                    padding: "10px 12px",
+                                    cursor: "pointer",
+                                    transition: "all 0.15s ease"
+                                }}
+                            >
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: isStep3Done ? "#166534" : "#b45309", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                        Langkah 3
+                                    </span>
+                                    {isStep3Done ? <CheckCircle2 size={14} color="#16a34a" /> : <Layers size={14} color="#d97706" />}
+                                </div>
+                                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0f172a" }}>Pemetaan Kamar (Mapping)</div>
+                                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                                    {isStep3Done ? `${mappedRoomsCount} Relasi Kamar Terhubung` : "Petakan Kamar PMS ke OTA"}
+                                </div>
+                            </div>
+
+                            {/* Step 4 */}
+                            <div 
+                                onClick={() => {
+                                    if (!syncingAri) {
+                                        handleSyncAllAri().catch(err => console.error("Error syncing ARI:", err));
+                                    }
+                                }}
+                                style={{
+                                    border: "1px solid #e2e8f0",
+                                    background: "#f8fafc",
+                                    borderRadius: "8px",
+                                    padding: "10px 12px",
+                                    cursor: syncingAri ? "not-allowed" : "pointer",
+                                    transition: "all 0.15s ease"
+                                }}
+                            >
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                        Langkah 4
+                                    </span>
+                                    <RefreshCw size={14} color="#0284c7" className={syncingAri ? "animate-spin" : ""} />
+                                </div>
+                                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0f172a" }}>Push ARI Perdana (500 Hari)</div>
+                                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                                    {syncingAri ? "Sedang Mengirim..." : (fullSyncResultData ? "✓ Sukses Tersinkron" : "Klik untuk Full Sync")}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1892,7 +2221,7 @@ export function ChannelManagerSection() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     {/* Educational Hospitality Context Banner */}
                     <div className={styles.matrixEducationalBanner}>
-                        <Calculator size={18} color="#5c0f1e" style={{ flexShrink: 0, marginTop: "2px" }} />
+                        <Calculator size={18} color="#2563eb" style={{ flexShrink: 0, marginTop: "2px" }} />
                         <div className={styles.matrixBannerText}>
                             <strong style={{ fontSize: "13px" }}>
                                 What is the Rate Matrix? (Net Base vs. OTA Gross Selling Rates)
@@ -1932,7 +2261,7 @@ export function ChannelManagerSection() {
 
                         <div className={styles.matrixMetricCard}>
                             <span className={styles.matrixMetricLabel}>Average OTA Commission</span>
-                            <span className={styles.matrixMetricValue} style={{ color: "#5c0f1e" }}>
+                            <span className={styles.matrixMetricValue} style={{ color: "#2563eb" }}>
                                 {activeChannelsList.length > 0
                                     ? `${(activeChannelsList.reduce((acc, c) => acc + Number(c.commissionPercent || 0), 0) / activeChannelsList.length).toFixed(1)}%`
                                     : "16.5% (Est.)"}
@@ -2249,7 +2578,7 @@ export function ChannelManagerSection() {
                                 <div className={styles.strategyCardHeader}>
                                     <div>
                                         <div className={styles.strategyCardTitle}>
-                                            <Sliders size={14} style={{ color: "#5c0f1e" }} />
+                                            <Sliders size={14} style={{ color: "#2563eb" }} />
                                             <span>Channel Distribution Strategy &amp; Front Office Separation</span>
                                         </div>
                                         <p className={styles.strategyCardDesc}>
@@ -2312,9 +2641,9 @@ export function ChannelManagerSection() {
                                                                     fontWeight: 600,
                                                                     fontSize: "11px",
                                                                     padding: "5px 8px",
-                                                                    color: mode !== "merged" ? "#5c0f1e" : "#09090b",
-                                                                    backgroundColor: mode !== "merged" ? "#fdf2f4" : "#ffffff",
-                                                                    borderColor: mode !== "merged" ? "#f3cfd6" : "#e4e4e7"
+                                                                    color: mode !== "merged" ? "#1d4ed8" : "#09090b",
+                                                                    backgroundColor: mode !== "merged" ? "#eff6ff" : "#ffffff",
+                                                                    borderColor: mode !== "merged" ? "#bfdbfe" : "#e4e4e7"
                                                                 }}
                                                             >
                                                                 <option value="merged">Master Pool (Shared Inventory)</option>
@@ -2330,7 +2659,7 @@ export function ChannelManagerSection() {
                                                                 </span>
                                                             )}
                                                             {mode === "separated_rate" && (
-                                                                <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 600 }}>
+                                                                <span style={{ fontSize: "11px", color: "#1d4ed8", fontWeight: 600 }}>
                                                                     Active in FO: Custom rate tier with shared master room pool.
                                                                 </span>
                                                             )}
@@ -2340,7 +2669,7 @@ export function ChannelManagerSection() {
                                                                 </span>
                                                             )}
                                                             {mode === "separated_both" && (
-                                                                <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 700 }}>
+                                                                <span style={{ fontSize: "11px", color: "#1d4ed8", fontWeight: 700 }}>
                                                                     Active in FO: Fully isolated dedicated rates and room quota.
                                                                 </span>
                                                             )}
@@ -2472,22 +2801,22 @@ export function ChannelManagerSection() {
                                 </div>
 
                                 <div className={styles.channelExtranetItem}>
-                                    <label className={styles.channelFieldLabel}>
-                                        Pricing Model
+                                    <label className={styles.channelFieldLabel} title="Pilih apakah Extranet OTA mengirim harga kotor jual tamu (Gross) atau harga bersih kontrak hotel (Nett)">
+                                        Tipe Harga Extranet OTA
                                     </label>
                                     <select
-                                        value={channelConfigs[selectedChannelCode].pricingModel}
-                                        onChange={e => updateChannelField(selectedChannelCode, "pricingModel", e.target.value)}
+                                        value={channelConfigs[selectedChannelCode].extranetRateModel || "gross"}
+                                        onChange={e => updateChannelField(selectedChannelCode, "extranetRateModel", e.target.value)}
                                         className={`${styles.cellSelect} ${styles.channelFieldSelect}`}
                                     >
-                                        <option value="gross">Gross Rate (OTA Sell Rate / Guest Price)</option>
-                                        <option value="net">Net Rate (Hotel Remittance Rate)</option>
+                                        <option value="gross">GROSS (Harga Jual Tamu - Agoda, Booking.com, Traveloka)</option>
+                                        <option value="net">NETT (Harga Bersih Kontrak - B2B Wholesaler / Net Merchant)</option>
                                     </select>
                                 </div>
 
                                 <div className={styles.channelExtranetItem}>
-                                    <label className={styles.channelFieldLabel}>
-                                        OTA Commission (%)
+                                    <label className={styles.channelFieldLabel} title="Komisi pokok resmi yang dipotong oleh OTA">
+                                        Komisi Pokok OTA (%)
                                     </label>
                                     <input
                                         type="number"
@@ -2495,6 +2824,20 @@ export function ChannelManagerSection() {
                                         onChange={e => updateChannelField(selectedChannelCode, "commissionPercent", Number(e.target.value) || 0)}
                                         onWheel={e => e.currentTarget.blur()}
                                         className={`${styles.cellInput} ${styles.channelFieldInput}`}
+                                    />
+                                </div>
+
+                                <div className={styles.channelExtranetItem}>
+                                    <label className={styles.channelFieldLabel} title="Biaya tambahan iklan atau booster listing (misal: Agoda Growth Express, Preferred Partner)">
+                                        Biaya Iklan / Booster (%)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={channelConfigs[selectedChannelCode].marketingAdsPercent ?? 0}
+                                        onChange={e => updateChannelField(selectedChannelCode, "marketingAdsPercent", Number(e.target.value) || 0)}
+                                        onWheel={e => e.currentTarget.blur()}
+                                        className={`${styles.cellInput} ${styles.channelFieldInput}`}
+                                        placeholder="0"
                                     />
                                 </div>
 
@@ -2508,9 +2851,9 @@ export function ChannelManagerSection() {
                                         className={`${styles.cellSelect} ${styles.channelFieldSelect}`}
                                         style={{
                                             fontWeight: 600,
-                                            color: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#5c0f1e" : "#09090b",
-                                            backgroundColor: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#fdf2f4" : "#ffffff",
-                                            borderColor: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#f3cfd6" : "#e4e4e7"
+                                            color: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#1d4ed8" : "#09090b",
+                                            backgroundColor: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#eff6ff" : "#ffffff",
+                                            borderColor: (channelConfigs[selectedChannelCode].separationMode && channelConfigs[selectedChannelCode].separationMode !== "merged") ? "#bfdbfe" : "#e4e4e7"
                                         }}
                                     >
                                         <option value="merged">Master Pool (Shared Inventory)</option>
@@ -2519,6 +2862,42 @@ export function ChannelManagerSection() {
                                         <option value="separated_both">Fully Separated (Dedicated Rates &amp; Quota)</option>
                                     </select>
                                 </div>
+
+                                {(() => {
+                                    const comm = Number(channelConfigs[selectedChannelCode].commissionPercent || 0);
+                                    const ads = Number(channelConfigs[selectedChannelCode].marketingAdsPercent || 0);
+                                    const totalDeduct = Math.min(99, comm + ads);
+                                    const isNetRate = channelConfigs[selectedChannelCode].extranetRateModel === "net";
+                                    const sampleGross = 100;
+                                    const sampleNet = isNetRate ? 100 : Math.round(sampleGross * (1 - totalDeduct / 100) * 100) / 100;
+                                    return (
+                                        <div style={{
+                                            gridColumn: "1 / -1",
+                                            background: "#eff6ff",
+                                            border: "1px solid #bfdbfe",
+                                            borderRadius: "6px",
+                                            padding: "10px 14px",
+                                            fontSize: "12px",
+                                            color: "#1e293b",
+                                            marginTop: "4px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            flexWrap: "wrap",
+                                            gap: "8px"
+                                        }}>
+                                            <div>
+                                                💡 <b>Simulasi Finansial Otomatis ({channelConfigs[selectedChannelCode].channelName}):</b>
+                                                <span style={{ marginLeft: "6px" }}>
+                                                    Total Potongan: <b>{totalDeduct}%</b> (Komisi {comm}% + Iklan {ads}%) • Extranet Mengirim: <b>{isNetRate ? "NETT" : "GROSS"}</b>
+                                                </span>
+                                            </div>
+                                            <div style={{ background: "#ffffff", padding: "4px 10px", borderRadius: "4px", border: "1px solid #bfdbfe", fontSize: "11.5px", fontWeight: 600 }}>
+                                                Booking $100.00 ➔ Nett to Hotel: <span style={{ color: "#166534" }}>${sampleNet}</span> (Mode Tampilan Tara: {globalPricingModel.toUpperCase()})
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             {/* Room Mapping Sub-Table */}
@@ -2528,7 +2907,7 @@ export function ChannelManagerSection() {
                                         1. Room Type Mapping (PMS to OTA):
                                     </span>
                                     {otaExtranetRooms[selectedChannelCode] && otaExtranetRooms[selectedChannelCode].length > 0 && (
-                                        <span style={{ fontSize: "11px", color: "#5c0f1e", backgroundColor: "#fdf2f4", padding: "3px 8px", borderRadius: "4px", border: "1px solid #f3cfd6", fontWeight: 600 }}>
+                                        <span style={{ fontSize: "11px", color: "#1d4ed8", backgroundColor: "#eff6ff", padding: "3px 8px", borderRadius: "4px", border: "1px solid #bfdbfe", fontWeight: 600 }}>
                                             {otaExtranetRooms[selectedChannelCode].length} Extranet Rooms Linked
                                         </span>
                                     )}
@@ -2679,7 +3058,7 @@ export function ChannelManagerSection() {
                                             Dikelompokkan rapi per Tipe Kamar agar pemetaan terarah dan akurat untuk setiap kamar.
                                         </div>
                                     </div>
-                                    <span style={{ fontSize: "11px", color: "#5c0f1e", backgroundColor: "#fdf2f4", padding: "3px 8px", borderRadius: "4px", border: "1px solid #f3cfd6", fontWeight: 600 }}>
+                                    <span style={{ fontSize: "11px", color: "#1d4ed8", backgroundColor: "#eff6ff", padding: "3px 8px", borderRadius: "4px", border: "1px solid #bfdbfe", fontWeight: 600 }}>
                                         {roomTypes.length} Tipe Kamar • {ratePlans.length} Master Rate Plan
                                     </span>
                                 </div>
@@ -4152,7 +4531,7 @@ export function ChannelManagerSection() {
                                 <div className={styles.webhookStatusRow}>
                                     <div className={styles.webhookStatusIndicator}>
                                         {webhookRegistrationStatus?.isRegistered ? (
-                                            <CheckCircle2 size={16} color="#5c0f1e" />
+                                            <CheckCircle2 size={16} color="#2563eb" />
                                         ) : (
                                             <AlertTriangle size={16} color="#71717a" />
                                         )}

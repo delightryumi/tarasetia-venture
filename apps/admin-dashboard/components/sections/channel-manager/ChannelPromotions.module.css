@@ -98,9 +98,9 @@
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     border-radius: 4px;
     font-size: 10px;
     font-weight: 700;
@@ -198,8 +198,8 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 .btnSecondary {

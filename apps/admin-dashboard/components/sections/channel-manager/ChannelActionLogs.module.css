@@ -54,18 +54,18 @@
     gap: 6px;
     font-size: 12px;
     font-weight: 600;
-    color: #5c0f1e;
-    background: #fdf2f4;
+    color: #2563eb;
+    background: #eff6ff;
     padding: 2px 8px;
     border-radius: 4px;
-    border: 1px solid #f3cfd6;
+    border: 1px solid #bfdbfe;
 }
 
 .channelDot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #5c0f1e;
+    background: #2563eb;
 }
 
 /* ── Filter Bar ── */
@@ -431,9 +431,9 @@
     display: inline-flex;
     padding: 2px 8px;
     border-radius: 4px;
-    border: 1px solid #f3cfd6;
-    background: #fdf2f4;
-    color: #5c0f1e;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #2563eb;
     font-size: 11px;
     font-weight: 600;
     font-family: var(--font-geist-mono, monospace);
@@ -515,9 +515,9 @@
 }
 
 .btnCleanLogs:hover {
-    background: #fdf2f4;
-    border-color: #f3cfd6;
-    color: #5c0f1e;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #2563eb;
 }
 
 .btnCleanLogs:disabled {
@@ -550,8 +550,8 @@
 }
 
 .diffLineDel {
-    background: #fdf2f4;
-    color: #5c0f1e;
+    background: #eff6ff;
+    color: #2563eb;
 }
 
 .diffColNum {
@@ -734,8 +734,8 @@
 }
 
 .liveSyncBtn:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 /* ── Detail Tabs in Drawer ── */
@@ -870,9 +870,9 @@
 }
 
 .otaStatusFailed {
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 
 .otaDetailText {
@@ -933,7 +933,7 @@
     width: 42px;
     height: 42px;
     border-radius: 8px;
-    background: #fff1f2;
+    background: #eff6ff;
     color: #be123c;
     border: 1px solid #fecdd3;
     display: flex;
@@ -1002,8 +1002,8 @@
 }
 
 .confirmOptionCardActive {
-    border-color: #5c0f1e;
-    background: #fdf2f4;
+    border-color: #2563eb;
+    background: #eff6ff;
 }
 
 .confirmOptionRadio {
@@ -1093,6 +1093,6 @@
 
 .btnDeleteRow:hover {
     color: #be123c;
-    background: #fff1f2;
+    background: #eff6ff;
 }
 

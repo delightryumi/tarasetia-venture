@@ -72,8 +72,8 @@
 }
 
 .btnPushAll:hover:not(:disabled) {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 .btnPushAll:disabled {
@@ -184,8 +184,8 @@
 }
 
 .facilityItemActive {
-    background: #fdf2f4;
-    border-color: #f3cfd6;
-    color: #5c0f1e;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #2563eb;
     font-weight: 600;
 }

@@ -122,9 +122,9 @@
 
 .searchInput:focus {
     outline: none;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
     background: #ffffff;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .filterSelect {
@@ -153,8 +153,8 @@
 }
 
 .btnAdd:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 .tableCard {
@@ -248,9 +248,9 @@
 }
 
 .badgeOta {
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 
 .badgeOffline {
@@ -266,9 +266,9 @@
 }
 
 .badgeWholesaler {
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 
 .badgeActive {
@@ -397,8 +397,8 @@
 
 .input:focus {
     outline: none;
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .modalFooter {
@@ -442,6 +442,6 @@
 }
 
 .btnPrimary:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }

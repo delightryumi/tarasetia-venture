@@ -1,7 +1,7 @@
 /* ==========================================================================
    RoomTypeTableVHP.module.css
    TARA PMS Hotel Enterprise Systematic Grid & Data Table for Master Room Types
-   Unified Monochrome + Subtle Burgundy Palette
+   Unified Monochrome + Subtle Executive Slate & Royal Sapphire Palette
    ========================================================================== */
 
 .vhpContainer {
@@ -37,9 +37,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fdf2f4;
-  color: #5c0f1e;
-  border: 1px solid #f3cfd6;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
   flex-shrink: 0;
 }
 
@@ -172,8 +172,8 @@
 }
 
 .btnAddRoom:hover {
-  background: #5c0f1e;
-  border-color: #5c0f1e;
+  background: #2563eb;
+  border-color: #2563eb;
   transform: translateY(-1px);
 }
 
@@ -275,9 +275,9 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
   font-weight: 700;
-  color: #5c0f1e;
-  background: #fdf2f4;
-  border: 1px solid #f3cfd6;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   padding: 1px 6px;
   border-radius: 4px;
 }
@@ -289,7 +289,7 @@
 }
 
 .bookingIconLink:hover {
-  color: #5c0f1e;
+  color: #2563eb;
 }
 
 /* ── Allotment & Physical Rooms Column ── */
@@ -424,9 +424,9 @@
   gap: 5px;
   font-size: 11px;
   font-weight: 700;
-  color: #5c0f1e;
-  background: #fdf2f4;
-  border: 1px solid #f3cfd6;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   padding: 3px 8px;
   border-radius: 6px;
   white-space: nowrap;
@@ -436,7 +436,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #5c0f1e;
+  background: #2563eb;
 }
 
 .statusBadgeLocal {
@@ -559,9 +559,9 @@
 }
 
 .idPillChannex {
-  background: #fdf2f4;
-  border-color: #f3cfd6;
-  color: #5c0f1e;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
 }
 
 .btnPing {
@@ -581,9 +581,9 @@
 }
 
 .btnPing:hover:not(:disabled) {
-  background: #fdf2f4;
-  border-color: #f3cfd6;
-  color: #5c0f1e;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
 }
 
 .btnPing:disabled {

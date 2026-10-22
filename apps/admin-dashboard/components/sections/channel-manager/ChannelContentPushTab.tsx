@@ -179,10 +179,10 @@ export function ChannelContentPushTab({ hotelCode }: Props) {
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
                         <div className={styles.cardTitle}>
-                            <ImageIcon size={15} color="#5c0f1e" />
+                            <ImageIcon size={15} color="#2563eb" />
                             <span>Property &amp; Room Photo Gallery ({photos.length} Active Photos)</span>
                         </div>
-                        <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 700 }}>
+                        <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: 700 }}>
                             {loadingPhotos ? "Loading..." : `${photos.length} Uploaded`}
                         </span>
                     </div>
@@ -236,7 +236,7 @@ export function ChannelContentPushTab({ hotelCode }: Props) {
                                     onClick={() => toggleFacility(key)}
                                     className={`${styles.facilityItem} ${isActive ? styles.facilityItemActive : ""}`}
                                 >
-                                    <CheckCircle2 size={14} color={isActive ? "#5c0f1e" : "#d4d4d8"} />
+                                    <CheckCircle2 size={14} color={isActive ? "#2563eb" : "#d4d4d8"} />
                                     <span>{facilityLabels[key] || key}</span>
                                 </div>
                             );

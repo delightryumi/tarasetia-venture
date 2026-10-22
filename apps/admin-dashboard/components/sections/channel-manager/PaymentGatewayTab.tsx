@@ -53,7 +53,7 @@ type MainTab =
     | "completeness";
 
 const PRESET_THEME_COLORS = [
-    { label: "Burgundy (Default)", hex: "#6D2B35" },
+    { label: "Executive Slate & Royal Sapphire (Default)", hex: "#2563eb" },
     { label: "Deep Crimson", hex: "#881337" },
     { label: "Emerald Luxury", hex: "#1e3a2f" },
     { label: "Sapphire Navy", hex: "#1e293b" },
@@ -130,7 +130,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
 
         const items = [
             {
-                name: "Hotel Brand & Theme Color (Burgundy)",
+                name: "Hotel Brand & Theme Color (Executive Slate & Royal Sapphire)",
                 category: "Basic Configuration",
                 weight: 20,
                 isCompleted: themeConfigured,
@@ -386,7 +386,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                         </span>
                     </div>
                     <p className={styles.subTitle}>
-                        Kelola identitas visual, tema Burgundy, alamat website kembali, preferensi form tamu, analitik tracking, voucher promo, dan kredensial payment gateway untuk {activeHotelName || `Hotel #${effectiveHotelCode}`}.
+                        Kelola identitas visual, tema Executive Slate & Royal Sapphire, alamat website kembali, preferensi form tamu, analitik tracking, voucher promo, dan kredensial payment gateway untuk {activeHotelName || `Hotel #${effectiveHotelCode}`}.
                     </p>
                 </div>
 
@@ -497,7 +497,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
             </div>
 
             {/* ══════════════════════════════════════════════════════════
-                TAB 1: SETTINGS (Theme Burgundy, Website Return URL, Guarantees)
+                TAB 1: SETTINGS (Theme Executive Slate & Royal Sapphire, Website Return URL, Guarantees)
                ══════════════════════════════════════════════════════════ */}
             {mainTab === "settings" && (
                 <div className={styles.contentCard}>
@@ -557,7 +557,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                         </div>
                     </div>
 
-                    {/* 2. Theme Setting (Theme Color Default Burgundy #6D2B35 & Logo & Website Return URL) */}
+                    {/* 2. Theme Setting (Theme Color Default Executive Slate & Royal Sapphire #2563eb & Logo & Website Return URL) */}
                     <div className={styles.settingGroup}>
                         <h3 className={styles.groupHeading}>Theme & Branding Setting</h3>
 
@@ -570,7 +570,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                 <div className={styles.colorInputBox}>
                                     <input
                                         type="color"
-                                        value={formData.theme?.themeColor || "#6D2B35"}
+                                        value={formData.theme?.themeColor || "#2563eb"}
                                         onChange={(e) =>
                                             setFormData((prev) => ({
                                                 ...prev,
@@ -584,7 +584,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                     />
                                     <input
                                         type="text"
-                                        value={formData.theme?.themeColor || "#6D2B35"}
+                                        value={formData.theme?.themeColor || "#2563eb"}
                                         onChange={(e) =>
                                             setFormData((prev) => ({
                                                 ...prev,
@@ -1038,7 +1038,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                     <path
                                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                         fill="none"
-                                        stroke={completenessItems.totalScore >= 80 ? "#5c0f1e" : "#71717a"}
+                                        stroke={completenessItems.totalScore >= 80 ? "#2563eb" : "#71717a"}
                                         strokeDasharray={`${completenessItems.totalScore}, 100`}
                                         strokeWidth="3.8"
                                         strokeLinecap="round"
@@ -1174,7 +1174,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                         <button
                                             type="button"
                                             onClick={() => handleTogglePromo(promo.id)}
-                                            style={{ background: promo.isActive ? "#fdf2f4" : "#f4f4f5", color: promo.isActive ? "#5c0f1e" : "#71717a", border: promo.isActive ? "1px solid #f3cfd6" : "1px solid #e4e4e7", padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
+                                            style={{ background: promo.isActive ? "#eff6ff" : "#f4f4f5", color: promo.isActive ? "#2563eb" : "#71717a", border: promo.isActive ? "1px solid #bfdbfe" : "1px solid #e4e4e7", padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}
                                         >
                                             {promo.isActive ? "● Aktif" : "Nonaktif"}
                                         </button>
@@ -1184,7 +1184,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
                                 </div>
 
                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e2e8f0", paddingTop: "10px" }}>
-                                    <span style={{ fontSize: "14px", fontWeight: 800, color: "#5c0f1e" }}>
+                                    <span style={{ fontSize: "14px", fontWeight: 800, color: "#2563eb" }}>
                                         Diskon: {promo.discountPercent}%
                                     </span>
                                     <button
@@ -1366,7 +1366,7 @@ export function PaymentGatewayTab({ hotelCode }: PaymentGatewayTabProps) {
 
                                 {/* ── Accounting & Revenue Center Mapping (USALI) ── */}
                                 <div style={{ borderTop: "1px dashed #e4e4e7", paddingTop: "10px", marginTop: "4px", background: "#fafafa", padding: "10px", borderRadius: "8px" }}>
-                                    <span style={{ fontSize: "11px", fontWeight: 800, color: "#5c0f1e", display: "block", marginBottom: "8px" }}>
+                                    <span style={{ fontSize: "11px", fontWeight: 800, color: "#2563eb", display: "block", marginBottom: "8px" }}>
                                         Integrasi Akuntansi &amp; Alokasi Pos Revenue
                                     </span>
                                     <div className={styles.addonRowInputs}>

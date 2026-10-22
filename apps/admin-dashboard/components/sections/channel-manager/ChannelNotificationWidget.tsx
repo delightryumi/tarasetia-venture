@@ -327,7 +327,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
             <div className={styles.waCard}>
                 <div className={styles.topRow}>
                     <div className={styles.titleArea}>
-                        <div className={styles.iconCircle} style={{ background: "#fdf2f4", color: "#5c0f1e" }}>
+                        <div className={styles.iconCircle} style={{ background: "#eff6ff", color: "#2563eb" }}>
                             <MessageSquare size={18} />
                         </div>
                         <div>
@@ -357,7 +357,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                 {/* Master System Credentials Banner (Locked & Semi-Dynamic) */}
                 <div className={styles.metaMasterBanner}>
                     <div className={styles.metaMasterLeft}>
-                        <ShieldCheck size={16} color="#5c0f1e" />
+                        <ShieldCheck size={16} color="#2563eb" />
                         <div>
                             <div style={{ fontWeight: 600, color: "#09090b" }}>
                                 Master Gateway: <b>{senderDisplay}</b>
@@ -444,11 +444,11 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                             <div className={styles.waField}>
                                 <div className={styles.waLabelRow}>
                                     <span className={styles.waLabel}>
-                                        <Smartphone size={13} style={{ color: "#5c0f1e" }} />
+                                        <Smartphone size={13} style={{ color: "#2563eb" }} />
                                         <span>Nomor WhatsApp Owner / Management (Mendukung Multi-Nomor):</span>
                                     </span>
                                     {parsedRecipients.length > 1 && (
-                                        <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 600 }}>
+                                        <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: 600 }}>
                                             {parsedRecipients.length} Nomor Penerima Terdeteksi
                                         </span>
                                     )}
@@ -595,7 +595,7 @@ export function ChannelNotificationWidget({ hotelCode, userEmail }: Props) {
                 {/* Info Bar at Bottom */}
                 <div className={styles.metaInfoBar}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <ShieldCheck size={14} style={{ color: "#5c0f1e" }} />
+                        <ShieldCheck size={14} style={{ color: "#2563eb" }} />
                         <span>
                             <b>Meta Official WhatsApp Cloud API • Serverless 24/7 • Template crs_booking_notification</b>
                         </span>

@@ -1,7 +1,7 @@
 /* ==========================================================================
    ChannelManager.module.css
    My Tara Luxury Hotel CRS: Modern Clean Editorial Look
-   Theme: High-End Monochrome Black & White with Subtle Burgundy Accents
+   Theme: High-End Monochrome Black & White with Subtle Executive Slate & Royal Sapphire Accents
    Strictly Zero-Green, Zero-Blue. 100% Modular CSS Architecture.
    Typography: Plus Jakarta Sans (UI) + Cormorant Garamond (Editorial Display)
                + Geist Mono (Tabular Numeral & Codes)
@@ -61,7 +61,7 @@
 }
 
 .systemIcon {
-    color: #5c0f1e;
+    color: #2563eb;
 }
 
 .systemBadge {
@@ -78,9 +78,9 @@
 }
 
 .systemBadgeProd {
-    background-color: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 
 .systemBadgeStaging {
@@ -94,9 +94,9 @@
 }
 
 .systemBadgeClickable:hover {
-    background-color: #5c0f1e;
+    background-color: #2563eb;
     color: #ffffff;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 .systemMetaRow {
@@ -131,7 +131,7 @@
     flex-wrap: wrap;
 }
 
-/* ── 2. Buttons (Monochrome + Burgundy Hover) ── */
+/* ── 2. Buttons (Monochrome + Executive Slate & Royal Sapphire Hover) ── */
 .btnActionPrimary {
     display: inline-flex;
     align-items: center;
@@ -150,10 +150,10 @@
 }
 
 .btnActionPrimary:hover:not(:disabled) {
-    background-color: #5c0f1e;
-    border-color: #5c0f1e;
+    background-color: #2563eb;
+    border-color: #2563eb;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(92, 15, 30, 0.2);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .btnActionPrimary:disabled {
@@ -189,19 +189,19 @@
     gap: 7px;
     padding: 8px 16px;
     border-radius: 6px;
-    background-color: #5c0f1e;
+    background-color: #2563eb;
     color: #ffffff;
     font-size: 12px;
     font-weight: 600;
-    border: 1px solid #5c0f1e;
+    border: 1px solid #2563eb;
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
 
 .btnActionBlue:hover {
-    background-color: #420a15;
-    border-color: #420a15;
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
 }
 
 .btnActionDanger {
@@ -262,9 +262,9 @@
 }
 
 .btnIconClear:hover {
-    background: #09090b;
-    border-color: #09090b;
-    color: #ffffff;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #2563eb;
 }
 
 /* ── 3. Module Context Header Banner ── */
@@ -275,7 +275,7 @@
     padding: 14px 20px;
     background: #ffffff;
     border: 1px solid #e4e4e7;
-    border-radius: 14px;
+    border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 8px 20px -6px rgba(0, 0, 0, 0.03);
 }
 
@@ -288,13 +288,13 @@
 .moduleHeaderIconWrap {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
-    background: #fdf2f4;
-    border: 1px solid #f3cfd6;
+    border-radius: 6px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #5c0f1e;
+    color: #2563eb;
     flex-shrink: 0;
 }
 
@@ -321,9 +321,9 @@
     border-radius: 4px;
     font-size: 10.5px;
     font-weight: 700;
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     letter-spacing: 0.02em;
 }
 
@@ -376,17 +376,17 @@
 }
 
 .categoryTabItemActive {
-    background: #09090b !important;
-    color: #ffffff !important;
-    border-color: #09090b !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border-color: #2563eb !important;
     font-weight: 600;
-    box-shadow: 0 1px 3px rgba(9, 9, 11, 0.12);
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);
 }
 
 .categoryBadge {
     font-size: 10px;
     padding: 1px 7px;
-    border-radius: 4px;
+    border-radius: 6px;
     background: #f4f4f5;
     color: #52525b;
     font-weight: 700;
@@ -395,8 +395,8 @@
 }
 
 .categoryTabItemActive .categoryBadge {
-    background: rgba(255, 255, 255, 0.22);
-    color: #ffffff;
+    background: #dbeafe;
+    color: #1d4ed8;
 }
 
 /* Tier 2: Refined Sub-Tabs */
@@ -439,9 +439,9 @@
 }
 
 .subTabItemActive {
-    color: #5c0f1e !important;
+    color: #2563eb !important;
     font-weight: 700 !important;
-    border-bottom-color: #5c0f1e !important;
+    border-bottom-color: #2563eb !important;
 }
 
 .quickJumper {
@@ -557,11 +557,11 @@
 }
 
 .dsiRow:hover td {
-    background-color: #fdf2f4;
+    background-color: #eff6ff;
 }
 
 .dsiRow:hover .colStickyLeft {
-    background-color: #fdf2f4;
+    background-color: #eff6ff;
 }
 
 /* Number / Money Cells */
@@ -577,8 +577,8 @@
 }
 
 .cellMoneyGross {
-    color: #5c0f1e;
-    background-color: #fdf2f4;
+    color: #2563eb;
+    background-color: #eff6ff;
     font-weight: 700;
 }
 
@@ -608,8 +608,8 @@
 }
 
 .cellInput:focus {
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.12);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
 .cellSelect {
@@ -625,22 +625,22 @@
     cursor: pointer;
 }
 
-/* ── 6. Clean Badges (Monochrome + Burgundy) ── */
+/* ── 6. Clean Badges (Monochrome + Executive Slate & Royal Sapphire) ── */
 .badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 10.5px;
     font-weight: 700;
     text-transform: uppercase;
 }
 
 .badgeActive {
-    background-color: #09090b;
-    color: #ffffff;
-    border: 1px solid #09090b;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
 }
 
 .badgeInactive {
@@ -650,9 +650,9 @@
 }
 
 .badgeWarning {
-    background-color: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 
 /* ── 7. Unified OTA Catalog Table ── */
@@ -722,7 +722,7 @@
 }
 
 .channelCardConnected {
-    border-color: #f3cfd6;
+    border-color: #bfdbfe;
     background: #ffffff;
 }
 
@@ -745,9 +745,9 @@
 }
 
 .badgePending {
-    background-color: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     font-size: 10px;
     padding: 2px 7px;
     border-radius: 4px;
@@ -779,10 +779,10 @@
 .catalogHotelIdBadge {
     font-size: 11px;
     padding: 6px 10px;
-    background: #fdf2f4;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
-    color: #5c0f1e;
+    color: #2563eb;
     font-family: var(--font-geist-mono, monospace);
     display: flex;
     align-items: center;
@@ -792,7 +792,7 @@
 
 .catalogHotelIdBadge b {
     font-weight: 700;
-    color: #5c0f1e;
+    color: #2563eb;
 }
 
 .catalogCardFooter {
@@ -856,8 +856,8 @@
     justify-content: center;
     gap: 5px;
     background: #ffffff;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
     padding: 7px 10px;
     font-size: 11.5px;
@@ -868,8 +868,8 @@
 }
 
 .btnCardDisconnect:hover {
-    background: #fdf2f4;
-    border-color: #5c0f1e;
+    background: #eff6ff;
+    border-color: #2563eb;
 }
 
 .btnCardConnect {
@@ -891,8 +891,8 @@
 }
 
 .btnCardConnect:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
     transform: translateY(-1px);
 }
 
@@ -1028,11 +1028,11 @@
 }
 
 .channelSwitcherBtnActive {
-    background: #fdf2f4 !important;
-    color: #5c0f1e !important;
-    border-color: #f3cfd6 !important;
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    border-color: #bfdbfe !important;
     font-weight: 700 !important;
-    box-shadow: 0 1px 3px rgba(92, 15, 30, 0.1) !important;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.1) !important;
 }
 
 .channelMappingBody {
@@ -1140,8 +1140,8 @@
 }
 
 :global(.dark) .btnActionFetch {
-    background-color: #5c0f1e;
-    border-color: #5c0f1e;
+    background-color: #2563eb;
+    border-color: #2563eb;
     color: #ffffff;
 }
 
@@ -1315,8 +1315,8 @@
 
 .channelFieldInput:focus,
 .channelFieldSelect:focus {
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .mappingSectionHeading {
@@ -1362,8 +1362,8 @@
 }
 
 .mappingInputField:focus {
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .idPill {
@@ -1389,15 +1389,15 @@
 }
 
 .idPillChannex {
-    background-color: #fdf2f4;
-    border-color: #f3cfd6;
-    color: #5c0f1e;
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+    color: #2563eb;
 }
 
 .idPillChannex:hover {
-    background-color: #5c0f1e;
+    background-color: #2563eb;
     color: #ffffff;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 .btnPing {
@@ -1416,9 +1416,9 @@
 }
 
 .btnPing:hover:not(:disabled) {
-    background: #5c0f1e;
+    background: #2563eb;
     color: #ffffff;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 /* ── 10. Certification Sandbox ── */
@@ -1473,8 +1473,8 @@
 }
 
 .certStageRunning {
-    border-left: 4px solid #5c0f1e !important;
-    background: #fdf2f4 !important;
+    border-left: 4px solid #2563eb !important;
+    background: #eff6ff !important;
 }
 
 .statusPassed {
@@ -1490,9 +1490,9 @@
 }
 
 .statusRunning {
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 
 .statusPending {
@@ -1517,8 +1517,8 @@
 }
 
 .btnRunAllCert:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 /* ── 11. Modal Dialogs ── */
@@ -1592,7 +1592,7 @@
 }
 
 .confirmIconDanger {
-    background-color: #fdf2f4;
+    background-color: #eff6ff;
     color: #991b1b;
     border: 1px solid #fecdd3;
 }
@@ -1682,7 +1682,7 @@
 }
 
 .confirmImpactList {
-    background-color: #fdf2f4;
+    background-color: #eff6ff;
     border: 1px solid #fecdd3;
     border-radius: 10px;
     padding: 14px 16px;
@@ -1777,9 +1777,9 @@
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    background-color: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1841,8 +1841,8 @@
 .catalogSearchInput:focus {
     outline: none;
     background-color: #ffffff;
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 3px rgba(92, 15, 30, 0.08);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 .catalogSearchClearBtn {
@@ -1899,8 +1899,8 @@
 }
 
 .catalogFilterPillActive:hover {
-    background-color: #5c0f1e;
-    border-color: #5c0f1e;
+    background-color: #2563eb;
+    border-color: #2563eb;
     color: #ffffff;
 }
 
@@ -2009,9 +2009,9 @@
     border-radius: 9999px;
     font-size: 10.5px;
     font-weight: 600;
-    background-color: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     flex-shrink: 0;
     white-space: nowrap;
 }
@@ -2090,9 +2090,9 @@
 }
 
 .addChannelActionBtnAvailable {
-    background-color: #5c0f1e;
+    background-color: #2563eb;
     color: #ffffff;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 .addChannelActionBtnAvailable:hover:not(:disabled) {
@@ -2210,8 +2210,8 @@
 }
 
 .btnActionPrimary:hover:not(:disabled) {
-    background-color: #5c0f1e;
-    border-color: #5c0f1e;
+    background-color: #2563eb;
+    border-color: #2563eb;
 }
 
 .btnActionPrimary:disabled {
@@ -2254,10 +2254,10 @@
     align-items: flex-start;
     gap: 12px;
     padding: 14px 18px;
-    background: #fdf2f4;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
     border-radius: 8px;
-    color: #5c0f1e;
+    color: #2563eb;
     font-size: 12px;
 }
 
@@ -2270,7 +2270,7 @@
 }
 
 .matrixBannerText strong {
-    color: #5c0f1e;
+    color: #2563eb;
     font-weight: 700;
 }
 
@@ -2368,7 +2368,7 @@
 }
 
 .matrixToggleBtnActiveGross {
-    background: #5c0f1e;
+    background: #2563eb;
     color: #ffffff;
 }
 
@@ -2486,7 +2486,7 @@
 }
 
 .cellMoneyGross {
-    color: #5c0f1e;
+    color: #2563eb;
     background-color: #fffbfa;
     border-right: 2px solid #e4e4e7 !important;
     font-weight: 800;
@@ -2552,8 +2552,8 @@
     width: 130px;
     min-width: 130px;
     text-align: right;
-    color: #5c0f1e;
-    background-color: #fdf2f4 !important;
+    color: #2563eb;
+    background-color: #eff6ff !important;
     font-weight: 700;
 }
 
@@ -2579,9 +2579,9 @@
 .matrixPricingBadge {
     font-size: 10px;
     font-weight: 600;
-    color: #5c0f1e;
-    background: #fdf2f4;
-    border: 1px solid #f3cfd6;
+    color: #2563eb;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
     padding: 1px 6px;
     border-radius: 4px;
     letter-spacing: normal;
@@ -2706,8 +2706,8 @@
 }
 
 .matrixBtnCreateRate:hover {
-    background-color: #5c0f1e;
-    border-color: #5c0f1e;
+    background-color: #2563eb;
+    border-color: #2563eb;
 }
 
 /* ── 13. Responsive Rules ── */
@@ -2721,7 +2721,7 @@
     }
 }
 
-/* ── 14. Luxury Dark Mode (Obsidian + Warm Burgundy Glow) ── */
+/* ── 14. Luxury Dark Mode (Obsidian + Warm Executive Slate & Royal Sapphire Glow) ── */
 :global(.dark) .container {
     color: #f4f4f5;
 }
@@ -2741,7 +2741,7 @@
 :global(.dark) .systemBadgeProd {
     background-color: #2d0810;
     color: #ffccd5;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 :global(.dark) .systemBadgeStaging {
@@ -2757,9 +2757,9 @@
 }
 
 :global(.dark) .btnActionPrimary:hover:not(:disabled) {
-    background-color: #5c0f1e;
+    background-color: #2563eb;
     color: #ffffff;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 :global(.dark) .moduleHeaderBar {
@@ -2773,7 +2773,7 @@
 
 :global(.dark) .moduleHeaderIconWrap {
     background: #2d0810;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
     color: #ffccd5;
 }
 
@@ -2948,7 +2948,7 @@
 
 :global(.dark) .channelSwitcherBtnActive {
     background: #2d0810 !important;
-    border-color: #5c0f1e !important;
+    border-color: #2563eb !important;
     color: #ffccd5 !important;
 }
 
@@ -2974,7 +2974,7 @@
 
 :global(.dark) .matrixEducationalBanner {
     background: #2d0810;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
     color: #ffccd5;
 }
 
@@ -2997,7 +2997,7 @@
 
 .envBannerProd {
     background-color: #faf5f6;
-    border-color: #f3cfd6;
+    border-color: #bfdbfe;
 }
 
 .envBannerStaging {
@@ -3023,7 +3023,7 @@
 .envServerTitleProd {
     font-size: 13.5px;
     font-weight: 700;
-    color: #5c0f1e;
+    color: #2563eb;
 }
 
 .envServerTitleStaging {
@@ -3065,7 +3065,7 @@
 }
 
 .credentialsHeaderIcon {
-    color: #5c0f1e;
+    color: #2563eb;
 }
 
 .credentialsTitle {
@@ -3124,8 +3124,8 @@
 }
 
 .inputGroupRow .cellInput:focus {
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.08);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
     outline: none;
 }
 
@@ -3174,8 +3174,8 @@
 }
 
 .currencySelect:focus {
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.08);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
 }
 
 .propertyIdentityCard {
@@ -3217,7 +3217,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: #5c0f1e;
+    background: #2563eb;
     color: #ffffff;
     padding: 3px 10px;
     border-radius: 4px;
@@ -3397,7 +3397,7 @@
 
 :global(.dark) .envBannerProd {
     background-color: #2d0810;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 :global(.dark) .envBannerStaging {
@@ -3712,8 +3712,8 @@
 
 .simSelect:focus,
 .simInput:focus {
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.08);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
 }
 
 .simActionRow {
@@ -3811,7 +3811,7 @@
 }
 
 :global(.dark) .certStage_failed {
-    background: #450a0a;
+    background: #0f172a;
     border-color: #7f1d1d;
 }
 
@@ -3910,7 +3910,7 @@
 }
 
 .iframeLoadingSpinner {
-    color: #5c0f1e;
+    color: #2563eb;
 }
 
 .iframeLoadingTitle {
@@ -4460,7 +4460,7 @@
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background-color: #fdf2f4;
+    background-color: #eff6ff;
     color: #72263d;
     flex-shrink: 0;
 }

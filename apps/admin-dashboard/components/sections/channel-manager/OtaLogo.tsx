@@ -195,7 +195,7 @@ export function OtaLogo({ code, name = "", size = 20, className = "" }: OtaLogoP
         );
     }
 
-    // 9. Hotelbeds Bedbank - Official Brand Coral Orange
+    // 9. Hotelbeds Bedbank - Official Brand Coral Sapphire
     if (normalizedCode.includes("hotelbeds")) {
         return (
             <svg style={containerStyle} viewBox="0 0 36 36" className={className} xmlns="http://www.w3.org/2000/svg">
@@ -218,7 +218,7 @@ export function OtaLogo({ code, name = "", size = 20, className = "" }: OtaLogoP
         );
     }
 
-    // 11. Klook Travel - Official Orange with Joyful Interlocking Smile
+    // 11. Klook Travel - Official Sapphire with Joyful Interlocking Smile
     if (normalizedCode.includes("klook")) {
         return (
             <svg style={containerStyle} viewBox="0 0 36 36" className={className} xmlns="http://www.w3.org/2000/svg">
@@ -230,7 +230,7 @@ export function OtaLogo({ code, name = "", size = 20, className = "" }: OtaLogoP
         );
     }
 
-    // 12. Hostelworld - Official Tangerine Orange with Iconic H Logo
+    // 12. Hostelworld - Official Tangerine Sapphire with Iconic H Logo
     if (normalizedCode.includes("hostelworld")) {
         return (
             <svg style={containerStyle} viewBox="0 0 36 36" className={className} xmlns="http://www.w3.org/2000/svg">
@@ -260,11 +260,11 @@ export function OtaLogo({ code, name = "", size = 20, className = "" }: OtaLogoP
         );
     }
 
-    // 15. Dida Travel - Official Flame Orange
+    // 15. Dida Travel - Official Flame Sapphire
     if (normalizedCode.includes("dida")) {
         return (
             <svg style={containerStyle} viewBox="0 0 36 36" className={className} xmlns="http://www.w3.org/2000/svg">
-                <rect width="36" height="36" rx="7" fill="#f97316" />
+                <rect width="36" height="36" rx="7" fill="#3b82f6" />
                 <path d="M11 23V13l11 5-11 5z" fill="#ffffff" />
                 <circle cx="24" cy="18" r="2.5" fill="#ffffff" />
             </svg>

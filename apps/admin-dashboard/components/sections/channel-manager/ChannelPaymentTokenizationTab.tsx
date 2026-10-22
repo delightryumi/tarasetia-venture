@@ -118,7 +118,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
 
             {/* PCI Security Badge Banner */}
             <div className={styles.pciBanner}>
-                <ShieldCheck size={24} style={{ flexShrink: 0, marginTop: "2px", color: "#5c0f1e" }} />
+                <ShieldCheck size={24} style={{ flexShrink: 0, marginTop: "2px", color: "#2563eb" }} />
                 <div>
                     <b>PCI DSS Level 1 Certified Protection:</b>
                     <p style={{ margin: "4px 0 0 0" }}>

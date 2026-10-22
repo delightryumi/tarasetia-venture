@@ -199,7 +199,7 @@ export function ChannelPromotionsTab({ hotelCode }: Props) {
                                     {p.minLos ? ` (Min. ${p.minLos} Nights)` : ""}
                                 </td>
                                 <td className={styles.td}>
-                                    <span style={{ fontWeight: 800, color: "#5c0f1e", fontSize: "13px" }}>
+                                    <span style={{ fontWeight: 800, color: "#2563eb", fontSize: "13px" }}>
                                         {p.discountPercent}%
                                     </span>
                                 </td>

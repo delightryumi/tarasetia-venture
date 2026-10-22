@@ -62,6 +62,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
     const { activeHotelCode, activeHotelName, user } = useAuth();
     const [currentTab, setCurrentTab] = useState<string>("mapping");
     const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState<boolean>(false);
+    const navGroupRef = React.useRef<HTMLDivElement>(null);
 
     // Sync active tab with URL query parameter ?tab=
     useEffect(() => {
@@ -79,6 +80,26 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             return () => window.removeEventListener("channel-tab-change", handleCustomTab);
         }
     }, []);
+
+    // Auto-scroll sidebar so active menu item is smoothly positioned near the top of the sidebar viewport
+    useEffect(() => {
+        if (!currentTab) return;
+        const timer = setTimeout(() => {
+            const navContainer = navGroupRef.current;
+            const targetEl = document.getElementById(`cm-sidebar-item-${currentTab}`);
+            if (navContainer && targetEl) {
+                const containerRect = navContainer.getBoundingClientRect();
+                const targetRect = targetEl.getBoundingClientRect();
+                const relativeOffset = targetRect.top - containerRect.top;
+
+                navContainer.scrollTo({
+                    top: navContainer.scrollTop + relativeOffset - 12,
+                    behavior: "smooth"
+                });
+            }
+        }, 50);
+        return () => clearTimeout(timer);
+    }, [currentTab]);
 
     const handleSelectTab = (tabId: string) => {
         setCurrentTab(tabId);
@@ -107,57 +128,46 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
 
     const MENU_GROUPS: CmMenuGroup[] = [
         {
-            title: "1. Onboarding & Setup",
+            title: "Line 1: Setup & Koneksi",
             items: [
-                { id: "groups", label: "Properties & Hotel Groups", shortLabel: "Properties", icon: Building2, badge: "Step 1", badgeColor: "#5c0f1e" },
-                { id: "golive", label: "API Credentials & Gateway", shortLabel: "Gateway", icon: Lock, badge: "Step 2", badgeColor: "#5c0f1e" },
-                { id: "sandbox", label: "Testing Sandbox & Roadmap", shortLabel: "Sandbox", icon: Zap, badge: "Test", badgeColor: "#71717a" }
+                { id: "groups", label: "Jaringan Hotel & Grup", shortLabel: "Grup", icon: Building2, badge: "Multi-Hotel", badgeColor: "#2563eb" },
+                { id: "golive", label: "Kredensial API & Go-Live", shortLabel: "Go-Live", icon: Lock, badge: "Step 1", badgeColor: "#2563eb" },
+                { id: "iframe", label: "Konsol Ekstranet (SSO)", shortLabel: "SSO", icon: LayoutGrid }
             ]
         },
         {
-            title: "2. Rooms & Master Pricing",
+            title: "Line 2: Master Kamar & Harga",
             items: [
-                { id: "rooms", label: "Room Types & Allotment", shortLabel: "Rooms", icon: BedDouble },
-                { id: "rateplans", label: "Rate Plans & Packages", shortLabel: "Rates", icon: Sliders },
-                { id: "matrix", label: "Rate Matrix Calendar", shortLabel: "Matrix", icon: Table },
-                { id: "dynamic_pricing", label: "Yield & Dynamic Pricing", shortLabel: "RMS", icon: TrendingUp }
+                { id: "rooms", label: "Tipe Kamar & Alotmen", shortLabel: "Kamar", icon: BedDouble },
+                { id: "rateplans", label: "Master Rate Plans", shortLabel: "Rates", icon: Sliders },
+                { id: "matrix", label: "Kalkulator Rate Matrix", shortLabel: "Matrix", icon: Table, badge: "Nett/Gross", badgeColor: "#2563eb" }
             ]
         },
         {
-            title: "3. OTA Distribution",
+            title: "Line 3: Distribusi OTA & RMS",
             items: [
-                { id: "mapping", label: "Channel Mapping & Catalog", shortLabel: "Channels", icon: Key, badge: "68+ OTA", badgeColor: "#5c0f1e" },
-                { id: "promotions", label: "Promotions & Deals", shortLabel: "Promos", icon: Tag },
-                { id: "google", label: "Google Hotel Links", shortLabel: "Google", icon: Search },
-                { id: "travel_agents", label: "Travel Agents & B2B", shortLabel: "B2B Agents", icon: Users },
-                { id: "content", label: "Content & Amenities", shortLabel: "Content", icon: UploadCloud }
+                { id: "mapping", label: "Pemetaan Saluran & OTA", shortLabel: "Mapping", icon: Key, badge: "68+ OTA", badgeColor: "#2563eb" },
+                { id: "dynamic_pricing", label: "Yield & Dynamic RMS", shortLabel: "RMS", icon: TrendingUp },
+                { id: "promotions", label: "Promosi & Diskon OTA", shortLabel: "Promo", icon: Tag },
+                { id: "google", label: "Google Hotel Free Links", shortLabel: "Google", icon: Search, badge: "0%", badgeColor: "#16a34a" },
+                { id: "travel_agents", label: "Travel Agent & B2B", shortLabel: "B2B", icon: Users },
+                { id: "content", label: "Konten & Foto Kamar", shortLabel: "Konten", icon: UploadCloud }
             ]
         },
         {
-            title: "4. Guest Suite & Direct",
+            title: "Line 4: Direct Guest & Booking",
             items: [
-                ...(isUserSuperadmin(user)
-                    ? [
-                          {
-                              id: "booking_engine",
-                              label: "Direct Booking Engine",
-                              shortLabel: "Direct Web",
-                              icon: Globe,
-                              badge: "Direct",
-                              badgeColor: "#5c0f1e",
-                          },
-                      ]
-                    : []),
-                { id: "messages", label: "Unified Guest Inbox", shortLabel: "Inbox", icon: MessageSquare },
-                { id: "reviews", label: "Guest Reviews & Ratings", shortLabel: "Reviews", icon: Star }
+                { id: "booking_engine", label: "Direct Booking Engine", shortLabel: "Direct", icon: Globe, badge: "Web Suite", badgeColor: "#2563eb" },
+                { id: "messages", label: "Kotak Masuk Pesan Tamu", shortLabel: "Pesan", icon: MessageSquare },
+                { id: "reviews", label: "Ulasan & Reputasi Tamu", shortLabel: "Ulasan", icon: Star }
             ]
         },
         {
-            title: "5. Monitoring & Security",
+            title: "Line 5: Keamanan & Monitoring",
             items: [
-                { id: "logs", label: "Transmission & Audit Logs", shortLabel: "Logs", icon: Terminal },
-                { id: "iframe", label: "Channex Console (SSO)", shortLabel: "Extranet SSO", icon: LayoutGrid },
-                { id: "payments", label: "PCI Card Vault & Security", shortLabel: "PCI Vault", icon: CreditCard }
+                { id: "logs", label: "Log Transmisi & Webhook", shortLabel: "Logs", icon: Terminal },
+                { id: "sync", label: "Live ARI Sync Feed", shortLabel: "Sync Feed", icon: RefreshCw },
+                { id: "payments", label: "PCI Card Vault & VCC", shortLabel: "PCI Vault", icon: CreditCard }
             ]
         }
     ];
@@ -220,22 +230,22 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                             width: "32px",
                             height: "32px",
                             borderRadius: "6px",
-                            background: "#09090b",
-                            color: "#ffffff",
+                            background: "#eff6ff",
+                            color: "#2563eb",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            border: "1px solid #27272a",
-                            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                            border: "1px solid #bfdbfe",
+                            boxShadow: "0 1px 2px rgba(37, 99, 235, 0.08)",
                             flexShrink: 0
                         }}>
                             <Globe size={16} />
                         </div>
                         <div style={{ overflow: "hidden" }}>
-                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#09090b", whiteSpace: "nowrap" }}>
+                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>
                                 Global Channel Manager
                             </div>
-                            <div style={{ fontSize: "10.5px", color: "#71717a", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                            <div style={{ fontSize: "10.5px", color: "#64748b", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
                                 {activeHotelName || "My Tara Hotel"} ({activeHotelCode})
                             </div>
                         </div>
@@ -246,13 +256,13 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                             width: "34px",
                             height: "34px",
                             borderRadius: "6px",
-                            background: "#09090b",
-                            color: "#ffffff",
+                            background: "#eff6ff",
+                            color: "#2563eb",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            border: "1px solid #27272a",
-                            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
+                            border: "1px solid #bfdbfe",
+                            boxShadow: "0 1px 2px rgba(37, 99, 235, 0.08)"
                         }}>
                             <Globe size={18} />
                         </div>
@@ -261,7 +271,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             </div>
 
             {/* Navigation Groups Container */}
-            <div className="nav-group" style={{ marginTop: "8px" }}>
+            <div ref={navGroupRef} className="nav-group" style={{ marginTop: "8px" }}>
                 {MENU_GROUPS.map((group, gIdx) => (
                     <div key={gIdx} style={{ marginBottom: "14px" }}>
                         {!isCollapsed && (
@@ -270,7 +280,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                 fontWeight: 700,
                                 textTransform: "uppercase",
                                 letterSpacing: "0.06em",
-                                color: "#a1a1aa",
+                                color: "#94a3b8",
                                 padding: "4px 10px 6px 10px"
                             }}>
                                 {group.title}
@@ -284,28 +294,30 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
 
                                 return (
                                     <button
+                                        id={`cm-sidebar-item-${item.id}`}
                                         key={item.id}
                                         type="button"
                                         onClick={() => handleSelectTab(item.id)}
                                         className="nav-item"
                                         style={{
-                                            backgroundColor: isActive ? "#09090b" : "transparent",
-                                            color: isActive ? "#ffffff" : "#52525b",
+                                            backgroundColor: isActive ? "#eff6ff" : "transparent",
+                                            color: isActive ? "#1e40af" : "#475569",
                                             fontWeight: isActive ? 600 : 500,
-                                            border: isActive ? "1px solid #09090b" : "1px solid transparent",
+                                            border: isActive ? "1px solid #bfdbfe" : "1px solid transparent",
+                                            borderLeft: isActive ? "3px solid #2563eb" : "1px solid transparent",
                                             borderRadius: "6px",
-                                            boxShadow: isActive ? "0 1px 3px rgba(9, 9, 11, 0.12)" : "none",
+                                            boxShadow: isActive ? "0 1px 2px rgba(37, 99, 235, 0.06)" : "none",
                                             position: "relative"
                                         }}
                                         title={item.label}
                                     >
                                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: "20px" }}>
-                                            <IconComponent size={15} color={isActive ? "#ffffff" : "#71717a"} />
+                                            <IconComponent size={15} color={isActive ? "#2563eb" : "#64748b"} />
                                         </div>
 
                                         {!isCollapsed && (
                                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, minWidth: 0, gap: "6px" }}>
-                                                <span className="nav-label" style={{ fontSize: "12px", color: isActive ? "#ffffff" : "#27272a" }}>
+                                                <span className="nav-label" style={{ fontSize: "12px", color: isActive ? "#1e40af" : "#334155" }}>
                                                     {item.label}
                                                 </span>
                                                 {item.badge && (
@@ -313,10 +325,10 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                                         fontSize: "9px",
                                                         fontWeight: 700,
                                                         padding: "1px 6px",
-                                                        borderRadius: "4px",
-                                                        background: isActive ? "rgba(255, 255, 255, 0.2)" : "#f4f4f5",
-                                                        color: isActive ? "#ffffff" : item.badgeColor || "#71717a",
-                                                        border: isActive ? "none" : "1px solid #e4e4e7",
+                                                        borderRadius: "6px",
+                                                        background: isActive ? "#dbeafe" : "#f1f5f9",
+                                                        color: isActive ? "#1e40af" : (item.badgeColor || "#64748b"),
+                                                        border: isActive ? "1px solid #bfdbfe" : "1px solid #e2e8f0",
                                                         flexShrink: 0
                                                     }}>
                                                         {item.badge}
@@ -346,7 +358,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             }}>
                 {!isCollapsed && (
                     <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                        <CheckCircle2 size={12} style={{ color: "#5c0f1e" }} />
+                        <CheckCircle2 size={12} style={{ color: "#2563eb" }} />
                         <span>Direct 2-Way OTA Sync</span>
                     </span>
                 )}

@@ -72,8 +72,8 @@
 }
 
 .btnAdd:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 /* ── Table Grid ── */
@@ -265,5 +265,5 @@
 }
 
 .btnSave:hover {
-    background: #5c0f1e;
+    background: #2563eb;
 }

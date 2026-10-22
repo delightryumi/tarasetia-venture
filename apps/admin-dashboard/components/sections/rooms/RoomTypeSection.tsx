@@ -349,7 +349,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         <p style={{ margin: 0, fontWeight: 600 }}>No room types match "{searchQuery}"</p>
                         <button
                             onClick={() => setSearchQuery("")}
-                            style={{ marginTop: 10, background: "none", border: "none", color: "#5c0f1e", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
+                            style={{ marginTop: 10, background: "none", border: "none", color: "#2563eb", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
                         >
                             Clear Search
                         </button>
@@ -563,7 +563,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                         </div>
                         <div className={vhpStyles.tableFooter}>
                             <span className={vhpStyles.footerHint}>
-                                <CheckCircle2 size={13} color="#5c0f1e" />
+                                <CheckCircle2 size={13} color="#2563eb" />
                                 Showing {filteredTypes.length} of {totalRoomTypes} hotel room types
                             </span>
                             <span>TARA PMS Master Inventory System</span>
@@ -884,7 +884,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                         <div className={styles.subPanelHeader}>
                                             <div>
                                                 <div className={styles.subPanelTitle}>
-                                                    <Hash size={14} color="#5c0f1e" /> Physical Room Numbers (Inventory)
+                                                    <Hash size={14} color="#2563eb" /> Physical Room Numbers (Inventory)
                                                 </div>
                                                 <p className={styles.subPanelSubtitle}>
                                                     Assigned room numbers. Directly linked to Front Desk check-in, Reservation Folios, GRC, and Room Rack.
@@ -965,7 +965,7 @@ export const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({ embedded = fal
                                 <div className={styles.formGroupFull}>
                                     <div className={styles.subPanel}>
                                         <div className={styles.subPanelTitle}>
-                                            <BedDouble size={14} color="#5c0f1e" /> Bedding Configuration (Bed Planner)
+                                            <BedDouble size={14} color="#2563eb" /> Bedding Configuration (Bed Planner)
                                         </div>
 
                                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, alignItems: "flex-end" }}>

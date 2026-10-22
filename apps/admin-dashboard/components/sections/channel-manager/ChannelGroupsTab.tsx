@@ -427,13 +427,13 @@ export const ChannelGroupsTab: React.FC = () => {
             {/* Live Master Channel Connection & Sync Banner */}
             <div style={{ background: "#ffffff", border: "1px solid #e4e4e7", borderRadius: "8px", padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "6px", background: environment === "production" ? "#fdf2f4" : "#f4f4f5", color: environment === "production" ? "#5c0f1e" : "#27272a", border: environment === "production" ? "1px solid #f3cfd6" : "1px solid #e4e4e7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "6px", background: environment === "production" ? "#eff6ff" : "#f4f4f5", color: environment === "production" ? "#2563eb" : "#27272a", border: environment === "production" ? "1px solid #bfdbfe" : "1px solid #e4e4e7", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <Globe size={18} />
                     </div>
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                             <strong style={{ fontSize: "13.5px", color: "#09090b" }}>Master Channel Live Sync</strong>
-                            <span style={{ fontSize: "10.5px", fontWeight: 600, padding: "2px 7px", borderRadius: "4px", background: environment === "production" ? "#fdf2f4" : "#f4f4f5", color: environment === "production" ? "#5c0f1e" : "#27272a", border: environment === "production" ? "1px solid #f3cfd6" : "1px solid #e4e4e7" }}>
+                            <span style={{ fontSize: "10.5px", fontWeight: 600, padding: "2px 7px", borderRadius: "4px", background: environment === "production" ? "#eff6ff" : "#f4f4f5", color: environment === "production" ? "#2563eb" : "#27272a", border: environment === "production" ? "1px solid #bfdbfe" : "1px solid #e4e4e7" }}>
                                 {environment === "production" ? "Production Cloud" : "Sandbox Test Mode"}
                             </span>
                             {apiKey && apiKey === savedApiKey && (
@@ -516,8 +516,8 @@ export const ChannelGroupsTab: React.FC = () => {
                                     display: "inline-flex",
                                     alignItems: "center",
                                     gap: "6px",
-                                    background: (apiKey && apiKey !== savedApiKey) ? "#5c0f1e" : "#09090b",
-                                    borderColor: (apiKey && apiKey !== savedApiKey) ? "#5c0f1e" : "#09090b"
+                                    background: (apiKey && apiKey !== savedApiKey) ? "#2563eb" : "#09090b",
+                                    borderColor: (apiKey && apiKey !== savedApiKey) ? "#2563eb" : "#09090b"
                                 }}
                                 title="Simpan API Key ke database"
                             >
@@ -569,7 +569,7 @@ export const ChannelGroupsTab: React.FC = () => {
             <div className={styles.headerActionRow}>
                 <div className={styles.headerLeft}>
                     <h3 className={styles.headerTitle}>
-                        <Building2 size={16} style={{ color: "#5c0f1e" }} />
+                        <Building2 size={16} style={{ color: "#2563eb" }} />
                         <span>Hotel Chains &amp; Multi-Property Grouping</span>
                     </h3>
                     <p className={styles.headerDesc}>
@@ -673,9 +673,9 @@ export const ChannelGroupsTab: React.FC = () => {
                                     className={styles.btnCancel}
                                     title={`Hapus Group ${group.name}`}
                                     style={{
-                                        color: "#5c0f1e",
-                                        borderColor: "#f3cfd6",
-                                        background: "#fdf2f4",
+                                        color: "#2563eb",
+                                        borderColor: "#bfdbfe",
+                                        background: "#eff6ff",
                                         padding: "4px 10px",
                                         fontSize: "12px",
                                         display: "inline-flex",
@@ -770,7 +770,7 @@ export const ChannelGroupsTab: React.FC = () => {
                                                                         display: "inline-flex",
                                                                         alignItems: "center",
                                                                         gap: "4px",
-                                                                        background: "#5c0f1e",
+                                                                        background: "#2563eb",
                                                                         color: "#ffffff"
                                                                     }}
                                                                     title="Daftarkan properti ini langsung ke Channex via API"
@@ -794,7 +794,7 @@ export const ChannelGroupsTab: React.FC = () => {
                                                                         display: "inline-flex",
                                                                         alignItems: "center",
                                                                         gap: "4px",
-                                                                        background: "#fff1f2",
+                                                                        background: "#eff6ff",
                                                                         border: "1px solid #fecdd3",
                                                                         color: "#be123c",
                                                                         borderRadius: "6px",
@@ -823,7 +823,7 @@ export const ChannelGroupsTab: React.FC = () => {
                                                                 onClick={() => handleAssignGroup(h.hotelCode, "", "")}
                                                                 className={styles.btnSwitch}
                                                                 title="Lepas dari Group ini"
-                                                                style={{ color: "#5c0f1e" }}
+                                                                style={{ color: "#2563eb" }}
                                                             >
                                                                 <Unlink size={12} />
                                                             </button>
@@ -925,7 +925,7 @@ export const ChannelGroupsTab: React.FC = () => {
                                                                 display: "inline-flex",
                                                                 alignItems: "center",
                                                                 gap: "4px",
-                                                                background: "#5c0f1e",
+                                                                background: "#2563eb",
                                                                 color: "#ffffff"
                                                             }}
                                                             title="Daftarkan properti ini langsung ke Channex via API"
@@ -949,7 +949,7 @@ export const ChannelGroupsTab: React.FC = () => {
                                                                 display: "inline-flex",
                                                                 alignItems: "center",
                                                                 gap: "4px",
-                                                                background: "#fff1f2",
+                                                                background: "#eff6ff",
                                                                 border: "1px solid #fecdd3",
                                                                 color: "#be123c",
                                                                 borderRadius: "6px",
@@ -990,7 +990,7 @@ export const ChannelGroupsTab: React.FC = () => {
                                                                         className={styles.groupDropdownItem}
                                                                     >
                                                                         <span>{g.name}</span>
-                                                                        <CheckCircle2 size={13} style={{ color: "#5c0f1e" }} />
+                                                                        <CheckCircle2 size={13} style={{ color: "#2563eb" }} />
                                                                     </button>
                                                                 ))
                                                             ) : (
@@ -1227,7 +1227,7 @@ export const ChannelGroupsTab: React.FC = () => {
                 <div className={styles.modalOverlay} onClick={() => !unlinkingHotelCode && setPropertyToUnlink(null)}>
                     <div className={styles.confirmModalContent} onClick={(e) => e.stopPropagation()}>
                         <div className={styles.confirmModalHeader}>
-                            <div className={styles.confirmModalIcon} style={{ background: "#fff1f2", color: "#be123c", borderColor: "#fecdd3" }}>
+                            <div className={styles.confirmModalIcon} style={{ background: "#eff6ff", color: "#be123c", borderColor: "#fecdd3" }}>
                                 <Unlink size={20} />
                             </div>
                             <div>

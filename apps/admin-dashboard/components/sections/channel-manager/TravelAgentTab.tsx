@@ -218,7 +218,7 @@ export function TravelAgentTab({
                         <span className={styles.statLabel}>Connected OTAs (2-Way)</span>
                         <span className={styles.statValue}>{activeOtaChannels.length}</span>
                     </div>
-                    <div className={styles.statIcon} style={{ background: "#fdf2f4", color: "#5c0f1e" }}>
+                    <div className={styles.statIcon} style={{ background: "#eff6ff", color: "#2563eb" }}>
                         <Globe size={18} />
                     </div>
                 </div>
@@ -391,7 +391,7 @@ export function TravelAgentTab({
                                 <tr key={ota.channelCode} className={styles.tr}>
                                     <td className={styles.td}>
                                         <div className={styles.agentNameCell}>
-                                            <div className={styles.agentAvatar} style={{ background: "#fdf2f4", color: "#5c0f1e" }}>
+                                            <div className={styles.agentAvatar} style={{ background: "#eff6ff", color: "#2563eb" }}>
                                                 OTA
                                             </div>
                                             <div className={styles.agentInfo}>
@@ -404,7 +404,7 @@ export function TravelAgentTab({
                                         <span className={`${styles.badge} ${styles.badgeOta}`}>Online Travel Agency</span>
                                     </td>
                                     <td className={styles.td}>
-                                        <span style={{ fontSize: "11px", color: "#5c0f1e", fontWeight: 600 }}>● Direct 2-Way OTA Sync</span>
+                                        <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: 600 }}>● Direct 2-Way OTA Sync</span>
                                     </td>
                                     <td className={styles.td} style={{ color: "#64748b" }}>
                                         Extranet Property ID: {ota.hotelId || "Connected"}

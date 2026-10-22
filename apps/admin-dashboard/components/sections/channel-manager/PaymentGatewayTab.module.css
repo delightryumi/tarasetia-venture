@@ -103,8 +103,8 @@
 }
 
 .btnGoToBookingEngine:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 .todayTag {
@@ -156,8 +156,8 @@
 }
 
 .btnSave:hover {
-    background: #5c0f1e;
-    border-color: #5c0f1e;
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 .btnSave:hover:not(:disabled) {
@@ -334,8 +334,8 @@
 
 .formInput:focus {
     background: #ffffff;
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .formSelect {
@@ -355,7 +355,7 @@
 
 .formSelect:focus {
     background: #ffffff;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 /* ── Theme Color Swatches & Picker ── */
@@ -609,9 +609,9 @@
 }
 
 .btnConfigureNow:hover {
-    background: #5c0f1e;
+    background: #2563eb;
     color: #ffffff;
-    border-color: #5c0f1e;
+    border-color: #2563eb;
 }
 
 /* ── Promotions & Vouchers Suite ── */
@@ -640,9 +640,9 @@
 
 .promoCodeBadge {
     padding: 3px 8px;
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px dashed #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px dashed #bfdbfe;
     border-radius: 4px;
     font-family: var(--font-geist-mono, monospace);
     font-size: 13px;
@@ -777,7 +777,7 @@
     gap: 4px;
     background: transparent;
     border: none;
-    color: #5c0f1e;
+    color: #2563eb;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
@@ -805,7 +805,7 @@
 
 .deniedCard {
     background: #ffffff;
-    border: 1px solid #fed7aa;
+    border: 1px solid #bfdbfe;
     border-radius: 14px;
     padding: 32px;
     text-align: center;
@@ -881,11 +881,11 @@
     gap: 6px;
     font-size: 11px;
     font-weight: 600;
-    color: #5c0f1e;
-    background: #fdf2f4;
+    color: #2563eb;
+    background: #eff6ff;
     padding: 3px 8px;
     border-radius: 4px;
-    border: 1px solid #f3cfd6;
+    border: 1px solid #bfdbfe;
 }
 
 .addonActions {
@@ -905,9 +905,9 @@
 }
 
 .btnToggleAddonActive {
-    background: #fdf2f4;
-    color: #5c0f1e;
-    border: 1px solid #f3cfd6;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
 }
 
 .btnToggleAddonInactive {
@@ -979,8 +979,8 @@
 }
 
 .currencyInputWrapper:focus-within {
-    border-color: #5c0f1e;
-    box-shadow: 0 0 0 2px rgba(92, 15, 30, 0.1);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .currencyPrefix {
@@ -1011,7 +1011,7 @@
 .addonPricePreview {
     font-size: 11px;
     font-weight: 600;
-    color: #5c0f1e;
+    color: #2563eb;
     margin-top: 3px;
     display: flex;
     align-items: center;
