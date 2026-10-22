@@ -197,18 +197,43 @@ export async function POST(req: NextRequest) {
                 const guestName = (customer.name || `${customer.first_name || ""} ${customer.last_name || ""}`).trim() || fallbackDetails.guestName || "Tamu OTA";
                 const guestPhone = customer.phone || customer.telephone || customer.mobile || fallbackDetails.guestPhone || "";
                 const guestEmail = customer.email || fallbackDetails.guestEmail || "";
-                const otaName = (bookingData as any)?.ota_name || (bookingData as any)?.channel_name || fallbackDetails.channelName || "OTA";
+                
+                const rawOta = (bookingData as any)?.ota_name || (bookingData as any)?.channel_name || (bookingData as any)?.channel || (payload as any)?.channel_name;
+                const otaName = (rawOta && rawOta.toLowerCase() !== "open channel" && rawOta.toLowerCase() !== "ota" && rawOta.toLowerCase() !== "ota channel")
+                    ? rawOta
+                    : (fallbackDetails.channelName && fallbackDetails.channelName.toLowerCase() !== "open channel" && fallbackDetails.channelName.toLowerCase() !== "ota" && fallbackDetails.channelName.toLowerCase() !== "ota channel"
+                        ? fallbackDetails.channelName
+                        : (rawOta || fallbackDetails.channelName || "OTA Channel"));
+
                 const roomsList = (bookingData as any)?.rooms || [];
                 const roomCount = roomsList.length || fallbackDetails.roomCount || 1;
-                const primaryRoomName = roomsList[0]?.room_type_name || fallbackDetails.roomName || "Kamar Hotel";
+                const primaryRoomName = fallbackDetails.roomName && fallbackDetails.roomName !== "Kamar Hotel" && fallbackDetails.roomName !== "Standard Room"
+                    ? fallbackDetails.roomName
+                    : (roomsList[0]?.room_type_name || fallbackDetails.roomName || "Standard Room");
                 const roomName = roomCount > 1 
                     ? `${primaryRoomName} (${roomCount} Kamar)` 
                     : primaryRoomName;
-                const bookingRef = (bookingData as any)?.channel_booking_id || (bookingData as any)?.ota_reservation_code || (bookingData as any)?.unique_id || (bookingData as any)?.booking_id || result.bookingId || "Booking";
-                const totalPrice = Number((bookingData as any)?.total_price || (bookingData as any)?.amount || (bookingData as any)?.total_amount) || fallbackDetails.totalPrice || 0;
+                const bookingRef = (bookingData as any)?.unique_id || (bookingData as any)?.channel_booking_id || (bookingData as any)?.ota_reservation_code || (bookingData as any)?.booking_id || result.bookingId || "Booking";
+                const revenueMode = ((result as any)?.financials?.revenueRecordingMode || (result as any)?.bookingDetails?.revenueRecordingMode || "NET").toUpperCase();
+                const grossPrice = Number((result as any)?.financials?.guestPaidGross ?? (result as any)?.bookingDetails?.grossPrice ?? (bookingData as any)?.total_price ?? (bookingData as any)?.amount ?? 0);
+                const netPrice = Number((result as any)?.financials?.netToHotel ?? (result as any)?.bookingDetails?.netToHotel ?? 0);
+                const recordedPrice = revenueMode === "NET"
+                    ? (netPrice || Number((result as any)?.financials?.recordedRevenue ?? (result as any)?.bookingDetails?.totalPrice) || grossPrice)
+                    : (grossPrice || Number((result as any)?.financials?.recordedRevenue ?? (result as any)?.bookingDetails?.totalPrice) || netPrice);
+                const currency = (bookingData as any)?.currency || (payload.booking as any)?.currency || fallbackDetails.currency || (result as any)?.financials?.currency;
 
                 const arrivalDate = (bookingData as any)?.arrival_date || fallbackDetails.arrivalDate || result.previousStay?.arrivalDate || "-";
                 const departureDate = (bookingData as any)?.departure_date || fallbackDetails.departureDate || result.previousStay?.departureDate || "-";
+                const eta = (bookingData as any)?.arrival_hour || 
+                    (bookingData as any)?.arrival_time || 
+                    (bookingData as any)?.checkin_time || 
+                    (bookingData as any)?.check_in_time || 
+                    (bookingData as any)?.estimated_arrival_time || 
+                    (bookingData as any)?.eta || 
+                    (payload as any)?.arrival_hour || 
+                    (payload as any)?.arrival_time || 
+                    fallbackDetails.eta || 
+                    "";
                 let nights = fallbackDetails.nights || 0;
                 if (!nights && arrivalDate !== "-" && departureDate !== "-") {
                     const diffMs = new Date(departureDate).getTime() - new Date(arrivalDate).getTime();
@@ -227,12 +252,12 @@ export async function POST(req: NextRequest) {
                 const cancellationReason = (bookingData as any)?.cancellation_reason || (payload as any)?.cancellation_reason || (specialNotes ? specialNotes : (isCancel ? "Dibatalkan melalui portal OTA" : undefined));
 
                 const pushTitle = isCancel
-                    ? `🚨 Pembatalan Reservasi! [${otaName}]`
-                    : (isModif ? `✏️ Perubahan Jadwal Reservasi! [${otaName}]` : `🛎️ Reservasi Baru Masuk! [${otaName}]`);
+                    ? `📋 Pembatalan Reservasi [${otaName}]`
+                    : (isModif ? `🔄 Perubahan Reservasi [${otaName}]` : `🛎️ Reservasi Baru [${otaName}]`);
 
                 const pushBody = isCancel
-                    ? `Tamu ${guestName} membatalkan pesanan kamar ${roomName} (${bookingRef}). Segera cek ketersediaan!`
-                    : (isModif ? `Tamu ${guestName} mengubah tanggal reservasi kamar ${roomName} (${bookingRef}) ke ${arrivalDate} s/d ${departureDate}.` : `Tamu ${guestName} memesan kamar ${roomName} (${bookingRef}). Check-in segera!`);
+                    ? `Tamu ${guestName} membatalkan reservasi kamar ${roomName} (${bookingRef}). Alokasi kamar telah dirilis kembali ke sistem.`
+                    : (isModif ? `Tamu ${guestName} mengubah tanggal menginap kamar ${roomName} (${bookingRef}) ke ${arrivalDate} s/d ${departureDate}.` : `Tamu ${guestName} memesan kamar ${roomName} (${bookingRef}). Check-in: ${arrivalDate}.`);
 
                 const { sendPushNotificationToHotel } = await import("@/lib/notifications/webPushServer");
                 sendPushNotificationToHotel(hotelCode, {
@@ -261,8 +286,13 @@ export async function POST(req: NextRequest) {
                         mealsIncluded: isWithBreakfast,
                         arrivalDate,
                         departureDate,
+                        eta,
                         nights,
-                        totalPrice,
+                        totalPrice: recordedPrice,
+                        grossPrice,
+                        netToHotel: netPrice,
+                        revenueRecordingMode: revenueMode,
+                        currency,
                         paymentStatus: (bookingData as any)?.payment_type || (bookingData as any)?.payment_collect || "Sesuai OTA",
                         notes: specialNotes,
                         customNote: specialNotes,

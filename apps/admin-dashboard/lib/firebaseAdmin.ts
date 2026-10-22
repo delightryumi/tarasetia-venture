@@ -40,7 +40,13 @@ const getAdminAuth = () => {
 
 const getAdminDb = () => {
   initFirebaseAdmin();
-  return getFirestore();
+  const db = getFirestore();
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // Ignore error if settings already applied
+  }
+  return db;
 };
 
 const getAdminStorage = () => {

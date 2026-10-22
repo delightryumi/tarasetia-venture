@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebaseAdmin";
+import { formatCurrencyAmount } from "@/lib/currency-utils";
 import { WhatsAppNotificationPayload as NotificationPayload } from "@/lib/notifications/whatsappMetaService";
 
 export type EmailNotificationPayload = NotificationPayload;
@@ -34,9 +35,8 @@ export function buildEmailNotificationHtml(
     const isModif = payload.event === "booking_modification" || payload.event === "booking_modified";
     const isTest = payload.event === "test";
 
-    const formattedPrice = typeof payload.totalPrice === "number"
-        ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(payload.totalPrice)
-        : (payload.totalPrice ? String(payload.totalPrice) : "Rp 0");
+    const activeCurrency = (payload.currency || "IDR").toUpperCase().trim();
+    const formattedPrice = formatCurrencyAmount(payload.totalPrice, activeCurrency);
 
     let subject = `Konfirmasi Reservasi: #${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
     let badgeBg = "#f0fdf4";
@@ -51,16 +51,16 @@ export function buildEmailNotificationHtml(
         badgeBg = "#fef2f2";
         badgeBorder = "#fecaca";
         badgeColor = "#991b1b";
-        badgeText = "RESERVASI DIBATALKAN";
-        headerTitle = "Pembatalan Reservasi";
+        badgeText = "PEMBATALAN RESERVASI";
+        headerTitle = "Pembatalan Reservasi (Booking Cancellation)";
         headerDesc = "Tamu telah membatalkan pemesanan melalui OTA. Kamar telah otomatis dirilis kembali ke ketersediaan sistem.";
     } else if (isModif) {
-        subject = `Perubahan Jadwal: #${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
+        subject = `Perubahan Reservasi: #${payload.bookingRef} - ${payload.guestName} (${payload.channelName || "OTA"})`;
         badgeBg = "#f1f5f9";
         badgeBorder = "#cbd5e1";
         badgeColor = "#334155";
-        badgeText = "MODIFIKASI JADWAL";
-        headerTitle = "Perubahan Jadwal Reservasi";
+        badgeText = "PERUBAHAN RESERVASI";
+        headerTitle = "Perubahan Reservasi (Booking Modification)";
         headerDesc = "Tamu telah melakukan modifikasi tanggal menginap. Jadwal PMS dan ketersediaan OTA telah diperbarui otomatis.";
     } else if (isTest) {
         subject = `Uji Coba Sistem Notifikasi: ${hotelName}`;
@@ -381,14 +381,14 @@ export function buildEmailNotificationHtml(
         </tr>
         <tr class="data-row">
           <td class="data-cell-label">Tanggal Kedatangan (Check-in)</td>
-          <td class="data-cell-value">${payload.arrivalDate}</td>
+          <td class="data-cell-value">${payload.arrivalDate}${payload.eta ? ` (Est. ETA: ${payload.eta})` : ""}</td>
         </tr>
         <tr class="data-row">
           <td class="data-cell-label">Tanggal Kepulangan (Check-out)</td>
           <td class="data-cell-value">${payload.departureDate} (${payload.nights || 1} Malam)</td>
         </tr>
         <tr class="data-row">
-          <td class="data-cell-label">${isCancel ? "Nilai Pemesanan Asal" : "Total Tagihan Tamu"}</td>
+          <td class="data-cell-label">${isCancel ? "Nilai Pemesanan Asal" : `Total Tagihan (${payload.revenueRecordingMode === "NET" ? "Nett to Hotel" : "Gross OTA"})`}</td>
           <td class="data-cell-value price-value">${formattedPrice}</td>
         </tr>
         <tr class="data-row">
@@ -483,6 +483,20 @@ export async function sendEmailNotificationToOwner(
         }
 
         const hotelName = hotelData.name || hotelData.propertyName || `Hotel #${hotelCode}`;
+        const hotelCurrency = (payload.currency || hotelData.currency || hotelData.channelManager?.currency || hotelData.settings?.currency || "IDR").toUpperCase().trim();
+        const hotelPricingModel = (hotelData.channelManager?.pricingModel || hotelData.settings?.revenueRecordingMode || payload.revenueRecordingMode || "net").toUpperCase();
+        payload.currency = hotelCurrency;
+        payload.revenueRecordingMode = hotelPricingModel;
+
+        // Strict Enforcement of Tara Channel Manager Pricing Model:
+        let displayTariff = payload.totalPrice;
+        if (hotelPricingModel === "NET" && payload.netToHotel && payload.netToHotel > 0) {
+            displayTariff = payload.netToHotel;
+        } else if (hotelPricingModel === "GROSS" && payload.grossPrice && payload.grossPrice > 0) {
+            displayTariff = payload.grossPrice;
+        }
+        payload.totalPrice = displayTariff;
+
         const senderEmail = emailConfig.senderEmail || DEFAULT_SENDER_EMAIL;
         const senderName = emailConfig.senderName || DEFAULT_SENDER_NAME;
 

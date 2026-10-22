@@ -5,7 +5,7 @@
 
 import { adminDb } from "@/lib/firebaseAdmin";
 import { channexClient } from "./channexClient";
-import { formatRateForChannex } from "@/lib/currency-utils";
+import { formatRateForChannex, formatCurrencyAmount } from "@/lib/currency-utils";
 import {
     ChannexWebhookPayload,
     ChannexBooking,
@@ -184,8 +184,12 @@ export class ChannexSyncService {
             return { success: false, message: `No active hotel found for Channex Property ID: ${property_id}` };
         }
 
-        const rawOta = (booking as any)?.ota_name || (booking as any)?.channel || (booking as any)?.ota;
-        const channelName = (rawOta && rawOta.toLowerCase() !== "open channel") ? rawOta : (booking.channel_name && booking.channel_name.toLowerCase() !== "open channel" ? booking.channel_name : (rawOta || "OTA"));
+        const rawOta = (booking as any)?.ota_name || (booking as any)?.channel || (booking as any)?.ota || (payload as any)?.channel_name;
+        let channelName = (rawOta && rawOta.toLowerCase() !== "open channel" && rawOta.toLowerCase() !== "ota" && rawOta.toLowerCase() !== "ota channel") 
+            ? rawOta 
+            : (booking.channel_name && booking.channel_name.toLowerCase() !== "open channel" && booking.channel_name.toLowerCase() !== "ota" && booking.channel_name.toLowerCase() !== "ota channel"
+                ? booking.channel_name 
+                : (rawOta || ""));
         const otaBookingId = (booking as any)?.unique_id || booking.channel_booking_id || (booking as any)?.ota_reservation_code || booking.id;
         const channexBookingId = booking.id;
         const revisionId = (booking as any)?.revision_id || (payload as any)?.booking_revision_id || "";
@@ -194,6 +198,15 @@ export class ChannexSyncService {
         const guestName = (guest.name || `${guest.first_name || ""} ${guest.last_name || ""}`).trim() || "OTA Guest";
         const arrivalDate = booking.arrival_date;
         const departureDate = booking.departure_date;
+        const eta = (booking as any)?.arrival_hour || 
+            (booking as any)?.arrival_time || 
+            (booking as any)?.checkin_time || 
+            (booking as any)?.check_in_time || 
+            (booking as any)?.estimated_arrival_time || 
+            (booking as any)?.eta || 
+            (payload as any)?.arrival_hour || 
+            (payload as any)?.arrival_time || 
+            "";
         const totalPrice = Number(booking.total_price || (booking as any)?.amount || (booking as any)?.total_amount) || 0;
         const isChannelCollect = booking.payment_type === "channel_collect" 
             || booking.payment_type === "virtual_card" 
@@ -213,17 +226,34 @@ export class ChannexSyncService {
 
         console.log(`[ChannexSync] Processing ${event} for Hotel [${hotelCode}], Guest: ${guestName}, OTA: ${channelName}, Ref: ${otaBookingId}`);
 
+        const uniqueId = (booking as any)?.unique_id;
+        const rawBookingId = (booking as any)?.booking_id;
+        const otaReservationCode = (booking as any)?.ota_reservation_code;
+        const isMatchingBooking = (e: any) => Boolean(
+            (otaBookingId && (e.bookingId === otaBookingId || e.reservationId === otaBookingId || e.voucherCode === otaBookingId || e.otaReservationId === otaBookingId)) ||
+            (uniqueId && (e.bookingId === uniqueId || e.reservationId === uniqueId || e.voucherCode === uniqueId || e.otaReservationId === uniqueId)) ||
+            (channexBookingId && (e.channexBookingId === channexBookingId || e.bookingId === channexBookingId)) ||
+            (rawBookingId && (e.channexBookingId === rawBookingId || e.bookingId === rawBookingId)) ||
+            (otaReservationCode && (e.otaReservationId === otaReservationCode || e.voucherCode === otaReservationCode)) ||
+            (otaBookingId && e.bookingId === `${otaBookingId}-BFT`) ||
+            (uniqueId && e.bookingId === `${uniqueId}-BFT`) ||
+            (otaBookingId && e.parentBookingId === otaBookingId) ||
+            (uniqueId && e.parentBookingId === uniqueId) ||
+            (booking.id && e.parentBookingId === booking.id) ||
+            (rawBookingId && e.parentBookingId === rawBookingId)
+        );
+
         // Fetch room types to map room_type_id
         const roomTypesSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
         const roomTypes = roomTypesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
 
-        // Fetch hotel data for propertyName and settings
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
         const hotelData = hotelDoc.data() || {};
         const propertyName = hotelData.name || hotelData.propertyName || "Setara Demo Partner";
+        const propertyCurrency = (booking.currency || hotelData.currency || hotelData.channelManager?.currency || hotelData.settings?.currency || "IDR").toUpperCase().trim();
 
         // Channel Commission & Revenue Recording Mode (Net to Hotel vs Gross)
-        const channelConfigs = hotelData.channelConfigs || hotelData.channels || {};
+        const channelConfigs = hotelData.channelManager?.channels || hotelData.channelConfigs || hotelData.channels || {};
         const matchedChannel = Object.values(channelConfigs).find((ch: any) => 
             ch.channelName?.toLowerCase().includes(channelName.toLowerCase()) ||
             channelName.toLowerCase().includes(ch.channelName?.toLowerCase() || "") ||
@@ -334,11 +364,11 @@ export class ChannexSyncService {
 
         // Revenue Recording Mode: "net" (Net to Hotel) vs "gross" (Gross Sell Rate)
         const revenueRecordingMode = (
+            matchedChannel?.pricingModel ||
             hotelData.channelManager?.pricingModel ||
             hotelData.settings?.revenueRecordingMode ||
             (payload as any).revenue_recording_mode ||
             (booking as any)?.revenue_recording_mode ||
-            matchedChannel?.pricingModel ||
             "net"
         ).toLowerCase() === "gross" ? "gross" : "net";
 
@@ -377,15 +407,7 @@ export class ChannexSyncService {
             for (const doc of existingRevenueSnap.docs) {
                 const dayData = doc.data();
                 const entries = dayData.entries || [];
-                const matchingEntry = entries.find((e: any) => 
-                    e.bookingId === otaBookingId || 
-                    e.channexBookingId === booking.id ||
-                    e.voucherCode === otaBookingId ||
-                    e.bookingId === booking.id ||
-                    e.bookingId === `${otaBookingId}-BFT` ||
-                    e.parentBookingId === otaBookingId ||
-                    e.parentBookingId === booking.id
-                );
+                const matchingEntry = entries.find(isMatchingBooking);
                 if (matchingEntry) {
                     if (!matchedOriginalBooking) {
                         matchedOriginalBooking = matchingEntry;
@@ -402,15 +424,7 @@ export class ChannexSyncService {
                     if (isCancelled) {
                         // Keep transaction record for Front Office & Audit visibility, but mark as CANCELLED with roomCount: 0 & roomsCount: 0
                         const updatedEntries = entries.map((e: any) => {
-                            if (
-                                e.bookingId === otaBookingId || 
-                                e.channexBookingId === booking.id ||
-                                e.voucherCode === otaBookingId ||
-                                e.bookingId === booking.id ||
-                                e.bookingId === `${otaBookingId}-BFT` ||
-                                e.parentBookingId === otaBookingId ||
-                                e.parentBookingId === booking.id
-                            ) {
+                            if (isMatchingBooking(e)) {
                                 return {
                                     ...e,
                                     amount: 0,
@@ -424,22 +438,17 @@ export class ChannexSyncService {
                             }
                             return e;
                         });
+                        const cleanEntry = (entry: any) => JSON.parse(JSON.stringify(entry, (_, v) => (v === undefined ? null : v)));
                         await doc.ref.update({
-                            entries: updatedEntries,
+                            entries: cleanEntry(updatedEntries),
                             lastUpdated: new Date().toISOString()
                         });
                     } else {
                         // For date modifications: clear out slots that may no longer be part of new stay range
-                        const cleanedEntries = entries.filter((e: any) => 
-                            e.bookingId !== otaBookingId && 
-                            e.channexBookingId !== booking.id &&
-                            e.voucherCode !== otaBookingId &&
-                            e.bookingId !== `${otaBookingId}-BFT` &&
-                            e.parentBookingId !== otaBookingId &&
-                            e.parentBookingId !== booking.id
-                        );
+                        const cleanedEntries = entries.filter((e: any) => !isMatchingBooking(e));
+                        const cleanEntry = (entry: any) => JSON.parse(JSON.stringify(entry, (_, v) => (v === undefined ? null : v)));
                         await doc.ref.update({
-                            entries: cleanedEntries,
+                            entries: cleanEntry(cleanedEntries),
                             lastUpdated: new Date().toISOString()
                         });
                     }
@@ -449,8 +458,14 @@ export class ChannexSyncService {
             console.warn(`[ChannexSync] Warning checking previous booking dates for cleanup:`, cleanErr);
         }
 
-        let primaryRoomTypeName = "Standard Room";
-        let primaryRoomNumber = "AUTO";
+        let primaryRoomTypeName = matchedOriginalBooking?.roomType || matchedOriginalBooking?.roomTypeName || "Standard Room";
+        let primaryRoomNumber = matchedOriginalBooking?.roomNumber || "AUTO";
+
+        if (matchedOriginalBooking) {
+            if (!channelName || channelName.toLowerCase() === "open channel" || channelName.toLowerCase() === "ota" || channelName.toLowerCase() === "ota channel") {
+                channelName = matchedOriginalBooking.channel || matchedOriginalBooking.otaName || matchedOriginalBooking.source || channelName || "OTA Channel";
+            }
+        }
 
         // Fetch rate plans and ARI overrides to enforce Stop Sell validation (bounded to stay dates)
         const ratePlansSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
@@ -652,9 +667,9 @@ export class ChannexSyncService {
                         revisionId: revisionId,
                         channexRevisionId: revisionId,
                         revisionEvent: payload.event,
-                        initialRevisionId: existingInitialRevId || (payload.event === "booking_new" ? revisionId : undefined),
-                        modifiedRevisionId: payload.event === "booking_modification" ? revisionId : (existingModifiedRevId || undefined),
-                        cancelledRevisionId: isCancelled ? revisionId : undefined,
+                        initialRevisionId: existingInitialRevId || (payload.event === "booking_new" ? revisionId : null),
+                        modifiedRevisionId: payload.event === "booking_modification" ? revisionId : (existingModifiedRevId || null),
+                        cancelledRevisionId: isCancelled ? revisionId : null,
                         isModified: payload.event === "booking_modification" || Boolean(existingModifiedRevId),
                         otaReservationId: otaReservationId,
                         channel: channelName,
@@ -709,17 +724,19 @@ export class ChannexSyncService {
                         payTransfer: roomPayTransfer,
                         status: isCancelled ? "CANCELLED" : finalStatus,
                         propertyName,
+                        currency: propertyCurrency,
                         staffName: "Channex Channel Manager",
                         note: `OTA Booking via ${channelName}. Ref: ${otaBookingId}.${isWithBreakfast ? ' [USALI Room Charge (Net of Breakfast)]' : ''} [Recon: ${revenueRecordingMode === 'net' ? 'Net-to-Hotel' : 'Gross'}] ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
                         timestamp: new Date().toISOString(),
                         isOTA: true,
                         channexRaw: {
-                            eventId: payload.event,
-                            insertedAt: payload.inserted_at
+                            eventId: payload.event || "booking",
+                            insertedAt: payload.inserted_at || new Date().toISOString()
                         }
                     };
 
-                    const entriesToAdd: any[] = [entryObject];
+                    const cleanEntry = (entry: any) => JSON.parse(JSON.stringify(entry, (_, v) => (v === undefined ? null : v)));
+                    const entriesToAdd: any[] = [cleanEntry(entryObject)];
 
                     if (isWithBreakfast && breakfastAmount > 0) {
                         const breakfastEntry = {
@@ -764,7 +781,7 @@ export class ChannexSyncService {
                             isOTA: true,
                             note: `USALI Package Allocation: Breakfast for ${adults} pax included in room package (${channelName})`,
                         };
-                        entriesToAdd.push(breakfastEntry);
+                        entriesToAdd.push(cleanEntry(breakfastEntry));
                     }
 
                     const dailyDocRef = adminDb.collection(`hotels/${hotelCode}/daily_revenue`).doc(`${hotelCode}_${dateStr}`);
@@ -772,23 +789,17 @@ export class ChannexSyncService {
 
                     if (dailyDoc.exists) {
                         const existingEntries = dailyDoc.data()?.entries || [];
-                        const filteredEntries = existingEntries.filter((e: any) => 
-                            e.bookingId !== otaBookingId && 
-                            e.channexBookingId !== booking.id &&
-                            e.voucherCode !== otaBookingId &&
-                            e.bookingId !== `${otaBookingId}-BFT` &&
-                            e.parentBookingId !== otaBookingId
-                        );
+                        const filteredEntries = existingEntries.filter((e: any) => !isMatchingBooking(e));
                         filteredEntries.push(...entriesToAdd);
 
                         await dailyDocRef.update({
-                            entries: filteredEntries,
+                            entries: cleanEntry(filteredEntries),
                             date: dateStr,
                             lastUpdated: new Date().toISOString()
                         });
                     } else {
                         await dailyDocRef.set({
-                            entries: entriesToAdd,
+                            entries: cleanEntry(entriesToAdd),
                             date: dateStr,
                             hotelId: hotelCode,
                             createdAt: new Date().toISOString()
@@ -810,7 +821,7 @@ export class ChannexSyncService {
                 status: "SUCCESS",
                 inserted_at: new Date().toISOString(),
                 entity: "ota_booking",
-                message: `${taskType}: Tamu "${guestName}" (${channelName}) | Periode: ${arrivalDate} s/d ${departureDate} | Kamar: ${primaryRoomTypeName} (${primaryRoomNumber}) | Ref: ${otaBookingId} | Total: Rp ${totalPrice.toLocaleString('id-ID')}`,
+                message: `${taskType}: Tamu "${guestName}" (${channelName}) | Periode: ${arrivalDate} s/d ${departureDate} | Kamar: ${primaryRoomTypeName} (${primaryRoomNumber}) | Ref: ${otaBookingId} | Total: ${formatCurrencyAmount(totalRecordedRevenue, propertyCurrency)} (${revenueRecordingMode.toUpperCase() === 'NET' ? 'Nett' : 'Gross'})`,
                 ota_responses: [{
                     ota: channelName,
                     status: isCancelled ? "CANCELLED" : "CONFIRMED",
@@ -852,14 +863,21 @@ export class ChannexSyncService {
             console.log(`[ChannexSync] Simulated revision ${revisionId}: ACK processed locally (skipping external Channex call).`);
         }
 
-        const totalGross = totalPrice;
+        const totalGross = totalPrice || Number(matchedOriginalBooking?.grossAmount || matchedOriginalBooking?.totalAmount || matchedOriginalBooking?.amount) || 0;
         const totalCommission = finalCommissionAmount;
         const totalPromo = finalPromoAmount;
         const totalDeductions = finalTotalDeductions;
-        const totalNetToHotel = finalNetToHotel;
-        const effectiveGuestName = guestName || matchedOriginalBooking?.guestName || "Tamu OTA";
-        const effectiveRoomName = primaryRoomTypeName || matchedOriginalBooking?.roomType || "Standard Room";
-        const effectiveTotalPrice = totalPrice || Number(matchedOriginalBooking?.grossAmount || matchedOriginalBooking?.totalAmount || matchedOriginalBooking?.amount) || 0;
+        const totalNetToHotel = finalNetToHotel || Number(matchedOriginalBooking?.netToHotel || matchedOriginalBooking?.amount) || totalGross;
+        const totalRecordedRevenue = revenueRecordingMode === "net" ? totalNetToHotel : totalGross;
+        const effectiveGuestName = (guestName && guestName !== "OTA Guest" && guestName !== "Tamu OTA")
+            ? guestName
+            : (matchedOriginalBooking?.guestName || guestName || "Tamu OTA");
+        const effectiveChannelName = (channelName && channelName.toLowerCase() !== "open channel" && channelName.toLowerCase() !== "ota" && channelName.toLowerCase() !== "ota channel")
+            ? channelName
+            : (matchedOriginalBooking?.channel || matchedOriginalBooking?.otaName || matchedOriginalBooking?.source || "OTA Channel");
+        const effectiveRoomName = (primaryRoomTypeName && primaryRoomTypeName !== "Standard Room" && primaryRoomTypeName !== "Kamar Hotel")
+            ? primaryRoomTypeName
+            : (matchedOriginalBooking?.roomType || matchedOriginalBooking?.roomTypeName || primaryRoomTypeName || "Standard Room");
 
         return {
             success: true,
@@ -872,13 +890,19 @@ export class ChannexSyncService {
                 guestName: effectiveGuestName,
                 guestPhone: guest.phone || matchedOriginalBooking?.phone || "",
                 guestEmail: guest.email || matchedOriginalBooking?.email || "",
-                channelName,
+                channelName: effectiveChannelName,
                 roomName: effectiveRoomName,
-                roomCount: booking.rooms?.length || 1,
-                arrivalDate,
-                departureDate,
-                totalPrice: effectiveTotalPrice,
-                nights,
+                roomCount: booking.rooms?.length || matchedOriginalBooking?.roomCount || 1,
+                arrivalDate: arrivalDate || matchedOriginalBooking?.checkInDate || previousStay?.arrivalDate || "-",
+                departureDate: departureDate || matchedOriginalBooking?.checkOutDate || previousStay?.departureDate || "-",
+                eta: eta || matchedOriginalBooking?.eta || "",
+                totalPrice: totalRecordedRevenue,
+                grossPrice: totalGross,
+                netToHotel: totalNetToHotel,
+                recordedRevenue: totalRecordedRevenue,
+                revenueRecordingMode: revenueRecordingMode.toUpperCase(),
+                currency: propertyCurrency,
+                nights: nights || matchedOriginalBooking?.nights || 1,
                 isCancelled,
                 isModified,
                 previousArrivalDate: previousStay?.arrivalDate,
@@ -896,7 +920,7 @@ export class ChannexSyncService {
                 isWholesalerNet: isWholesaler,
                 recordedRevenue: totalRecordedRevenue,
                 revenueRecordingMode: revenueRecordingMode.toUpperCase(),
-                currency: booking.currency || "IDR"
+                currency: propertyCurrency
             }
         };
     }
