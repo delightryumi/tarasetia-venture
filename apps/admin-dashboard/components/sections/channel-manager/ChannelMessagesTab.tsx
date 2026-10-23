@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Send, MessageSquare, CheckCheck, Clock, Search, RefreshCw, FileText, Building2 } from "lucide-react";
+import { Send, MessageSquare, CheckCheck, Clock, Search, RefreshCw, FileText, Building2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import styles from "./ChannelMessages.module.css";
 
@@ -275,6 +275,46 @@ export function ChannelMessagesTab({ hotelCode }: Props) {
                             <Send size={14} />
                             <span>{sending ? "Sending..." : "Send Reply"}</span>
                         </button>
+                    </div>
+                </div>
+            ) : threads.length === 0 ? (
+                <div className={styles.emptyState} style={{ padding: "40px 24px" }}>
+                    <div style={{ maxWidth: 460, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+                        <div style={{ width: 52, height: 52, borderRadius: 12, background: "#eff6ff", color: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <MessageSquare size={26} />
+                        </div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>
+                            Guest Messaging App Belum Aktif di Akun Channex
+                        </div>
+                        <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6 }}>
+                            Fitur ini menghubungkan pesan masuk dari tamu Booking.com, Airbnb, dan Expedia langsung ke Tara PMS. Pastikan aplikasi <b>Guest Messaging</b> telah diaktifkan di Channex App Store.
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "12px 16px", textAlign: "left", fontSize: 11.5, color: "#475569" }}>
+                            <div><b>Langkah 1:</b> Buka Channex App Store di <span style={{ fontFamily: "monospace" }}>app.channex.io/applications</span></div>
+                            <div><b>Langkah 2:</b> Klik <b>Install</b> pada aplikasi <i>Guest Messaging</i></div>
+                            <div><b>Langkah 3:</b> Hubungkan kredensial akun Airbnb / Booking.com Anda, lalu klik tombol refresh di Tara</div>
+                        </div>
+                        <a
+                            href="https://app.channex.io/applications"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                background: "#09090b",
+                                color: "#ffffff",
+                                padding: "8px 18px",
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                textDecoration: "none",
+                                marginTop: 6
+                            }}
+                        >
+                            <span>Buka Channex App Store</span>
+                            <ExternalLink size={14} />
+                        </a>
                     </div>
                 </div>
             ) : (

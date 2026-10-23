@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { channexSyncService } from "@/lib/channex/syncService";
+import { channexSyncService, getCachedHotelData } from "@/lib/channex/syncService";
 import { channexClient } from "@/lib/channex/channexClient";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { ChannexWebhookPayload } from "@/lib/channex/types";
@@ -85,23 +85,56 @@ export async function POST(req: NextRequest) {
             // If nestedPayload already has booking attributes (or data)
             if (!payload.booking && (nestedPayload.rooms || nestedPayload.customer || nestedPayload.attributes)) {
                 const attrs = nestedPayload.attributes || nestedPayload;
+                const realBookingUuid = attrs.booking_id || 
+                    attrs.bookingId ||
+                    nestedPayload.relationships?.booking?.data?.id || 
+                    (payload as any)?.relationships?.booking?.data?.id ||
+                    nestedPayload.booking_id ||
+                    (attrs.id && attrs.id !== revisionId ? attrs.id : undefined);
+
                 payload.booking = {
-                    id: attrs.id || nestedPayload.id || nestedPayload.booking_id || revisionId,
+                    id: realBookingUuid || attrs.id || nestedPayload.id || revisionId,
+                    booking_id: realBookingUuid,
                     property_id: payload.property_id || attrs.property_id,
                     ...attrs
                 };
+            } else if (payload.booking) {
+                const attrs = (payload.booking as any).attributes || payload.booking;
+                const realBookingUuid = attrs.booking_id || 
+                    attrs.bookingId ||
+                    (payload.booking as any).booking_id ||
+                    (payload.booking as any).bookingId ||
+                    nestedPayload.relationships?.booking?.data?.id || 
+                    (payload as any)?.relationships?.booking?.data?.id ||
+                    (payload.booking as any)?.relationships?.booking?.data?.id ||
+                    nestedPayload.booking_id ||
+                    ((attrs.id && attrs.id !== revisionId) ? attrs.id : undefined);
+
+                if (realBookingUuid) {
+                    payload.booking.booking_id = realBookingUuid;
+                    payload.booking.id = realBookingUuid;
+                }
             }
 
-            // Hydrate authoritative full booking payload via GET /booking_revisions/:id if payload.booking is missing or incomplete
+            // Hydrate authoritative full booking payload via GET /booking_revisions/:id if payload.booking is missing, has no rooms, or is missing permanent booking_id
             let resolvedHotel = propertyId ? await channexSyncService.findHotelCodeByChannexPropertyId(propertyId) : null;
-            if (revisionId && (!payload.booking || !payload.booking.rooms || payload.booking.rooms.length === 0)) {
+            const needsHydration = Boolean(
+                revisionId && (
+                    !payload.booking || 
+                    !payload.booking.rooms || 
+                    payload.booking.rooms.length === 0 ||
+                    !payload.booking.booking_id ||
+                    payload.booking.id === revisionId
+                )
+            );
+
+            if (needsHydration) {
                 try {
                     let customApiKey = process.env.CHANNEX_API_KEY;
                     let env: "staging" | "production" = (process.env.CHANNEX_ENV as any) || "staging";
 
                     if (resolvedHotel) {
-                        const hDoc = await adminDb.collection("hotels").doc(resolvedHotel).get();
-                        const hData = hDoc.data();
+                        const hData = await getCachedHotelData(resolvedHotel);
                         customApiKey = hData?.channelManager?.apiKey || customApiKey;
                         env = hData?.channelManager?.environment || hData?.channelManager?.env || env;
                     } else if (!customApiKey) {
@@ -125,8 +158,15 @@ export async function POST(req: NextRequest) {
                     if (bookingAttrs) {
                         payload.property_id = payload.property_id || bookingAttrs.property_id || revData?.relationships?.property?.data?.id;
                         payload.booking_revision_id = revisionId;
+                        const realBookingUuid = bookingAttrs.booking_id || 
+                            revData?.relationships?.booking?.data?.id || 
+                            bookingAttrs.bookingId ||
+                            nestedPayload.booking_id ||
+                            (bookingAttrs.id && bookingAttrs.id !== revisionId ? bookingAttrs.id : undefined);
+
                         payload.booking = {
-                            id: bookingAttrs.id || nestedPayload.booking_id || revisionId,
+                            id: realBookingUuid || bookingAttrs.id || revisionId,
+                            booking_id: realBookingUuid,
                             property_id: payload.property_id,
                             ...bookingAttrs
                         };
@@ -135,11 +175,19 @@ export async function POST(req: NextRequest) {
                             resolvedHotel = await channexSyncService.findHotelCodeByChannexPropertyId(payload.property_id);
                         }
 
-                        console.log(`[Channex Webhook Hydration] Successfully hydrated revision ${revisionId} for Guest: ${(bookingAttrs as any)?.customer?.name}`);
+                        console.log(`[Channex Webhook Hydration] Successfully hydrated revision ${revisionId} (Booking UUID: ${realBookingUuid}) for Guest: ${(bookingAttrs as any)?.customer?.name}`);
                     }
                 } catch (hydrErr: any) {
                     console.warn(`[Channex Webhook Hydration Warning] Could not fetch revision ${revisionId}:`, hydrErr.message);
                 }
+            }
+
+            // Normalize event name based on booking status
+            const bookingStatus = payload.booking?.status || (payload.booking as any)?.attributes?.status || nestedPayload.status || nestedPayload.attributes?.status;
+            if (bookingStatus === "cancelled" && payload.event !== "booking_cancellation" && payload.event !== "booking_cancelled") {
+                payload.event = "booking_cancellation";
+            } else if (bookingStatus === "modified" && payload.event !== "booking_modification" && payload.event !== "booking_modified") {
+                payload.event = "booking_modification";
             }
 
             const result = await channexSyncService.processIncomingBookingWebhook(payload, resolvedHotel || undefined);

@@ -23,17 +23,16 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, onSelect }: BookingCardProps) {
-    const [copied, setCopied] = React.useState(false);
+    const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
     const { formatCurrency } = useCurrency();
 
-    const handleCopyVoucher = (e: React.MouseEvent) => {
+    const handleCopy = (e: React.MouseEvent, text: string, key: string, label: string) => {
         e.stopPropagation();
-        const codeToCopy = booking.voucherCode || booking.reservationId || booking.bookingId;
-        if (!codeToCopy) return;
-        navigator.clipboard.writeText(codeToCopy);
-        setCopied(true);
-        toast.success(`Voucher disalin: ${codeToCopy}`);
-        setTimeout(() => setCopied(false), 2000);
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedKey(key);
+        toast.success(`${label} disalin: ${text}`);
+        setTimeout(() => setCopiedKey(null), 2000);
     };
 
     const formatDateDisplay = (dateStr: string) => {
@@ -108,23 +107,47 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
                 </div>
             </div>
 
-            {/* Guest Name & Voucher */}
+            {/* Guest Name & Reservation IDs */}
             <div className={s.guestSection}>
                 <div className={`${s.guestName} ${booking.isCancelled ? s.guestNameCancelled : ""}`}>
                     {getSafeDisplay(booking.guestName, "Tamu")}
                 </div>
                 
-                <div 
-                    className={s.voucherBar} 
-                    onClick={handleCopyVoucher}
-                    title="Klik untuk menyalin nomor voucher"
-                >
-                    <span>{getSafeDisplay(booking.voucherCode || booking.reservationId, "-")}</span>
-                    {copied ? (
-                        <Check size={11} weight="bold" color="#16a34a" />
-                    ) : (
-                        <Copy size={11} weight="bold" />
-                    )}
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 4 }}>
+                    {/* Primary Reservation ID (e.g. BDC-TEST) */}
+                    <div 
+                        className={s.voucherBar} 
+                        onClick={(e) => handleCopy(e, booking.reservationId || booking.voucherCode || booking.bookingId, "res", "Reservation ID")}
+                        title="Klik untuk menyalin Reservation ID"
+                    >
+                        <span style={{ fontSize: 9.5, opacity: 0.7, fontWeight: 700 }}>RES:</span>
+                        <span style={{ fontWeight: 700, color: "#1e293b" }}>
+                            {getSafeDisplay(booking.reservationId || booking.voucherCode || booking.bookingId, "-")}
+                        </span>
+                        {copiedKey === "res" ? (
+                            <Check size={11} weight="bold" color="#16a34a" />
+                        ) : (
+                            <Copy size={11} weight="bold" />
+                        )}
+                    </div>
+
+                    {/* OTA Reservation ID (e.g. TEST) if different from Reservation ID */}
+                    {booking.otaReservationId && booking.otaReservationId !== (booking.reservationId || booking.voucherCode) ? (
+                        <div 
+                            className={s.voucherBar}
+                            onClick={(e) => handleCopy(e, booking.otaReservationId, "ota", "OTA Reservation ID")}
+                            title="Klik untuk menyalin OTA Reservation ID"
+                            style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
+                        >
+                            <span style={{ fontSize: 9.5, opacity: 0.7, fontWeight: 700 }}>OTA:</span>
+                            <span>{booking.otaReservationId}</span>
+                            {copiedKey === "ota" ? (
+                                <Check size={11} weight="bold" color="#16a34a" />
+                            ) : (
+                                <Copy size={11} weight="bold" />
+                            )}
+                        </div>
+                    ) : null}
                 </div>
             </div>
 

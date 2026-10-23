@@ -102,8 +102,10 @@ export async function POST(req: NextRequest) {
         }
 
         if (type === "delta") {
-            const { delta } = body;
-            const result = await channexSyncService.pushDeltaBatch(hotelCode, delta || {});
+            const { delta, immediate } = body;
+            const result = immediate
+                ? await channexSyncService.pushDeltaBatch(hotelCode, delta || {})
+                : await channexSyncService.enqueueDebouncedDelta(hotelCode, delta || {}, false);
             const deltaTaskIds = result.taskIds || [];
             const primaryDeltaTaskId = deltaTaskIds[0] || result.restrictionsTaskId || result.availabilityTaskId || `delta-${Date.now()}`;
 

@@ -600,6 +600,22 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 }
             }
 
+            // Immediately trigger automatic availability recalculation & delta sync to Channex for all affected stay dates
+            const allTouchedDates = Array.from(new Set([...(sweepDates || []), ...(newDates || [])])).filter(Boolean).sort();
+            if (allTouchedDates.length > 0 && formData.type === "accommodation") {
+                fetch("/api/channex/sync-ari", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hotelCode: hotelId,
+                        startDate: allTouchedDates[0],
+                        endDate: allTouchedDates[allTouchedDates.length - 1],
+                        type: "availability",
+                        user: user?.email ? `${user.displayName || user.name || "Operator"} (${user.email})` : (user?.displayName || user?.name || "Operator")
+                    })
+                }).catch(err => console.warn("[Update Booking Channex Sync Warning]:", err));
+            }
+
             toast.success("Transaction updated successfully");
             if (onSave) onSave();
             onClose();

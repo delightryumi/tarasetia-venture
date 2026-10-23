@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { resolveHotelFromHost } from "@/lib/hotelResolver";
 
-export default function GenericBookRedirect() {
+function BookRedirectContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [resolving, setResolving] = useState(true);
@@ -37,5 +37,22 @@ export default function GenericBookRedirect() {
                 </span>
             </div>
         </div>
+    );
+}
+
+export default function GenericBookRedirect() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#0d0f12] text-neutral-300 flex items-center justify-center p-6">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-xs uppercase tracking-[0.3em] text-neutral-400 font-light">
+                        Membuka Sistem Reservasi Resmi...
+                    </span>
+                </div>
+            </div>
+        }>
+            <BookRedirectContent />
+        </Suspense>
     );
 }

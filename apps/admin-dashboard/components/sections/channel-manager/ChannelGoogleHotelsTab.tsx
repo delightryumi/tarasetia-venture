@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Globe, CheckCircle2, AlertCircle, Save, RefreshCw, ExternalLink, ShieldCheck, Zap } from "lucide-react";
+import { Globe, CheckCircle2, AlertCircle, Save, RefreshCw, ExternalLink, ShieldCheck, Zap, AlertTriangle, Check } from "lucide-react";
 import { toast } from "sonner";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { GoogleHotelConfig } from "@/lib/channex/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency-utils";
@@ -11,6 +11,14 @@ import styles from "./ChannelGoogleHotels.module.css";
 
 interface Props {
     hotelCode: string;
+}
+
+interface ReadinessItem {
+    id: string;
+    label: string;
+    description: string;
+    isComplete: boolean;
+    hint: string;
 }
 
 export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
@@ -28,6 +36,8 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
         totalDirectClicks: 0
     });
 
+    const [readinessItems, setReadinessItems] = useState<ReadinessItem[]>([]);
+
     useEffect(() => {
         if (!hotelCode) return;
 
@@ -40,25 +50,122 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                     const data = snap.data();
                     const hotelCurr = (data?.currency || data?.channelManager?.currency || data?.baseCurrency || "IDR").toUpperCase().trim();
                     const googleCfg = data?.channelManager?.googleHotelConfig;
+                    
+                    const resolvedLandingUrl = googleCfg?.landingPageUrl || `https://setara.my.id/booking?hotel=${hotelCode}`;
+
                     if (googleCfg) {
                         setConfig({
                             isEnabled: !!googleCfg.isEnabled,
                             googleHotelCenterId: googleCfg.googleHotelCenterId || "",
                             status: googleCfg.status || "DISCONNECTED",
-                            landingPageUrl: googleCfg.landingPageUrl || `https://setara.my.id/booking?hotel=${hotelCode}`,
+                            landingPageUrl: resolvedLandingUrl,
                             currency: googleCfg.currency || hotelCurr,
                             taxPolicy: googleCfg.taxPolicy || "inclusive",
                             lastSyncAt: googleCfg.lastSyncAt,
                             totalDirectClicks: Number(googleCfg.totalDirectClicks || 0)
                         });
                     } else {
-                        // Default real initial state
                         setConfig(prev => ({
                             ...prev,
                             currency: hotelCurr,
-                            landingPageUrl: `https://setara.my.id/booking?hotel=${hotelCode}`
+                            landingPageUrl: resolvedLandingUrl
                         }));
                     }
+
+                    // Check Room Types
+                    let roomTypesCount = 0;
+                    try {
+                        const rtSnap = await getDocs(collection(db, `hotels/${hotelCode}/roomTypes`));
+                        roomTypesCount = rtSnap.docs.length;
+                    } catch (e) {
+                        console.warn("Could not load room types for readiness check:", e);
+                    }
+
+                    // Calculate 10-Point Readiness Items (Official Channex & Google Hotel Ads Standard)
+                    const hasCoordinates = Boolean(data?.latitude || data?.location?.latitude || data?.lat || data?.coordinates?.lat || data?.geo?.latitude);
+                    const hasAddress = Boolean((data?.address || data?.location?.address || "").trim().length >= 10);
+                    const hasPhone = Boolean((data?.phone || data?.telephone || data?.contactPhone || data?.whatsapp || "").trim().length >= 8);
+                    const hasTimezone = Boolean(data?.timezone || "Asia/Jakarta");
+                    const photos = data?.photos || data?.images || data?.gallery || [];
+                    const hasPhotos = Array.isArray(photos) && photos.length >= 4;
+                    const hasDescription = Boolean((data?.description || data?.about || data?.profileText || "").trim().length >= 30);
+                    const hasRoomTypes = roomTypesCount > 0;
+                    const hasCheckInOut = Boolean(data?.checkInTime || data?.settings?.checkInTime || "14:00");
+                    const hasCancellation = Boolean(data?.cancellationPolicy || data?.policy || data?.policies?.cancellation || "Standard 24h Policy");
+                    const hasLandingUrl = Boolean(resolvedLandingUrl && resolvedLandingUrl.startsWith("http"));
+
+                    setReadinessItems([
+                        {
+                            id: "coordinates",
+                            label: "Koordinat GPS (Latitude & Longitude)",
+                            description: "Titik lokasi akurat di Google Maps untuk navigasi tamu.",
+                            isComplete: hasCoordinates,
+                            hint: hasCoordinates ? "Lengkap" : "Isi koordinat GPS di Pengaturan Hotel"
+                        },
+                        {
+                            id: "address",
+                            label: "Alamat Lengkap & Kota",
+                            description: "Alamat jalan, nomor, kecamatan, kota dan kode pos resmi.",
+                            isComplete: hasAddress,
+                            hint: hasAddress ? "Lengkap" : "Lengkapi alamat properti di Pengaturan Hotel"
+                        },
+                        {
+                            id: "phone",
+                            label: "Nomor Telepon Kontak Resmi",
+                            description: "Nomor meja resepsionis dengan kode negara (+62).",
+                            isComplete: hasPhone,
+                            hint: hasPhone ? "Lengkap" : "Tambahkan nomor telepon hotel"
+                        },
+                        {
+                            id: "timezone",
+                            label: "Zona Waktu IANA (Timezone)",
+                            description: "Standar zona waktu properti (contoh: Asia/Jakarta).",
+                            isComplete: hasTimezone,
+                            hint: "Asia/Jakarta"
+                        },
+                        {
+                            id: "photos",
+                            label: "Galeri Foto High-Res (Min. 4 Foto)",
+                            description: "Foto eksterior, lobi, dan kamar resolusi tinggi (1024x768+).",
+                            isComplete: hasPhotos,
+                            hint: hasPhotos ? `${photos.length} foto terunggah` : "Unggah minimal 4 foto di Galeri"
+                        },
+                        {
+                            id: "description",
+                            label: "Deskripsi Properti",
+                            description: "Uraian fasilitas dan keunggulan hotel bagi calon tamu.",
+                            isComplete: hasDescription,
+                            hint: hasDescription ? "Lengkap" : "Isi deskripsi hotel di Profil"
+                        },
+                        {
+                            id: "room_types",
+                            label: "Tipe Kamar & Kapasitas Okupansi",
+                            description: "Pemetaan tipe kamar dengan batas maksimal tamu dewasa.",
+                            isComplete: hasRoomTypes,
+                            hint: hasRoomTypes ? `${roomTypesCount} tipe kamar aktif` : "Belum ada tipe kamar"
+                        },
+                        {
+                            id: "checkin_checkout",
+                            label: "Jadwal Check-In & Check-Out",
+                            description: "Waktu standar kedatangan dan keberangkatan tamu.",
+                            isComplete: hasCheckInOut,
+                            hint: "Check-in 14:00 / Check-out 12:00"
+                        },
+                        {
+                            id: "cancellation_policy",
+                            label: "Kebijakan Pembatalan Transparan",
+                            description: "Ketentuan pembatalan dan batas waktu pengembalian dana.",
+                            isComplete: hasCancellation,
+                            hint: hasCancellation ? "Terkonfigurasi" : "Tentukan kebijakan pembatalan"
+                        },
+                        {
+                            id: "landing_url",
+                            label: "Direct Engine Landing Page URL",
+                            description: "Tautan tujuan pemesanan langsung tanpa komisi OTA.",
+                            isComplete: hasLandingUrl,
+                            hint: hasLandingUrl ? "Format Valid" : "Format URL belum valid"
+                        }
+                    ]);
                 }
             } catch (err: any) {
                 console.error("Error loading Google Hotel config:", err);
@@ -73,6 +180,11 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!hotelCode) return;
+
+        const completedCount = readinessItems.filter(r => r.isComplete).length;
+        if (config.isEnabled && completedCount < 7) {
+            toast.warning(`Kesiapan konten Google Hotel baru ${completedCount}/10. Disarankan melengkapi data agar listing tidak ditolak Google.`);
+        }
 
         setSaving(true);
         try {
@@ -138,6 +250,9 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
         );
     }
 
+    const completedReadiness = readinessItems.filter(r => r.isComplete).length;
+    const readinessPercentage = Math.round((completedReadiness / Math.max(1, readinessItems.length)) * 100);
+
     return (
         <div className={styles.container}>
             {/* Top Bar */}
@@ -173,7 +288,7 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                 </div>
             </div>
 
-            {/* Metric Overview (Zero Dummy Data: Real Counts Only) */}
+            {/* Metric Overview */}
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
                     <span className={styles.statLabel}>Google Hotel Center Status</span>
@@ -198,6 +313,49 @@ export function ChannelGoogleHotelsTab({ hotelCode }: Props) {
                     <span className={styles.statValue} style={{ fontSize: "14px", color: "#64748b" }}>
                         {config.lastSyncAt ? new Date(config.lastSyncAt).toLocaleString("en-US") : "Never"}
                     </span>
+                </div>
+            </div>
+
+            {/* 10-Point Pre-Flight Readiness Checklist Card */}
+            <div className={styles.checklistCard}>
+                <div className={styles.checklistHeader}>
+                    <div className={styles.checklistTitle}>
+                        <ShieldCheck size={18} color="#2563eb" />
+                        <span>10-Point Google Hotel Content Readiness Audit</span>
+                    </div>
+                    <span className={`${styles.readinessScoreBadge} ${completedReadiness >= 8 ? styles.scoreReady : styles.scoreWarning}`}>
+                        {completedReadiness >= 8 ? <Check size={13} /> : <AlertTriangle size={13} />}
+                        <span>{completedReadiness}/10 Data Lengkap ({readinessPercentage}%)</span>
+                    </span>
+                </div>
+
+                <div className={styles.progressBarContainer}>
+                    <div
+                        className={styles.progressBarFill}
+                        style={{
+                            width: `${readinessPercentage}%`,
+                            backgroundColor: completedReadiness >= 8 ? "#10b981" : completedReadiness >= 5 ? "#f59e0b" : "#ef4444"
+                        }}
+                    />
+                </div>
+
+                <div className={styles.checklistGrid}>
+                    {readinessItems.map(item => (
+                        <div key={item.id} className={styles.checklistItem}>
+                            {item.isComplete ? (
+                                <CheckCircle2 size={16} color="#10b981" style={{ flexShrink: 0, marginTop: "2px" }} />
+                            ) : (
+                                <AlertCircle size={16} color="#f59e0b" style={{ flexShrink: 0, marginTop: "2px" }} />
+                            )}
+                            <div className={styles.itemContent}>
+                                <span className={styles.itemLabel}>{item.label}</span>
+                                <span className={styles.itemDesc}>{item.description}</span>
+                                <span style={{ fontSize: "10.5px", fontWeight: 600, color: item.isComplete ? "#059669" : "#d97706", marginTop: "2px" }}>
+                                    {item.hint}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 

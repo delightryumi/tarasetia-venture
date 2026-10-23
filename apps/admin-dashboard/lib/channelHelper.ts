@@ -167,22 +167,45 @@ export function resolveBookingIdentifiers(item: any): ResolvedBookingIdentifiers
   const channel = resolveChannelName(item);
   const logo = getChannelLogo(channel);
 
-  // Extract Channex UUID
-  let bookingId = item.bookingId || item.channexBookingId || item.id || "";
-  let reservationId = item.reservationId || item.channelBookingId || item.unique_id || "";
-  let revisionId = item.revisionId || item.channexRevisionId || item.booking_revision_id || "";
-  let otaReservationId = item.otaReservationId || item.ota_reservation_code || item.voucherCode || "";
-
-  // If bookingId looks like a Channex UUID (8-4-4-4-12 format)
+  // Extract Channex identifiers
   const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
-  if (isUUID(bookingId)) {
-    // Correctly structured Channex UUID
-  } else if (isUUID(item.channexBookingId)) {
-    bookingId = item.channexBookingId;
+  let revisionId = item.revisionId || item.channexRevisionId || item.booking_revision_id || item.revision_id || "";
+  let reservationId = item.reservationId || item.channelBookingId || item.channel_booking_id || item.unique_id || "";
+  let otaReservationId = item.otaReservationId || item.ota_reservation_code || item.voucherCode || "";
+
+  // Extract Channex Booking UUID (distinct from revision ID)
+  let rawBookingId = item.booking_id || 
+    item.bookingId || 
+    item.channexBookingId || 
+    item.channex_booking_id || 
+    item.channexRaw?.booking_id || 
+    item.channexRaw?.bookingId ||
+    item.id || 
+    "";
+
+  // If rawBookingId is identical to revisionId, check if item has a separate booking_id or channex booking UUID
+  let bookingId = rawBookingId;
+  if (bookingId && revisionId && bookingId === revisionId) {
+    if (item.booking_id && item.booking_id !== revisionId) {
+      bookingId = item.booking_id;
+    } else if (item.channexRaw?.booking_id && item.channexRaw?.booking_id !== revisionId) {
+      bookingId = item.channexRaw.booking_id;
+    } else if (item.channexBookingId && item.channexBookingId !== revisionId) {
+      bookingId = item.channexBookingId;
+    }
   }
 
-  // Ensure reservationId is present
+  // If item has a valid UUID in channexBookingId or booking_id, prefer it
+  if (!isUUID(bookingId)) {
+    if (isUUID(item.channexBookingId)) {
+      bookingId = item.channexBookingId;
+    } else if (isUUID(item.booking_id)) {
+      bookingId = item.booking_id;
+    }
+  }
+
+  // Ensure reservationId is present (e.g. BDC-TEST or TRK-MTR-593169)
   if (!reservationId) {
     if (item.bookingId && !isUUID(item.bookingId)) {
       reservationId = item.bookingId;

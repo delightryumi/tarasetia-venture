@@ -281,3 +281,107 @@
     color: #52525b;
     line-height: 1.5;
 }
+
+/* 10-Point Pre-Flight Readiness Checklist Styles */
+.checklistCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.checklistHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.checklistTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.readinessScoreBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.scoreReady {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.scoreWarning {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.progressBarContainer {
+    width: 100%;
+    height: 8px;
+    background: #f4f4f5;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progressBarFill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.checklistGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
+}
+
+.checklistItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #fafafa;
+    border: 1px solid #f4f4f5;
+    border-radius: 6px;
+    transition: border-color 0.15s ease;
+}
+
+.checklistItem:hover {
+    border-color: #e4e4e7;
+}
+
+.itemContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.itemLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: #18181b;
+}
+
+.itemDesc {
+    font-size: 11px;
+    color: #71717a;
+}
+

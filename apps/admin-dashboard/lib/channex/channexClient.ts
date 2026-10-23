@@ -653,6 +653,55 @@ export class ChannexClient {
             body: JSON.stringify({ channel: { is_active: false } })
         }, customApiKey, environment);
     }
+
+    // ==========================================
+    // 8. BOOKING CRS & TWO-WAY RESERVATIONS API
+    // Official Channex Specification: POST /api/v1/bookings
+    // ==========================================
+
+    /**
+     * Create a CRS / Walk-In reservation directly in Channex
+     */
+    async createBooking(bookingPayload: any, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any; meta?: any }>("/bookings", {
+            method: "POST",
+            body: JSON.stringify({ booking: bookingPayload })
+        }, customApiKey, environment);
+    }
+
+    /**
+     * Update an existing booking in Channex
+     */
+    async updateBooking(bookingId: string, bookingPayload: any, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any; meta?: any }>(`/bookings/${bookingId}`, {
+            method: "PUT",
+            body: JSON.stringify({ booking: bookingPayload })
+        }, customApiKey, environment);
+    }
+
+    /**
+     * Cancel an existing booking in Channex
+     */
+    async cancelBooking(bookingId: string, payload?: any, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any; meta?: any }>(`/bookings/${bookingId}/cancel`, {
+            method: "POST",
+            body: JSON.stringify(payload || {})
+        }, customApiKey, environment);
+    }
+
+    /**
+     * Fetch a specific booking by Channex UUID
+     */
+    async getBooking(bookingId: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>(`/bookings/${bookingId}`, { method: "GET" }, customApiKey, environment);
+    }
+
+    /**
+     * Fetch all revisions associated with a booking
+     */
+    async getBookingRevisions(bookingId: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any[] }>(`/booking_revisions?filter[booking_id]=${bookingId}`, { method: "GET" }, customApiKey, environment);
+    }
 }
 
 // Singleton helper instance

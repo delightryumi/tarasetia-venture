@@ -162,10 +162,13 @@ export function useBookings({
                 }
 
                 const canonicalId = (
-                    entry.bookingId ||
                     entry.reservationId ||
+                    ids.reservationId ||
                     entry.otaReservationId ||
-                    entry.channexBookingId ||
+                    ids.otaReservationId ||
+                    (ids.bookingId && ids.bookingId !== ids.revisionId ? ids.bookingId : "") ||
+                    (entry.bookingId && entry.bookingId !== entry.revisionId ? entry.bookingId : "") ||
+                    (entry.channexBookingId && entry.channexBookingId !== entry.revisionId ? entry.channexBookingId : "") ||
                     entry.voucherCode ||
                     (guestName && checkInDate ? `${guestName.toLowerCase()}_${checkInDate}` : "") ||
                     `${docId}_${entry.timestamp || Math.random()}`
@@ -206,17 +209,44 @@ export function useBookings({
                 const currentGross = Number(entry.grossAmount ?? entry.totalPrice ?? currentAmount);
                 const currentNet = Number(entry.netToHotel ?? currentAmount);
 
+                const initialRevId = entry.initialRevisionId || 
+                    (!entry.isModified && !isEntryCancelled ? (entry.revisionId || ids.revisionId) : undefined) ||
+                    entry.revisionId || 
+                    ids.revisionId;
+
+                const modifiedRevId = entry.modifiedRevisionId || 
+                    ((entry.isModified || entry.revisionEvent === "booking_modification" || entry.channexRaw?.eventId === "booking_modification") 
+                        ? (entry.revisionId || ids.revisionId) 
+                        : undefined);
+
+                const cancelledRevId = entry.cancelledRevisionId || 
+                    (isEntryCancelled ? (entry.revisionId || ids.revisionId) : undefined);
+
+                let safeBookingId = ids.bookingId;
+                if (safeBookingId === ids.revisionId && entry.channexBookingId && entry.channexBookingId !== ids.revisionId) {
+                    safeBookingId = entry.channexBookingId;
+                }
+                if (safeBookingId === ids.revisionId && entry.booking_id && entry.booking_id !== ids.revisionId) {
+                    safeBookingId = entry.booking_id;
+                }
+                if (safeBookingId === ids.revisionId && entry.bookingId && entry.bookingId !== ids.revisionId) {
+                    safeBookingId = entry.bookingId;
+                }
+                if (safeBookingId === ids.revisionId && entry.channexRaw?.booking_id && entry.channexRaw?.booking_id !== ids.revisionId) {
+                    safeBookingId = entry.channexRaw.booking_id;
+                }
+
                 if (!bookingsMap.has(canonicalId)) {
                     // Create new consolidated booking record
                     bookingsMap.set(canonicalId, {
                         id: canonicalId,
-                        bookingId: ids.bookingId || canonicalId,
-                        reservationId: ids.reservationId || canonicalId,
-                        otaReservationId: ids.otaReservationId || entry.voucherCode || canonicalId,
+                        bookingId: safeBookingId || ids.bookingId || canonicalId,
+                        reservationId: ids.reservationId || entry.reservationId || canonicalId,
+                        otaReservationId: ids.otaReservationId || entry.otaReservationId || entry.voucherCode || canonicalId,
                         revisionId: ids.revisionId || entry.revisionId || "",
-                        initialRevisionId: entry.initialRevisionId || (!entry.isModified && !isEntryCancelled && (entry.revisionId || ids.revisionId)) || undefined,
-                        modifiedRevisionId: entry.modifiedRevisionId || (entry.isModified || entry.revisionEvent === "booking_modification" || entry.channexRaw?.eventId === "booking_modification" ? (entry.revisionId || ids.revisionId) : undefined),
-                        cancelledRevisionId: entry.cancelledRevisionId || (isEntryCancelled ? (entry.revisionId || ids.revisionId) : undefined),
+                        initialRevisionId: initialRevId,
+                        modifiedRevisionId: modifiedRevId,
+                        cancelledRevisionId: cancelledRevId,
                         voucherCode: entry.voucherCode || ids.otaReservationId || ids.reservationId || canonicalId,
 
                         guestName,
@@ -304,11 +334,24 @@ export function useBookings({
                     if (entry.initialRevisionId && !existing.initialRevisionId) {
                         existing.initialRevisionId = entry.initialRevisionId;
                     }
+                    if (!existing.initialRevisionId) {
+                        existing.initialRevisionId = initialRevId || existing.revisionId;
+                    }
+
                     if (entry.modifiedRevisionId && !existing.modifiedRevisionId) {
                         existing.modifiedRevisionId = entry.modifiedRevisionId;
                     }
                     if (entry.cancelledRevisionId && !existing.cancelledRevisionId) {
                         existing.cancelledRevisionId = entry.cancelledRevisionId;
+                    }
+
+                    // Preserve and heal true Channex booking ID if existing was equal to revisionId
+                    if (existing.bookingId === existing.revisionId && safeBookingId && safeBookingId !== existing.revisionId) {
+                        existing.bookingId = safeBookingId;
+                    } else if (existing.bookingId === existing.revisionId && ids.bookingId && ids.bookingId !== ids.revisionId) {
+                        existing.bookingId = ids.bookingId;
+                    } else if (existing.bookingId === existing.revisionId && entry.channexBookingId && entry.channexBookingId !== existing.revisionId) {
+                        existing.bookingId = entry.channexBookingId;
                     }
 
                     const isEntryModified = Boolean(

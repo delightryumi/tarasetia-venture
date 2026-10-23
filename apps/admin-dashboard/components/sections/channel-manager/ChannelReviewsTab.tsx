@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Star, MessageSquare, Reply, ThumbsUp, RefreshCw, CheckCircle2, ShieldCheck, Filter } from "lucide-react";
+import { Star, MessageSquare, Reply, ThumbsUp, RefreshCw, CheckCircle2, ShieldCheck, Filter, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import styles from "./ChannelReviews.module.css";
 
@@ -307,6 +307,57 @@ export function ChannelReviewsTab({ hotelCode }: Props) {
                         )}
                     </div>
                 ))}
+
+                {filteredReviews.length === 0 && (
+                    <div style={{
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        padding: "48px 24px",
+                        textAlign: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "14px",
+                        margin: "12px 0"
+                    }}>
+                        <div style={{ width: 52, height: 52, borderRadius: 12, background: "#fef3c7", color: "#d97706", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Star size={26} />
+                        </div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>
+                            Belum Ada Ulasan Masuk atau Aplikasi Reviews Belum Terpasang
+                        </div>
+                        <div style={{ fontSize: 12, color: "#64748b", maxWidth: 480, lineHeight: 1.6 }}>
+                            Modul ini mengumpulkan ulasan dan rating tamu dari Booking.com, Agoda, dan Expedia ke satu dashboard terpusat serta memungkinkan staf merespons ulasan langsung dari Tara.
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 480, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "12px 16px", textAlign: "left", fontSize: 11.5, color: "#475569" }}>
+                            <div><b>Langkah 1:</b> Masuk ke Channex App Store di <span style={{ fontFamily: "monospace" }}>app.channex.io/applications</span></div>
+                            <div><b>Langkah 2:</b> Aktifkan aplikasi <b>OTA Reviews</b> pada properti Anda</div>
+                            <div><b>Langkah 3:</b> Ulasan tamu dari OTA akan otomatis disinkronkan ke My Tara</div>
+                        </div>
+                        <a
+                            href="https://app.channex.io/applications"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                background: "#09090b",
+                                color: "#ffffff",
+                                padding: "8px 18px",
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                textDecoration: "none",
+                                marginTop: 6
+                            }}
+                        >
+                            <span>Buka Channex App Store</span>
+                            <ExternalLink size={14} />
+                        </a>
+                    </div>
+                )}
             </div>
         </div>
     );

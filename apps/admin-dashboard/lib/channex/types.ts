@@ -326,9 +326,15 @@ export interface OtaPromotionConfig {
     daysAdvance?: number;
 }
 
+export type PciVaultProvider = "vaultera" | "pci_booking" | "tokenex" | "stripe";
+
 export interface StripeTokenizationConfig {
     isEnabled: boolean;
+    provider?: PciVaultProvider;
     stripePublishableKey?: string;
+    vaultApiKey?: string;
+    vaultEndpoint?: string;
+    tokenizationMode?: "headless_proxy" | "hosted_iframe";
     accountStatus: "CONNECTED" | "NOT_CONFIGURED" | "RESTRICTED";
     autoPreAuthOnBooking: boolean;
     autoCaptureOnCheckin: boolean;

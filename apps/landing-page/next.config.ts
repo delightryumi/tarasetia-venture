@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: process.platform === "win32" ? undefined : "standalone",
   eslint: {
     ignoreDuringBuilds: true,
   },

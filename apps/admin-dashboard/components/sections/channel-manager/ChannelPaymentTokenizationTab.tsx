@@ -18,11 +18,15 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
 
     const [config, setConfig] = useState<StripeTokenizationConfig>({
         isEnabled: false,
+        provider: "vaultera",
         stripePublishableKey: "",
+        vaultApiKey: "",
+        vaultEndpoint: "https://proxy.vaultera.com/v1/tokens",
+        tokenizationMode: "headless_proxy",
         accountStatus: "NOT_CONFIGURED",
         autoPreAuthOnBooking: true,
         autoCaptureOnCheckin: false,
-        pciComplianceLevel: "PCI-DSS Level 1 (Encrypted Vault)",
+        pciComplianceLevel: "PCI-DSS Level 1 (Encrypted Token Vault)",
         lastTokenizedAt: undefined
     });
 
@@ -38,13 +42,18 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                     const data = snap.data();
                     const payCfg = data?.channelManager?.stripeTokenizationConfig;
                     if (payCfg) {
+                        const hasKeys = Boolean(payCfg.stripePublishableKey || payCfg.vaultApiKey);
                         setConfig({
                             isEnabled: !!payCfg.isEnabled,
+                            provider: payCfg.provider || (payCfg.stripePublishableKey ? "stripe" : "vaultera"),
                             stripePublishableKey: payCfg.stripePublishableKey || "",
-                            accountStatus: payCfg.stripePublishableKey ? "CONNECTED" : "NOT_CONFIGURED",
+                            vaultApiKey: payCfg.vaultApiKey || "",
+                            vaultEndpoint: payCfg.vaultEndpoint || "https://proxy.vaultera.com/v1/tokens",
+                            tokenizationMode: payCfg.tokenizationMode || "headless_proxy",
+                            accountStatus: hasKeys && payCfg.isEnabled ? "CONNECTED" : "NOT_CONFIGURED",
                             autoPreAuthOnBooking: payCfg.autoPreAuthOnBooking ?? true,
                             autoCaptureOnCheckin: !!payCfg.autoCaptureOnCheckin,
-                            pciComplianceLevel: payCfg.pciComplianceLevel || "PCI-DSS Level 1 (Encrypted Vault)",
+                            pciComplianceLevel: payCfg.pciComplianceLevel || "PCI-DSS Level 1 (Encrypted Token Vault)",
                             lastTokenizedAt: payCfg.lastTokenizedAt
                         });
                     }
@@ -65,7 +74,8 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
 
         setSaving(true);
         try {
-            const isConnected = !!config.stripePublishableKey && config.isEnabled;
+            const hasKeys = Boolean(config.stripePublishableKey || config.vaultApiKey);
+            const isConnected = hasKeys && config.isEnabled;
             const newStatus: "CONNECTED" | "NOT_CONFIGURED" = isConnected ? "CONNECTED" : "NOT_CONFIGURED";
             const updatedConfig: StripeTokenizationConfig = {
                 ...config,
@@ -78,7 +88,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
             });
 
             setConfig(updatedConfig);
-            toast.success("Payment Gateway & Tokenization Vault configuration saved successfully.");
+            toast.success("PCI Tokenization Vault configuration saved successfully.");
         } catch (err: any) {
             console.error("Error saving Payment Tokenization config:", err);
             toast.error("Failed to save tokenization configuration.");
@@ -96,6 +106,13 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
         );
     }
 
+    const providerNames: Record<string, string> = {
+        vaultera: "Vaultera PCI Proxy (Channex Official Partner)",
+        pci_booking: "PCI Booking Vault (Channex Integrated)",
+        tokenex: "Tokenex Cloud PCI Vault",
+        stripe: "Stripe Elements Vault"
+    };
+
     return (
         <div className={styles.container}>
             {/* Top Bar */}
@@ -103,15 +120,15 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                 <div className={styles.titleGroup}>
                     <div className={styles.title}>
                         <CreditCard size={18} color="#09090b" />
-                        <span>Stripe Tokenization &amp; PCI-DSS Card Vault</span>
+                        <span>PCI-DSS Card Tokenization &amp; Proxy Vault</span>
                         {config.accountStatus === "CONNECTED" ? (
-                            <span className={styles.badgeConnected}>● STRIPE VAULT CONNECTED</span>
+                            <span className={styles.badgeConnected}>● VAULT CONNECTED ({config.provider?.toUpperCase()})</span>
                         ) : (
                             <span className={styles.badgeNotConfigured}>○ NOT CONFIGURED</span>
                         )}
                     </div>
                     <span className={styles.desc}>
-                        End-to-end encryption for OTA guest credit cards and Virtual Credit Cards (VCC) without storing raw cardholder data on local premises, maintaining PCI-DSS Level 1 compliance.
+                        End-to-end encryption for OTA guest credit cards and Virtual Credit Cards (VCC) complying with Channex PCI Guidelines and PCI-DSS Level 1 standards without storing raw PAN in local premises.
                     </span>
                 </div>
             </div>
@@ -120,10 +137,11 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
             <div className={styles.pciBanner}>
                 <ShieldCheck size={24} style={{ flexShrink: 0, marginTop: "2px", color: "#2563eb" }} />
                 <div>
-                    <b>PCI DSS Level 1 Certified Protection:</b>
-                    <p style={{ margin: "4px 0 0 0" }}>
-                        When credit card reservations are ingested from OTAs, raw card details are tokenized in a PCI-compliant vault. Hotel operations handle secure tokens (`pm_...` or `tok_...`) for settlements, eliminating merchant card liability.
-                    </p>
+                    <b>Panduan Kepatuhan PCI-DSS Channex (Official Standard):</b>
+                    <div style={{ margin: "6px 0 0 0", fontSize: "12px", lineHeight: "1.6", color: "#334155" }}>
+                        <div><b>1. Virtual Credit Cards (OTA VCC):</b> Data saldo, tanggal aktif, dan CVV dari Booking.com/Agoda diekstrak langsung melalui <code>guarantee.meta</code> di Tara tanpa memicu beban audit penyimpanan nomor kartu mentah.</div>
+                        <div style={{ marginTop: 4 }}><b>2. Kartu Fisik Tamu Non-VCC:</b> Sesuai aturan Channex, nomor kartu fisik tamu tidak diserahkan dalam bentuk teks biasa. Transaksi didelegasikan melalui Proxy Token eksternal di bawah (Vaultera / PCI Booking / Tokenex), sehingga sistem Tara memenuhi standar <b>PCI SAQ-A</b> secara mutlak.</div>
+                    </div>
                 </div>
             </div>
 
@@ -132,7 +150,7 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                 <div className={styles.cardHeader}>
                     <span className={styles.cardTitle}>
                         <Lock size={16} color="#09090b" />
-                        <span>Payment Gateway Credentials &amp; Automated Settlement Rules</span>
+                        <span>PCI Vault Provider &amp; Tokenization Credentials</span>
                     </span>
                     <button
                         type="submit"
@@ -140,62 +158,130 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
                         className={styles.btnPrimary}
                     >
                         <Save size={14} />
-                        <span>{saving ? "Saving..." : "Save Payment Settings"}</span>
+                        <span>{saving ? "Saving..." : "Save Vault Settings"}</span>
                     </button>
                 </div>
 
                 <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Enable Stripe Tokenization Vault</label>
+                        <label className={styles.label}>Aktifkan PCI Tokenization Vault</label>
                         <select
                             value={config.isEnabled ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, isEnabled: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="false">Disable Automated Tokenization</option>
-                            <option value="true">Enable Stripe Tokenization Vault</option>
+                            <option value="false">Nonaktifkan Tokenization Vault</option>
+                            <option value="true">Aktifkan PCI Vault (Disarankan untuk OTA Card Guarantee)</option>
                         </select>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Stripe Publishable Key (Client Token)</label>
-                        <input
-                            type="text"
-                            placeholder="pk_live_... or pk_test_..."
-                            value={config.stripePublishableKey || ""}
-                            onChange={e => setConfig(prev => ({ ...prev, stripePublishableKey: e.target.value.trim() }))}
-                            className={styles.input}
-                        />
-                        <span className={styles.hint}>Hotel public Stripe key for frontend payment element tokenization.</span>
+                        <label className={styles.label}>Penyedia PCI Tokenization Proxy (Channex Partner)</label>
+                        <select
+                            value={config.provider || "vaultera"}
+                            onChange={e => {
+                                const p = e.target.value as any;
+                                setConfig(prev => ({
+                                    ...prev,
+                                    provider: p,
+                                    vaultEndpoint: p === "vaultera" 
+                                        ? "https://proxy.vaultera.com/v1/tokens" 
+                                        : p === "pci_booking" 
+                                            ? "https://service.pcibooking.net/api/v1" 
+                                            : p === "tokenex" 
+                                                ? "https://api.tokenex.com/v2" 
+                                                : "https://api.stripe.com/v1/tokens"
+                                }));
+                            }}
+                            className={styles.select}
+                        >
+                            <option value="vaultera">Vaultera PCI Proxy (Channex Official Partner)</option>
+                            <option value="pci_booking">PCI Booking Vault (Channex Integrated)</option>
+                            <option value="tokenex">Tokenex Cloud PCI Vault</option>
+                            <option value="stripe">Stripe Elements Vault</option>
+                        </select>
+                        <span className={styles.hint}>Layanan vault terakreditasi PCI Level 1 yang memproses token kartu tanpa risiko liabilitas merchant.</span>
                     </div>
 
+                    {config.provider === "stripe" ? (
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Stripe Publishable Key (Client Token)</label>
+                            <input
+                                type="text"
+                                placeholder="pk_live_... or pk_test_..."
+                                value={config.stripePublishableKey || ""}
+                                onChange={e => setConfig(prev => ({ ...prev, stripePublishableKey: e.target.value.trim() }))}
+                                className={styles.input}
+                            />
+                            <span className={styles.hint}>Kunci publik Stripe hotel untuk tokenisasi elemen pembayaran frontend.</span>
+                        </div>
+                    ) : (
+                        <>
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Vault API Key / Merchant Token</label>
+                                <input
+                                    type="password"
+                                    placeholder="Masukkan Vault Client Key..."
+                                    value={config.vaultApiKey || ""}
+                                    onChange={e => setConfig(prev => ({ ...prev, vaultApiKey: e.target.value.trim() }))}
+                                    className={styles.input}
+                                />
+                                <span className={styles.hint}>Kredensial API dari dashboard {providerNames[config.provider || "vaultera"]}.</span>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>PCI Proxy Endpoint URL</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://proxy.vaultera.com/v1/tokens"
+                                    value={config.vaultEndpoint || ""}
+                                    onChange={e => setConfig(prev => ({ ...prev, vaultEndpoint: e.target.value.trim() }))}
+                                    className={styles.input}
+                                />
+                                <span className={styles.hint}>URL proxy gateway resmi untuk pertukaran token tokenized cardholder.</span>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Metode Tokenisasi Kartu</label>
+                                <select
+                                    value={config.tokenizationMode || "headless_proxy"}
+                                    onChange={e => setConfig(prev => ({ ...prev, tokenizationMode: e.target.value as any }))}
+                                    className={styles.select}
+                                >
+                                    <option value="headless_proxy">Headless Token Proxy (Channex Direct API)</option>
+                                    <option value="hosted_iframe">Hosted IFrame Container (PCI SAQ-A)</option>
+                                </select>
+                            </div>
+                        </>
+                    )}
+
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Automatic Card Pre-Authorization on Inbound Booking</label>
+                        <label className={styles.label}>Pre-Authorization Otomatis saat Booking Masuk</label>
                         <select
                             value={config.autoPreAuthOnBooking ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, autoPreAuthOnBooking: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="true">Yes, Verify Guest Card Balance (Pre-Auth 1st Night)</option>
-                            <option value="false">Do Not Pre-Auth, Store Card Token Only</option>
+                            <option value="true">Ya, Validasi Saldo Kartu Tamu (Pre-Auth Malam Pertama)</option>
+                            <option value="false">Tidak, Simpan Token Kartu Saja</option>
                         </select>
-                        <span className={styles.hint}>Prevents invalid card reservations and chargebacks from OTA channels.</span>
+                        <span className={styles.hint}>Mencegah reservasi kartu palsu atau tidak bersaldo dari kanal OTA.</span>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Automatic Balance Capture at Guest Check-In</label>
+                        <label className={styles.label}>Penyelesaian Tagihan (Capture) saat Check-In</label>
                         <select
                             value={config.autoCaptureOnCheckin ? "true" : "false"}
                             onChange={e => setConfig(prev => ({ ...prev, autoCaptureOnCheckin: e.target.value === "true" }))}
                             className={styles.select}
                         >
-                            <option value="true">Automatically Capture Full Accommodation Folio at Check-In</option>
-                            <option value="false">Settle Manually via Front Office Terminal</option>
+                            <option value="true">Otomatis Eksekusi Tagihan Kamar saat Check-In</option>
+                            <option value="false">Selesaikan Manual via Terminal Kasir Front Desk</option>
                         </select>
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>PCI Compliance Certification Level</label>
+                        <label className={styles.label}>Level Sertifikasi Kepatuhan PCI</label>
                         <input
                             type="text"
                             disabled
@@ -209,3 +295,4 @@ export function ChannelPaymentTokenizationTab({ hotelCode }: Props) {
         </div>
     );
 }
+

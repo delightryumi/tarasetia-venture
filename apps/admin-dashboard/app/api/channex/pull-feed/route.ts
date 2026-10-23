@@ -124,14 +124,24 @@ async function handlePullFeed(req: NextRequest) {
                         fullRevision = fullRes?.data?.attributes || fullRes?.data || fullRevision;
                     }
 
+                    const realBookingUuid = fullRevision?.booking_id || 
+                        fullRevision?.bookingId || 
+                        revisionRaw?.relationships?.booking?.data?.id ||
+                        (fullRevision?.id && fullRevision?.id !== revisionId ? fullRevision?.id : undefined);
+
+                    const resolvedEvent = fullRevision?.status === "cancelled" 
+                        ? "booking_cancellation" 
+                        : (fullRevision?.status === "modified" ? "booking_modification" : "booking_new");
+
                     // Build a synthetic webhook payload identical to what the webhook handler expects
                     const syntheticPayload = {
-                        event: fullRevision?.status === "cancelled" ? "booking_cancellation" : "booking_new",
+                        event: resolvedEvent,
                         property_id: propertyId,
                         booking_revision_id: revisionId,
                         is_pull_feed: true, // Marks as pulled (skip duplicate ACK in syncService)
                         booking: {
-                            id: fullRevision?.id || revisionId,
+                            id: realBookingUuid || revisionId,
+                            booking_id: realBookingUuid,
                             property_id: propertyId,
                             ...fullRevision
                         }

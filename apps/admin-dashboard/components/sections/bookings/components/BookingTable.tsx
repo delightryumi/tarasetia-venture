@@ -15,20 +15,19 @@ import s from "./BookingTable.module.css";
 
 interface BookingTableProps {
     bookings: BookingRecord[];
-    onSelect: (booking: BookingRecord) => void;
 }
 
 export function BookingTable({ bookings, onSelect }: BookingTableProps) {
-    const [copiedId, setCopiedId] = React.useState<string | null>(null);
+    const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
     const { formatCurrency } = useCurrency();
 
-    const handleCopyVoucher = (e: React.MouseEvent, code: string) => {
+    const handleCopy = (e: React.MouseEvent, code: string, key: string, label: string) => {
         e.stopPropagation();
         if (!code) return;
         navigator.clipboard.writeText(code);
-        setCopiedId(code);
-        toast.success(`Voucher disalin: ${code}`);
-        setTimeout(() => setCopiedId(null), 2000);
+        setCopiedKey(key);
+        toast.success(`${label} disalin: ${code}`);
+        setTimeout(() => setCopiedKey(null), 2000);
     };
 
     const formatDateDisplay = (dateStr: string) => {
@@ -82,8 +81,9 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
                 </thead>
                 <tbody>
                     {bookings.map((booking) => {
-                        const isCopied = copiedId === (booking.voucherCode || booking.reservationId);
-                        const voucherCode = booking.voucherCode || booking.reservationId || booking.bookingId;
+                        const resId = booking.reservationId || booking.voucherCode || booking.bookingId || "-";
+                        const otaId = booking.otaReservationId;
+                        const hasDiffOta = otaId && otaId !== (booking.reservationId || booking.voucherCode);
 
                         return (
                             <tr 
@@ -91,7 +91,7 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
                                 className={`${s.row} ${booking.isCancelled ? s.rowCancelled : ""}`}
                                 onClick={() => onSelect(booking)}
                             >
-                                {/* Channel & Voucher */}
+                                {/* Channel & Reservation Identifiers */}
                                 <td className={s.td}>
                                     <div className={s.channelCell}>
                                         {booking.channelLogo ? (
@@ -112,17 +112,38 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
                                             <div style={{ fontWeight: 700, color: "#1e293b", fontSize: 13 }}>
                                                 {booking.channel}
                                             </div>
-                                            <div 
-                                                className={s.voucherText}
-                                                onClick={(e) => handleCopyVoucher(e, voucherCode)}
-                                                title="Salin voucher"
-                                            >
-                                                <span>{voucherCode}</span>
-                                                {isCopied ? (
-                                                    <Check size={11} weight="bold" color="#16a34a" />
-                                                ) : (
-                                                    <Copy size={11} weight="bold" />
-                                                )}
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>
+                                                {/* Primary Reservation ID (e.g. BDC-TEST) */}
+                                                <div 
+                                                    className={s.voucherText}
+                                                    onClick={(e) => handleCopy(e, resId, `res-${booking.id}`, "Reservation ID")}
+                                                    title="Salin Reservation ID"
+                                                >
+                                                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#94a3b8" }}>RES:</span>
+                                                    <span style={{ fontWeight: 700, color: "#1e293b" }}>{resId}</span>
+                                                    {copiedKey === `res-${booking.id}` ? (
+                                                        <Check size={10} weight="bold" color="#16a34a" />
+                                                    ) : (
+                                                        <Copy size={10} weight="bold" />
+                                                    )}
+                                                </div>
+
+                                                {/* OTA Reservation ID (e.g. TEST) if different */}
+                                                {hasDiffOta ? (
+                                                    <div 
+                                                        className={s.voucherText}
+                                                        onClick={(e) => handleCopy(e, otaId, `ota-${booking.id}`, "OTA Reservation ID")}
+                                                        title="Salin OTA Reservation ID"
+                                                    >
+                                                        <span style={{ fontSize: 9.5, fontWeight: 700, color: "#94a3b8" }}>OTA:</span>
+                                                        <span>{otaId}</span>
+                                                        {copiedKey === `ota-${booking.id}` ? (
+                                                            <Check size={10} weight="bold" color="#16a34a" />
+                                                        ) : (
+                                                            <Copy size={10} weight="bold" />
+                                                        )}
+                                                    </div>
+                                                ) : null}
                                             </div>
                                         </div>
                                     </div>

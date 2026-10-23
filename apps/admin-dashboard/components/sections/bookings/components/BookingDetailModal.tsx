@@ -13,7 +13,8 @@ import {
     Check, 
     WarningCircle,
     Printer,
-    IdentificationCard
+    IdentificationCard,
+    CloudArrowUp
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -31,7 +32,16 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
     const [copied, setCopied] = React.useState(false);
     const [copiedBookingId, setCopiedBookingId] = React.useState(false);
     const [copiedRevisionId, setCopiedRevisionId] = React.useState(false);
+    const [pushingCrs, setPushingCrs] = React.useState(false);
+    const [crsBookingId, setCrsBookingId] = React.useState<string | null>(booking?.channexBookingId || null);
     const { formatCurrency } = useCurrency();
+
+    // Sync crsBookingId when booking prop changes
+    useEffect(() => {
+        if (booking) {
+            setCrsBookingId(booking.channexBookingId || null);
+        }
+    }, [booking]);
 
     // Close on Escape key press
     useEffect(() => {
@@ -63,6 +73,49 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
         setCopiedKey(label || val);
         toast.success(`${label || "Kode"} disalin: ${val}`);
         setTimeout(() => setCopiedKey(null), 2000);
+    };
+
+    const handlePushToChannexCrs = async () => {
+        const hotelCode = typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "" : "";
+        if (!hotelCode) {
+            toast.error("Hotel Code tidak ditemukan.");
+            return;
+        }
+        setPushingCrs(true);
+        try {
+            const res = await fetch("/api/channex/push-booking", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode,
+                    bookingData: {
+                        bookingId: booking.bookingId,
+                        reservationId: booking.reservationId || booking.voucherCode,
+                        guestName: booking.guestName,
+                        email: booking.email,
+                        phone: booking.phone,
+                        checkInDate: booking.checkInDate,
+                        checkOutDate: booking.checkOutDate,
+                        roomTypeId: booking.roomTypeId,
+                        roomTypeName: booking.roomType,
+                        totalAmount: booking.totalAmount || booking.amount || 0,
+                        channel: booking.channel || "Walk-In / Direct",
+                        notes: booking.note || ""
+                    }
+                })
+            });
+            const data = await res.json();
+            if (data.success && data.channexBookingId) {
+                setCrsBookingId(data.channexBookingId);
+                toast.success(`Berhasil didaftarkan ke Channex CRS! ID: ${data.channexBookingId}`);
+            } else {
+                toast.error(data.error || "Gagal sinkronisasi ke Channex CRS");
+            }
+        } catch (err: any) {
+            toast.error(`Koneksi error: ${err.message}`);
+        } finally {
+            setPushingCrs(false);
+        }
     };
 
     const getSafeDisplay = (val: any, fallback = "-"): string => {
@@ -107,15 +160,18 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                         ) : null}
                         <div>
                             <div className={s.channelTitle}>
-                                {booking.channel} · Reservasi Masuk
+                                {booking.channel} · {booking.isCancelled ? "Reservasi Dibatalkan" : (booking.isModified ? "Reservasi Diubah (Modified)" : "Reservasi Masuk")}
                             </div>
                             <div className={s.channelSubtitle}>
-                                <span>Ref: {getSafeDisplay(booking.voucherCode || booking.reservationId, "-")}</span>
+                                <span>Ref: {getSafeDisplay(booking.reservationId || booking.voucherCode, "-")}</span>
+                                {booking.otaReservationId && booking.otaReservationId !== (booking.reservationId || booking.voucherCode) ? (
+                                    <span style={{ color: "#64748b", fontSize: 11 }}>• OTA: {booking.otaReservationId}</span>
+                                ) : null}
                                 <button 
                                     type="button"
                                     onClick={handleCopyVoucher} 
                                     style={{ background: "none", border: "none", cursor: "pointer", display: "inline-flex", color: "#2563eb", padding: 0 }}
-                                    title="Salin nomor voucher"
+                                    title="Salin nomor voucher / referensi"
                                 >
                                     {copied ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
                                 </button>
@@ -238,8 +294,40 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                         <div className={s.sectionTitle}>
                             <FileText size={16} weight="bold" />
                             <span>Catatan & Audit Sistem</span>
-                        </div>                        <div className={s.grid2}>
-                            {/* Booking ID */}
+                        </div>
+                        <div className={s.grid2}>
+                            {/* Reservation ID (e.g. BDC-TEST) */}
+                            <div className={s.field}>
+                                <span className={s.fieldLabel}>Reservation ID</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                                    <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace", wordBreak: "break-all", fontWeight: 700, color: "#1e293b" }}>
+                                        {booking.reservationId || booking.voucherCode || "-"}
+                                    </span>
+                                    {(booking.reservationId || booking.voucherCode) && (
+                                        <button 
+                                            type="button"
+                                            onClick={() => handleCopyField(booking.reservationId || booking.voucherCode, "Reservation ID")}
+                                            style={{ 
+                                                background: "none", 
+                                                border: "none", 
+                                                cursor: "pointer", 
+                                                display: "inline-flex", 
+                                                alignItems: "center", 
+                                                justifyContent: "center",
+                                                color: "#2563eb", 
+                                                padding: 2,
+                                                borderRadius: 4,
+                                                flexShrink: 0
+                                            }}
+                                            title="Salin Reservation ID"
+                                        >
+                                            {copiedKey === "Reservation ID" ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Booking ID (Channex Booking UUID) */}
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Booking ID</span>
                                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
@@ -270,8 +358,8 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                                 </div>
                             </div>
 
-                            {/* New Revision ID */}
-                            {(booking.initialRevisionId || (!booking.isModified && !booking.isCancelled && booking.revisionId)) && (
+                            {/* New Revision ID (Creation revision, always preserved) */}
+                            {(booking.initialRevisionId || booking.revisionId) && (
                                 <div className={s.field}>
                                     <span className={s.fieldLabel}>New Revision ID</span>
                                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
@@ -300,6 +388,37 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                                     </div>
                                 </div>
                             )}
+
+                            {/* OTA Reservation ID (e.g. TEST) */}
+                            <div className={s.field}>
+                                <span className={s.fieldLabel}>OTA Reservation ID</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                                    <span className={s.fieldValue} style={{ fontSize: 11, fontFamily: "monospace", wordBreak: "break-all" }}>
+                                        {booking.otaReservationId || booking.voucherCode || "-"}
+                                    </span>
+                                    {(booking.otaReservationId || booking.voucherCode) && (
+                                        <button 
+                                            type="button"
+                                            onClick={() => handleCopyField(booking.otaReservationId || booking.voucherCode, "OTA Reservation ID")}
+                                            style={{ 
+                                                background: "none", 
+                                                border: "none", 
+                                                cursor: "pointer", 
+                                                display: "inline-flex", 
+                                                alignItems: "center", 
+                                                justifyContent: "center",
+                                                color: "#2563eb", 
+                                                padding: 2,
+                                                borderRadius: 4,
+                                                flexShrink: 0
+                                            }}
+                                            title="Salin OTA Reservation ID"
+                                        >
+                                            {copiedKey === "OTA Reservation ID" ? <Check size={14} weight="bold" color="#16a34a" /> : <Copy size={14} weight="bold" />}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
 
                             {/* Modified Revision ID (Shown whenever modified) */}
                             {(booking.isModified || booking.modifiedRevisionId) && (
@@ -365,7 +484,7 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
 
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Koneksi Saluran</span>
-                                <span className={s.fieldValue}>{booking.connectionChannel || "Direct Front Office"}</span>
+                                <span className={s.fieldValue}>{booking.connectionChannel || (booking.isOTA ? "Open Channel" : "Direct Front Office")}</span>
                             </div>
                         </div>
                         {booking.note && (
@@ -405,6 +524,25 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                             <Printer size={18} weight="bold" />
                             <span>Invoice</span>
                         </button>
+
+                        {/* Push to Channex CRS Button for Direct / Walk-In Bookings */}
+                        {!booking.isOTA && (
+                            <button
+                                type="button"
+                                className={`${s.actionButton} ${s.btnSecondary}`}
+                                onClick={handlePushToChannexCrs}
+                                disabled={pushingCrs || Boolean(crsBookingId)}
+                                style={{
+                                    color: crsBookingId ? "#047857" : "#4338ca",
+                                    borderColor: crsBookingId ? "#a7f3d0" : "#c7d2fe",
+                                    backgroundColor: crsBookingId ? "#ecfdf5" : "#eef2ff"
+                                }}
+                                title="Daftarkan reservasi offline/walk-in ke kalender Channex CRS"
+                            >
+                                <CloudArrowUp size={18} weight="bold" />
+                                <span>{pushingCrs ? "Mendaftarkan CRS..." : crsBookingId ? "Tersinkron CRS" : "Push ke Channex CRS"}</span>
+                            </button>
+                        )}
                     </div>
 
                     <button 
