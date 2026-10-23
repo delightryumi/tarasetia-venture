@@ -91,6 +91,253 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        // Helper to resolve room types & rate plans for certification scenarios
+        const getCertEntities = async () => {
+            const rtSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
+            const rts = rtSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
+            const rpSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
+            const rps = rpSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
+            const twinRt = rts.find(r => r.name?.toLowerCase().includes("twin") || r.code?.toLowerCase().includes("twin")) || rts[0] || { id: "twin_room", name: "Twin Room" };
+            const doubleRt = rts.find(r => r.name?.toLowerCase().includes("double") || r.code?.toLowerCase().includes("double")) || rts[1] || rts[0] || { id: "double_room", name: "Double Room" };
+
+            const barRp = rps.find(p => p.name?.toLowerCase().includes("best") || p.name?.toLowerCase().includes("bar") || p.name?.toLowerCase().includes("standard")) || rps[0] || { id: "bar", name: "Best Available Rate" };
+            const bbRp = rps.find(p => p.name?.toLowerCase().includes("breakfast") || p.name?.toLowerCase().includes("bb")) || rps[1] || rps[0] || { id: "bb", name: "Bed & Breakfast" };
+
+            return { twinRt, doubleRt, barRp, bbRp };
+        };
+
+        // TEST 2: Single Date Update for Single Rate
+        if (action === "test_ari_scenario_2" || action === "test_2_single_rate") {
+            const { twinRt, barRp } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                rates: [
+                    {
+                        roomTypeId: twinRt.id,
+                        ratePlanId: barRp.id,
+                        date: "2026-11-22",
+                        rate: 333
+                    }
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 2: Single Date Update for Single Rate",
+                message: `Pembaruan harga Twin Room (BAR) pada 2026-11-22 menjadi $333 berhasil dikirim dalam 1 API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
+        // TEST 3: Single Date Update for Multiple Rates
+        if (action === "test_ari_scenario_3" || action === "test_3_multi_rates_single_date") {
+            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                rates: [
+                    { roomTypeId: twinRt.id, ratePlanId: barRp.id, date: "2026-11-21", rate: 333 },
+                    { roomTypeId: doubleRt.id, ratePlanId: barRp.id, date: "2026-11-25", rate: 444 },
+                    { roomTypeId: doubleRt.id, ratePlanId: bbRp.id, date: "2026-11-29", rate: 456.23 }
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 3: Single Date Update for Multiple Rates",
+                message: `Pembaruan 3 tarif pada tanggal berbeda berhasil dikirim bersamaan dalam 1 batched API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
+        // TEST 4: Multiple Date Update for Multiple Rates (Merged Sequence Ranges)
+        if (action === "test_ari_scenario_4" || action === "test_4_multi_date_multi_rates") {
+            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                rates: [
+                    { roomTypeId: twinRt.id, ratePlanId: barRp.id, dateFrom: "2026-11-01", dateTo: "2026-11-10", rate: 241 },
+                    { roomTypeId: doubleRt.id, ratePlanId: barRp.id, dateFrom: "2026-11-10", dateTo: "2026-11-16", rate: 312.66 },
+                    { roomTypeId: doubleRt.id, ratePlanId: bbRp.id, dateFrom: "2026-11-01", dateTo: "2026-11-20", rate: 111 }
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 4: Multiple Date Update for Multiple Rates",
+                message: `Pembaruan tarif multi-tanggal berhasil dikirim dengan sintaks date_from dan date_to dalam 1 batched API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
+        // TEST 5: Min Stay Update (Dual Min Stay: arrival and through)
+        if (action === "test_ari_scenario_5" || action === "test_5_min_stay") {
+            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                rates: [
+                    { roomTypeId: twinRt.id, ratePlanId: barRp.id, date: "2026-11-23", minStay: 3, minStayArrival: 3, minStayThrough: 3 },
+                    { roomTypeId: doubleRt.id, ratePlanId: barRp.id, date: "2026-11-25", minStay: 2, minStayArrival: 2, minStayThrough: 2 },
+                    { roomTypeId: doubleRt.id, ratePlanId: bbRp.id, date: "2026-11-15", minStay: 5, minStayArrival: 5, minStayThrough: 5 }
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 5: Min Stay Restrictions Update",
+                message: `Pembaruan restriksi Minimum Stay (min_stay_arrival dan min_stay_through tersinkronisasi penuh) berhasil dikirim dalam 1 batched API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
+        // TEST 6: Stop Sell Restrictions Update
+        if (action === "test_ari_scenario_6" || action === "test_6_stop_sell") {
+            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                rates: [
+                    { roomTypeId: twinRt.id, ratePlanId: barRp.id, date: "2026-11-14", stopSell: true },
+                    { roomTypeId: doubleRt.id, ratePlanId: barRp.id, date: "2026-11-16", stopSell: true },
+                    { roomTypeId: doubleRt.id, ratePlanId: bbRp.id, date: "2026-11-20", stopSell: true }
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 6: Stop Sell Restrictions Update",
+                message: `Pembaruan Stop Sell pada 3 kombinasi kamar berhasil dikirim dalam 1 batched API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
+        // TEST 7: Multiple Restrictions Update (CTA, CTD, Min/Max Stay - 1 Batched Call)
+        if (action === "test_ari_scenario_7" || action === "test_7_multiple_restrictions") {
+            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                rates: [
+                    {
+                        roomTypeId: twinRt.id,
+                        ratePlanId: barRp.id,
+                        dateFrom: "2026-11-01",
+                        dateTo: "2026-11-10",
+                        closedToArrival: true,
+                        closedToDeparture: false,
+                        maxStay: 4,
+                        minStay: 1,
+                        minStayArrival: 1,
+                        minStayThrough: 1
+                    },
+                    {
+                        roomTypeId: twinRt.id,
+                        ratePlanId: bbRp.id,
+                        dateFrom: "2026-11-12",
+                        dateTo: "2026-11-16",
+                        closedToArrival: false,
+                        closedToDeparture: true,
+                        minStay: 6,
+                        minStayArrival: 6,
+                        minStayThrough: 6
+                    },
+                    {
+                        roomTypeId: doubleRt.id,
+                        ratePlanId: barRp.id,
+                        dateFrom: "2026-11-10",
+                        dateTo: "2026-11-16",
+                        closedToArrival: true, // ENFORCED TRUE - Fixed Channex Audit Failure!
+                        minStay: 2,
+                        minStayArrival: 2,
+                        minStayThrough: 2
+                    },
+                    {
+                        roomTypeId: doubleRt.id,
+                        ratePlanId: bbRp.id,
+                        dateFrom: "2026-11-01",
+                        dateTo: "2026-11-20",
+                        minStay: 10,
+                        minStayArrival: 10,
+                        minStayThrough: 10
+                    }
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 7: Multiple Restrictions Update",
+                message: `Pembaruan multi-restriksi kompleks (Double BAR CTA: true diaktifkan, dual min_stay) berhasil dikirim dalam 1 batched API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
+        // TEST 8: Half-Year Update (5 Bulan)
+        if (action === "test_ari_scenario_8" || action === "test_8_half_year") {
+            const { twinRt, doubleRt, barRp } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                rates: [
+                    {
+                        roomTypeId: twinRt.id,
+                        ratePlanId: barRp.id,
+                        dateFrom: "2026-12-01",
+                        dateTo: "2027-05-01",
+                        rate: 432,
+                        closedToArrival: false,
+                        closedToDeparture: false,
+                        minStay: 2,
+                        minStayArrival: 2,
+                        minStayThrough: 2
+                    },
+                    {
+                        roomTypeId: doubleRt.id,
+                        ratePlanId: barRp.id,
+                        dateFrom: "2026-12-01",
+                        dateTo: "2027-05-01",
+                        rate: 342,
+                        minStay: 3,
+                        minStayArrival: 3,
+                        minStayThrough: 3
+                    }
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 8: Half-Year Update (01 Des 2026 - 01 Mei 2027)",
+                message: `Pembaruan tarif & restriksi semester 5 bulan dengan dual min_stay berhasil dikirim dalam 1 batched API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
+        // TEST 9: Single Date Availability Update
+        if (action === "test_ari_scenario_9" || action === "test_9_single_date_availability") {
+            const { twinRt, doubleRt } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                availability: [
+                    { roomTypeId: twinRt.id, date: "2026-11-21", qty: 7 },
+                    { roomTypeId: doubleRt.id, date: "2026-11-25", qty: 0 } // TARGETS 2026-11-25 - Fixed Channex Audit Failure!
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 9: Single Date Availability Update",
+                message: `Pembaruan ketersediaan Twin (2026-11-21: 7) dan Double (2026-11-25: 0) berhasil dikirim tepat dalam 1 batched API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
+        // TEST 10: Multiple Date Availability Update
+        if (action === "test_ari_scenario_10" || action === "test_10_multi_date_availability") {
+            const { twinRt, doubleRt } = await getCertEntities();
+            const result = await channexSyncService.pushDeltaBatch(hotelCode, {
+                availability: [
+                    { roomTypeId: twinRt.id, dateFrom: "2026-11-10", dateTo: "2026-11-16", qty: 3 },
+                    { roomTypeId: doubleRt.id, dateFrom: "2026-11-17", dateTo: "2026-11-24", qty: 4 }
+                ]
+            });
+            return NextResponse.json({
+                success: result.success,
+                title: "Test 10: Multiple Date Availability Update",
+                message: `Pembaruan ketersediaan rentang tanggal Twin (10-16 Nov: 3) dan Double (17-24 Nov: 4) berhasil dikirim dalam 1 batched API call!`,
+                taskIds: result.taskIds,
+                detail: result
+            });
+        }
+
         // 4. Action: Create Simulated Booking (Stage 4: Booking Ingestion)
         if (action === "create_booking") {
             const simulatedBookingId = `OTA-SBX-${Math.floor(100000 + Math.random() * 900000)}`;

@@ -1767,6 +1767,156 @@ export function ChannelManagerSection() {
         toast.success("All sandbox certification test scenarios completed successfully.");
     };
 
+    // ── 10 SKENARIO UJI ARI SERTIFIKASI CHANNEX (TEST 1 - 10) ──
+    interface AriCertStage {
+        id: string;
+        num: number;
+        title: string;
+        desc: string;
+        actionKey: string;
+        status: "pending" | "running" | "passed" | "failed";
+        taskIds?: string[];
+        detail?: string;
+    }
+
+    const [ariCertStages, setAriCertStages] = useState<AriCertStage[]>([
+        {
+            id: "ari_1",
+            num: 1,
+            title: "Test 1: Full Data Update (Full Sync 500 Hari)",
+            desc: "2 API Calls: Allotment 500 hari & Rates/Restrictions dengan declared max_stay.",
+            actionKey: "test_full_sync",
+            status: "pending"
+        },
+        {
+            id: "ari_2",
+            num: 2,
+            title: "Test 2: Single Date Update for Single Rate",
+            desc: "Twin Room BAR pada 2026-11-22 menjadi $333 (1 Batched API Call).",
+            actionKey: "test_ari_scenario_2",
+            status: "pending"
+        },
+        {
+            id: "ari_3",
+            num: 3,
+            title: "Test 3: Single Date Update for Multiple Rates",
+            desc: "Twin BAR (21 Nov $333), Double BAR (25 Nov $444), Double BB (29 Nov $456.23) dalam 1 Batched API Call.",
+            actionKey: "test_ari_scenario_3",
+            status: "pending"
+        },
+        {
+            id: "ari_4",
+            num: 4,
+            title: "Test 4: Multiple Date Update for Multiple Rates",
+            desc: "Sintaks rentang tanggal date_from/date_to: Twin BAR 1-10 Nov $241, Double BAR 10-16 Nov $312.66, Double BB 1-20 Nov $111.",
+            actionKey: "test_ari_scenario_4",
+            status: "pending"
+        },
+        {
+            id: "ari_5",
+            num: 5,
+            title: "Test 5: Min Stay Restrictions Update",
+            desc: "Twin BAR 23 Nov: 3, Double BAR 25 Nov: 2, Double BB 15 Nov: 5 (Dual min_stay_arrival & min_stay_through).",
+            actionKey: "test_ari_scenario_5",
+            status: "pending"
+        },
+        {
+            id: "ari_6",
+            num: 6,
+            title: "Test 6: Stop Sell Restrictions Update",
+            desc: "Stop Sell = true: Twin BAR 14 Nov, Double BAR 16 Nov, Double BB 20 Nov dalam 1 Batched API Call.",
+            actionKey: "test_ari_scenario_6",
+            status: "pending"
+        },
+        {
+            id: "ari_7",
+            num: 7,
+            title: "Test 7: Multiple Restrictions Update (CTA/CTD/Min/Max)",
+            desc: "Double BAR CTA: true diaktifkan! Twin BAR CTA/CTD/Max 4/Min 1, Twin BB, Double BB dengan dual min_stay.",
+            actionKey: "test_ari_scenario_7",
+            status: "pending"
+        },
+        {
+            id: "ari_8",
+            num: 8,
+            title: "Test 8: Pembaruan Semester 5 Bulan (01 Des 2026 - 01 Mei 2027)",
+            desc: "Twin BAR $432 Min 2, Double BAR $342 Min 3 dengan dual min_stay_arrival & min_stay_through.",
+            actionKey: "test_ari_scenario_8",
+            status: "pending"
+        },
+        {
+            id: "ari_9",
+            num: 9,
+            title: "Test 9: Single Date Availability Update",
+            desc: "Twin Room 2026-11-21: 7 kamar, Double Room 2026-11-25: 0 kamar (Tepat sasaran 25 Nov).",
+            actionKey: "test_ari_scenario_9",
+            status: "pending"
+        },
+        {
+            id: "ari_10",
+            num: 10,
+            title: "Test 10: Multiple Date Availability Update",
+            desc: "Twin Room 10-16 Nov: 3 kamar, Double Room 17-24 Nov: 4 kamar dalam 1 Batched API Call.",
+            actionKey: "test_ari_scenario_10",
+            status: "pending"
+        }
+    ]);
+
+    const [runningAriCertAll, setRunningAriCertAll] = useState<boolean>(false);
+
+    const runAriCertStage = async (stageIndex: number) => {
+        if (!activeHotelCode) return;
+        const stage = ariCertStages[stageIndex];
+        if (!stage) return;
+
+        setAriCertStages(prev => prev.map((s, idx) => idx === stageIndex ? { ...s, status: "running", detail: "Mengirim payload terstandarisasi ke Channex..." } : s));
+
+        try {
+            const res = await fetch("/api/channex/sandbox-simulate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: stage.actionKey,
+                    hotelCode: activeHotelCode
+                })
+            });
+            const data = await res.json();
+            const isSuccess = data.success !== false;
+            const tIds: string[] = data.taskIds || (data.taskId ? [data.taskId] : []);
+
+            setAriCertStages(prev => prev.map((s, idx) => idx === stageIndex ? {
+                ...s,
+                status: isSuccess ? "passed" : "failed",
+                taskIds: tIds,
+                detail: data.message || (isSuccess ? "Uji coba berhasil!" : data.error)
+            } : s));
+
+            if (isSuccess) {
+                toast.success(`${stage.title} sukses! Task ID: ${tIds.join(", ") || "OK"}`);
+            } else {
+                toast.error(data.message || data.error || `${stage.title} gagal.`);
+            }
+        } catch (err: any) {
+            setAriCertStages(prev => prev.map((s, idx) => idx === stageIndex ? {
+                ...s,
+                status: "failed",
+                detail: err.message || "Gagal menghubungi server"
+            } : s));
+            toast.error(err.message || "Gagal menjalankan skenario.");
+        }
+    };
+
+    const runAllAriCertStages = async () => {
+        setRunningAriCertAll(true);
+        toast.info("Menjalankan 10 Skenario Uji ARI Sertifikasi Channex...");
+        for (let i = 0; i < ariCertStages.length; i++) {
+            await runAriCertStage(i);
+            await new Promise(r => setTimeout(r, 600));
+        }
+        setRunningAriCertAll(false);
+        toast.success("Seluruh 10 Skenario Uji ARI selesai diproses!");
+    };
+
     return (
         <div className={styles.container}>
             {/* 1. TOP ENTERPRISE HEADER BAR */}
@@ -4013,6 +4163,102 @@ export function ChannelManagerSection() {
                                             className={`${styles.btnActionSecondary} ${styles.btnTestStage}`}
                                         >
                                             {stage.status === "running" ? "Testing..." : "Test Stage"}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SECTION 1B: CHANNEX OFFICIAL 10 ARI CERTIFICATION SCENARIOS */}
+                    <div className={styles.gridCard}>
+                        <div className={styles.gridToolbar}>
+                            <div>
+                                <span className={styles.sandboxToolbarTitle}>
+                                    <Layers size={16} color="#72263d" />
+                                    <span>Channex Official 10 ARI Certification Scenarios</span>
+                                </span>
+                                <p className={styles.mappingHeaderSubtitle}>
+                                    Skenario pengujian resmi Channex PMS Certification (Test 1 s/d 10). Setiap skenario mematuhi restriksi deklarasi max_stay, dual min_stay, dan kompresi tanggal.
+                                </p>
+                            </div>
+
+                            <div className={styles.sandboxToolbarRight}>
+                                <span className={ariCertStages.filter(s => s.status === "passed").length === ariCertStages.length ? styles.sandboxScorePassed : styles.sandboxScorePending}>
+                                    {ariCertStages.filter(s => s.status === "passed").length} / {ariCertStages.length} Skenario Lolos
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={runAllAriCertStages}
+                                    disabled={runningAriCertAll}
+                                    className={`${styles.btnActionPrimary} ${styles.btnRunAllCert}`}
+                                >
+                                    <Play size={13} />
+                                    <span>{runningAriCertAll ? "Memproses Skenario..." : "Jalankan Semua Skenario Uji ARI"}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className={styles.certSuiteContainer}>
+                            <div className={styles.certStageList}>
+                                {ariCertStages.map((stage, idx) => (
+                                    <div key={stage.id} className={`${styles.certStageItem} ${styles[`certStage_${stage.status}`]}`}>
+                                        <div className={styles.certStageNum}>
+                                            {stage.status === "passed" ? "✓" : stage.status === "running" ? "..." : stage.num}
+                                        </div>
+                                        <div className={styles.certStageInfo}>
+                                            <div className={styles.certStageTitleRow}>
+                                                <span className={styles.certStageTitle}>{stage.title}</span>
+                                                <span className={`${styles.badge} ${stage.status === "passed" ? styles.badgeActive : stage.status === "failed" ? styles.badgeInactive : styles.badgePending}`}>
+                                                    {stage.status.toUpperCase()}
+                                                </span>
+                                            </div>
+                                            <p className={styles.certStageDesc}>{stage.desc}</p>
+                                            {stage.detail && (
+                                                <div className={styles.certStageDetail}>
+                                                    {stage.detail}
+                                                </div>
+                                            )}
+                                            {stage.taskIds && stage.taskIds.length > 0 && (
+                                                <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                                    <span style={{ fontSize: 11, fontWeight: 700, color: "#15803d" }}>Task ID Channex:</span>
+                                                    {stage.taskIds.map(tid => (
+                                                        <button
+                                                            key={tid}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(tid);
+                                                                toast.success(`Task ID disalin: ${tid}`);
+                                                            }}
+                                                            style={{
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                gap: 4,
+                                                                padding: "2px 8px",
+                                                                borderRadius: 5,
+                                                                fontSize: 11,
+                                                                fontFamily: "var(--font-geist-mono, monospace)",
+                                                                backgroundColor: "#f0fdf4",
+                                                                border: "1px solid #bbf7d0",
+                                                                color: "#166534",
+                                                                cursor: "pointer"
+                                                            }}
+                                                            title="Klik untuk menyalin Task ID ke clipboard"
+                                                        >
+                                                            <span>{tid}</span>
+                                                            <Copy size={11} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            disabled={stage.status === "running" || runningAriCertAll}
+                                            onClick={() => runAriCertStage(idx)}
+                                            className={`${styles.btnActionSecondary} ${styles.btnTestStage}`}
+                                        >
+                                            {stage.status === "running" ? "Menguji..." : "Uji Skenario"}
                                         </button>
                                     </div>
                                 ))}

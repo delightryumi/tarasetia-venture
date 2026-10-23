@@ -1039,9 +1039,13 @@ export const useRateInventory = () => {
                     if (targetRtId) item.roomTypeId = targetRtId;
                     if (edits.rates?.[rpId] !== undefined) item.rate = edits.rates[rpId];
                     if (edits.stopSell?.[rpId] !== undefined) item.stopSell = edits.stopSell[rpId];
-                    if (edits.minStay?.[rpId] !== undefined) item.minStay = edits.minStay[rpId];
-                    if (edits.minStayArrival?.[rpId] !== undefined) item.minStayArrival = edits.minStayArrival[rpId];
-                    if (edits.minStayThrough?.[rpId] !== undefined) item.minStayThrough = edits.minStayThrough[rpId];
+                    
+                    const resolvedMinStay = edits.minStayThrough?.[rpId] ?? edits.minStayArrival?.[rpId] ?? edits.minStay?.[rpId];
+                    if (resolvedMinStay !== undefined) {
+                        item.minStay = resolvedMinStay;
+                        item.minStayArrival = edits.minStayArrival?.[rpId] !== undefined ? edits.minStayArrival[rpId] : resolvedMinStay;
+                        item.minStayThrough = edits.minStayThrough?.[rpId] !== undefined ? edits.minStayThrough[rpId] : resolvedMinStay;
+                    }
                     if (edits.maxStay?.[rpId] !== undefined) item.maxStay = edits.maxStay[rpId];
                     if (edits.cta?.[rpId] !== undefined) item.closedToArrival = edits.cta[rpId];
                     if (edits.ctd?.[rpId] !== undefined) item.closedToDeparture = edits.ctd[rpId];
@@ -1316,16 +1320,29 @@ export const useRateInventory = () => {
                         if (item.minStayArrivalAction === "set" && item.minStayArrivalValue !== undefined) {
                             targetRatePlans.forEach(rp => { 
                                 docData.minStayArrival[rp.id] = item.minStayArrivalValue!; 
+                                docData.minStayThrough[rp.id] = item.minStayArrivalValue!;
                                 docData.minStay[rp.id] = item.minStayArrivalValue!;
                             });
                         } else if (item.minStayArrivalAction === "remove") {
-                            targetRatePlans.forEach(rp => { delete docData.minStayArrival[rp.id]; });
+                            targetRatePlans.forEach(rp => { 
+                                delete docData.minStayArrival[rp.id]; 
+                                delete docData.minStayThrough[rp.id];
+                                delete docData.minStay[rp.id];
+                            });
                         }
 
                         if (item.minStayThroughAction === "set" && item.minStayThroughValue !== undefined) {
-                            targetRatePlans.forEach(rp => { docData.minStayThrough[rp.id] = item.minStayThroughValue!; });
+                            targetRatePlans.forEach(rp => { 
+                                docData.minStayThrough[rp.id] = item.minStayThroughValue!; 
+                                docData.minStayArrival[rp.id] = item.minStayThroughValue!;
+                                docData.minStay[rp.id] = item.minStayThroughValue!;
+                            });
                         } else if (item.minStayThroughAction === "remove") {
-                            targetRatePlans.forEach(rp => { delete docData.minStayThrough[rp.id]; });
+                            targetRatePlans.forEach(rp => { 
+                                delete docData.minStayThrough[rp.id]; 
+                                delete docData.minStayArrival[rp.id];
+                                delete docData.minStay[rp.id];
+                            });
                         }
 
                         if (item.maxStayAction === "set" && item.maxStayValue !== undefined) {
@@ -1423,11 +1440,25 @@ export const useRateInventory = () => {
                             if (isStopSellActive) deltaItem.stopSell = true;
                             else if (isStopSellInactive) deltaItem.stopSell = false;
 
-                            if (item.minStayArrivalAction === "set" && item.minStayArrivalValue !== undefined) deltaItem.minStayArrival = item.minStayArrivalValue;
-                            else if (item.minStayArrivalAction === "remove") deltaItem.minStayArrival = null;
+                            if (item.minStayArrivalAction === "set" && item.minStayArrivalValue !== undefined) {
+                                deltaItem.minStayArrival = item.minStayArrivalValue;
+                                if (deltaItem.minStayThrough === undefined) deltaItem.minStayThrough = item.minStayArrivalValue;
+                                deltaItem.minStay = item.minStayArrivalValue;
+                            } else if (item.minStayArrivalAction === "remove") {
+                                deltaItem.minStayArrival = null;
+                                if (item.minStayThroughAction === undefined) deltaItem.minStayThrough = null;
+                                deltaItem.minStay = null;
+                            }
 
-                            if (item.minStayThroughAction === "set" && item.minStayThroughValue !== undefined) deltaItem.minStayThrough = item.minStayThroughValue;
-                            else if (item.minStayThroughAction === "remove") deltaItem.minStayThrough = null;
+                            if (item.minStayThroughAction === "set" && item.minStayThroughValue !== undefined) {
+                                deltaItem.minStayThrough = item.minStayThroughValue;
+                                if (deltaItem.minStayArrival === undefined) deltaItem.minStayArrival = item.minStayThroughValue;
+                                deltaItem.minStay = item.minStayThroughValue;
+                            } else if (item.minStayThroughAction === "remove") {
+                                deltaItem.minStayThrough = null;
+                                if (item.minStayArrivalAction === undefined) deltaItem.minStayArrival = null;
+                                deltaItem.minStay = null;
+                            }
 
                             if (item.maxStayAction === "set" && item.maxStayValue !== undefined) deltaItem.maxStay = item.maxStayValue;
                             else if (item.maxStayAction === "remove") deltaItem.maxStay = null;

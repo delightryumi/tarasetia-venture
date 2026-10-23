@@ -132,6 +132,101 @@ function compressAvailabilityRanges(
     return ranges;
 }
 
+/**
+ * Helper to compress consecutive daily restrictions into run-length encoded date ranges (Channex Standard)
+ * Merges consecutive date sequences sharing identical rate & restrictions into date_from & date_to
+ */
+function compressRestrictionRanges(items: any[]): any[] {
+    if (!items || items.length === 0) return [];
+
+    // 1. Separate items that already declare date_from / date_to from discrete daily items
+    const alreadyRanges: any[] = [];
+    const singleDays: any[] = [];
+
+    items.forEach(item => {
+        if (item.date_from && item.date_to) {
+            alreadyRanges.push(item);
+        } else if (item.date) {
+            singleDays.push(item);
+        } else {
+            alreadyRanges.push(item);
+        }
+    });
+
+    if (singleDays.length === 0) {
+        return alreadyRanges;
+    }
+
+    // 2. Group single day items by unique signature (property_id + rate_plan_id + values)
+    const groups: Map<string, any[]> = new Map();
+
+    singleDays.forEach(item => {
+        const signature = JSON.stringify({
+            pId: item.property_id,
+            rpId: item.rate_plan_id,
+            rate: item.rate,
+            minArr: item.min_stay_arrival,
+            minThru: item.min_stay_through,
+            maxStay: item.max_stay,
+            stopSell: item.stop_sell,
+            cta: item.closed_to_arrival,
+            ctd: item.closed_to_departure,
+            days: item.days ? [...item.days].sort().join(",") : ""
+        });
+
+        if (!groups.has(signature)) {
+            groups.set(signature, []);
+        }
+        groups.get(signature)!.push(item);
+    });
+
+    const mergedRanges: any[] = [];
+
+    // 3. For each group, sort by date ascending and merge consecutive date sequences
+    groups.forEach((groupItems) => {
+        groupItems.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
+        let seqStart = groupItems[0].date;
+        let seqEnd = groupItems[0].date;
+        let baseTemplate = { ...groupItems[0] };
+        delete baseTemplate.date;
+
+        for (let i = 1; i < groupItems.length; i++) {
+            const prevDate = new Date(seqEnd);
+            const curDate = new Date(groupItems[i].date);
+            const diffDays = Math.round((curDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                // Consecutive calendar day: extend current range
+                seqEnd = groupItems[i].date;
+            } else if (diffDays === 0) {
+                // Duplicate date: ignore
+                continue;
+            } else {
+                // Sequence break: flush previous range
+                if (seqStart === seqEnd) {
+                    mergedRanges.push({ ...baseTemplate, date: seqStart });
+                } else {
+                    mergedRanges.push({ ...baseTemplate, date_from: seqStart, date_to: seqEnd });
+                }
+                seqStart = groupItems[i].date;
+                seqEnd = groupItems[i].date;
+                baseTemplate = { ...groupItems[i] };
+                delete baseTemplate.date;
+            }
+        }
+
+        // Flush last sequence
+        if (seqStart === seqEnd) {
+            mergedRanges.push({ ...baseTemplate, date: seqStart });
+        } else {
+            mergedRanges.push({ ...baseTemplate, date_from: seqStart, date_to: seqEnd });
+        }
+    });
+
+    return [...alreadyRanges, ...mergedRanges];
+}
+
 // ============================================================
 // HIGH-SCALE MULTI-HOTEL FIREBASE COST OPTIMIZATION (100+ HOTELS)
 // In-memory 60s TTL Caching for Static Hotel Data, Room Types & Rate Plans
@@ -1235,9 +1330,9 @@ export class ChannexSyncService {
                     date_from: effectiveDateFrom,
                     date_to: dateTo,
                     rate: formatRateForChannex(Number(rate), hotelCurrency),
-                    min_stay_arrival: restrictions?.minStayArrival || restrictions?.minStay || 1,
-                    min_stay_through: restrictions?.minStayThrough || restrictions?.minStay || 1,
-                    ...(restrictions?.maxStay !== undefined && restrictions?.maxStay !== null ? { max_stay: Number(restrictions.maxStay) } : {}),
+                    min_stay_arrival: restrictions?.minStayArrival ?? restrictions?.minStayThrough ?? restrictions?.minStay ?? 1,
+                    min_stay_through: restrictions?.minStayThrough ?? restrictions?.minStayArrival ?? restrictions?.minStay ?? 1,
+                    max_stay: restrictions?.maxStay !== undefined && restrictions?.maxStay !== null ? Number(restrictions.maxStay) : 0,
                     stop_sell: !!restrictions?.stopSell,
                     closed_to_arrival: !!restrictions?.closedToArrival,
                     closed_to_departure: !!restrictions?.closedToDeparture
@@ -1367,23 +1462,21 @@ export class ChannexSyncService {
                     valObj.rate = formatRateForChannex(Number(r.rate), hotelCurrency);
                 }
                 
-                // Min Stay Arrival
-                if (r.minStayArrival !== undefined && r.minStayArrival !== null) {
-                    valObj.min_stay_arrival = Number(r.minStayArrival);
-                } else if (r.minStay !== undefined && r.minStay !== null) {
-                    valObj.min_stay_arrival = Number(r.minStay);
-                }
-
-                // Min Stay Through
-                if (r.minStayThrough !== undefined && r.minStayThrough !== null) {
-                    valObj.min_stay_through = Number(r.minStayThrough);
-                } else if (r.minStay !== undefined && r.minStay !== null) {
-                    valObj.min_stay_through = Number(r.minStay);
+                // Dual Min-Stay Synchronization (Both min_stay_arrival and min_stay_through must always be set)
+                const resolvedMinStay = r.minStayThrough ?? r.minStayArrival ?? r.minStay;
+                if (resolvedMinStay !== undefined && resolvedMinStay !== null) {
+                    valObj.min_stay_arrival = Number(r.minStayArrival !== undefined && r.minStayArrival !== null ? r.minStayArrival : resolvedMinStay);
+                    valObj.min_stay_through = Number(r.minStayThrough !== undefined && r.minStayThrough !== null ? r.minStayThrough : resolvedMinStay);
+                } else if (resolvedMinStay === null) {
+                    valObj.min_stay_arrival = null;
+                    valObj.min_stay_through = null;
                 }
 
                 // Max Stay
                 if (r.maxStay !== undefined && r.maxStay !== null) {
                     valObj.max_stay = Number(r.maxStay);
+                } else if (r.maxStay === null) {
+                    valObj.max_stay = null;
                 }
 
                 if (r.stopSell !== undefined) valObj.stop_sell = Boolean(r.stopSell);
@@ -1394,9 +1487,11 @@ export class ChannexSyncService {
             }
 
             if (restrictionValues.length > 0) {
+                // Compress single-date sequences into merged date_from and date_to ranges (Channex Standard)
+                const compressedRestrictions = compressRestrictionRanges(restrictionValues);
                 await throttleAriCall(channexPropertyId);
-                console.log(`[ChannexSync] Executing Delta Batch Restrictions (${restrictionValues.length} items) in 1 API call...`);
-                const restRes = await channexClient.pushRestrictions({ values: restrictionValues }, customApiKey, env);
+                console.log(`[ChannexSync] Executing Delta Batch Restrictions (${compressedRestrictions.length} items compressed from ${restrictionValues.length}) in 1 API call...`);
+                const restRes = await channexClient.pushRestrictions({ values: compressedRestrictions }, customApiKey, env);
                 restrictionsTaskId = restRes?.data?.[0]?.id || restRes?.data?.id;
                 if (restrictionsTaskId) taskIds.push(restrictionsTaskId);
             }
@@ -1427,9 +1522,30 @@ export class ChannexSyncService {
             }
 
             if (availValues.length > 0) {
+                // Compress availability if any single date items are consecutive
+                const alreadyAvailRanges: any[] = [];
+                const singleAvailMap: Map<string, Array<{ dateStr: string; qty: number }>> = new Map();
+                availValues.forEach(a => {
+                    if (a.date_from && a.date_to) {
+                        alreadyAvailRanges.push(a);
+                    } else if (a.date) {
+                        const key = `${a.property_id}_${a.room_type_id}`;
+                        if (!singleAvailMap.has(key)) singleAvailMap.set(key, []);
+                        singleAvailMap.get(key)!.push({ dateStr: a.date, qty: a.availability });
+                    } else {
+                        alreadyAvailRanges.push(a);
+                    }
+                });
+                const compressedAvail = [...alreadyAvailRanges];
+                singleAvailMap.forEach((list, key) => {
+                    const [pId, rtId] = key.split("_");
+                    list.sort((x, y) => (x.dateStr < y.dateStr ? -1 : 1));
+                    compressedAvail.push(...compressAvailabilityRanges(list, pId, rtId));
+                });
+
                 await throttleAriCall(channexPropertyId);
-                console.log(`[ChannexSync] Executing Delta Batch Availability (${availValues.length} items) in 1 API call...`);
-                const availRes = await channexClient.pushAvailability({ values: availValues }, customApiKey, env);
+                console.log(`[ChannexSync] Executing Delta Batch Availability (${compressedAvail.length} items compressed from ${availValues.length}) in 1 API call...`);
+                const availRes = await channexClient.pushAvailability({ values: compressedAvail }, customApiKey, env);
                 availabilityTaskId = availRes?.data?.[0]?.id || availRes?.data?.id;
                 if (availabilityTaskId) taskIds.push(availabilityTaskId);
             }
@@ -1594,6 +1710,7 @@ export class ChannexSyncService {
                     (hotelCurrency === "IDR" ? 500000 : 100)
                 );
                 const formattedBaseRate = formatRateForChannex(basePrice, hotelCurrency);
+                const baseMaxStay = rp.maxStay !== undefined && rp.maxStay !== null ? Number(rp.maxStay) : 0;
 
                 // Base broad range across the sync window
                 restrictionValues.push({
@@ -1604,6 +1721,7 @@ export class ChannexSyncService {
                     rate: formattedBaseRate,
                     min_stay_arrival: minStay,
                     min_stay_through: minStay,
+                    max_stay: baseMaxStay,
                     stop_sell: stopSell,
                     closed_to_arrival: closedToArrival,
                     closed_to_departure: closedToDeparture
@@ -1654,13 +1772,11 @@ export class ChannexSyncService {
                             rate: customRateStr,
                             min_stay_arrival: customMinStayArr,
                             min_stay_through: customMinStayThru,
+                            max_stay: customMaxStay !== undefined && customMaxStay !== null ? customMaxStay : baseMaxStay,
                             stop_sell: customStopSell,
                             closed_to_arrival: customCta,
                             closed_to_departure: customCtd
                         };
-                        if (customMaxStay !== undefined && customMaxStay !== null) {
-                            overrideRestObj.max_stay = customMaxStay;
-                        }
 
                         restrictionValues.push(overrideRestObj);
                     }
@@ -1682,12 +1798,13 @@ export class ChannexSyncService {
             if (availabilityTaskId) taskIds.push(availabilityTaskId);
         }
 
-        // EXECUTE CALL 2: POST /restrictions (with rate limit throttle)
-        console.log(`[FullSync] Executing Call 2/2: Pushing ${restrictionValues.length} rate restriction ranges...`);
+        // EXECUTE CALL 2: POST /restrictions (with rate limit throttle & sequence merger)
+        console.log(`[FullSync] Executing Call 2/2: Pushing ${restrictionValues.length} rate restrictions...`);
         let restRes = null;
         if (restrictionValues.length > 0) {
+            const compressedRestrictions = compressRestrictionRanges(restrictionValues);
             await throttleAriCall(channexPropertyId);
-            restRes = await channexClient.pushRestrictions({ values: restrictionValues }, customApiKey, env);
+            restRes = await channexClient.pushRestrictions({ values: compressedRestrictions }, customApiKey, env);
             restrictionsTaskId = restRes?.data?.[0]?.id || restRes?.data?.id;
             if (restrictionsTaskId) taskIds.push(restrictionsTaskId);
         }
