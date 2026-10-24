@@ -1,27 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { 
-    RefreshCw, 
-    X, 
-    ChevronLeft, 
-    ChevronRight, 
-    ArrowUpDown,
-    Trash2,
-    AlertTriangle,
-    ShieldCheck,
-    Copy,
-    Check,
-    Code2,
-    Layers,
-    GitCompare,
-    Globe,
-    CheckCircle2,
-    AlertCircle,
-    Clock
-} from "lucide-react";
 import { toast } from "sonner";
-import { ChannelNotificationWidget } from "./ChannelNotificationWidget";
+import { ChannelActionLogsDesktopView } from "./ChannelActionLogsDesktopView";
+import { ChannelActionLogsMobileView } from "./ChannelActionLogsMobileView";
 import styles from "./ChannelActionLogs.module.css";
 
 export interface ChannelTaskLog {
@@ -49,15 +31,15 @@ export interface ChannelTaskLog {
     is_live_synced?: boolean;
 }
 
-interface Props {
+interface ChannelActionLogsTabProps {
     hotelCode: string;
 }
 
-export function ChannelActionLogsTab({ hotelCode }: Props) {
+export function ChannelActionLogsTab({ hotelCode }: ChannelActionLogsTabProps) {
     const [logs, setLogs] = useState<ChannelTaskLog[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [cleaningLogs, setCleaningLogs] = useState<boolean>(false);
-    const [retentionDays, setRetentionDays] = useState<number>(60); // 60 days = 2 months default
+    const [retentionDays, setRetentionDays] = useState<number>(60); // 60 days standard
 
     // Filters
     const [actionFilter, setActionFilter] = useState<string>("all");
@@ -76,13 +58,13 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
     const [fetchingLiveTask, setFetchingLiveTask] = useState<boolean>(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
 
-    // Custom CSS Modals for Purge & Single Delete
+    // Modals for Purge & Single Delete
     const [isPurgeModalOpen, setIsPurgeModalOpen] = useState<boolean>(false);
-    const [purgeMode, setPurgeMode] = useState<"all" | "obsolete">("all");
+    const [purgeMode, setPurgeMode] = useState<"all" | "obsolete">("obsolete");
     const [logToDelete, setLogToDelete] = useState<ChannelTaskLog | null>(null);
     const [deletingSingleLog, setDeletingSingleLog] = useState<boolean>(false);
 
-    // Keyboard accessibility: Close modals on Escape key (antislop R-32)
+    // Keyboard accessibility: Close modals on Escape key
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
@@ -99,7 +81,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
         if (!text) return;
         navigator.clipboard.writeText(text);
         setCopiedField(label);
-        toast.success(`${label} copied to clipboard!`);
+        toast.success(`${label} disalin ke clipboard!`);
         setTimeout(() => setCopiedField(null), 2000);
     };
 
@@ -151,7 +133,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
         fetchLogs();
     }, [hotelCode]);
 
-    // Handle Retention Policy Change (2 or 3 months)
+    // Handle Retention Policy Change
     const handleRetentionChange = async (days: number) => {
         setRetentionDays(days);
         try {
@@ -166,22 +148,22 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(`Retention policy updated to ${days} days (~${Math.round(days / 30)} months). ${data.purgedCount ? `Purged ${data.purgedCount} obsolete logs.` : "All logs retained."}`);
+                toast.success(`Kebijakan retensi diperbarui ke ${days} hari (~${Math.round(days / 30)} bulan).`);
                 fetchLogs();
             } else {
-                toast.error(data.error || "Failed to update retention policy");
+                toast.error(data.error || "Gagal memperbarui kebijakan retensi");
             }
         } catch (err: any) {
             toast.error(`Error: ${err.message}`);
         }
     };
 
-    // Execute Purge (Obsolete or All) via CSS Modal
+    // Execute Purge
     const handleExecutePurge = async () => {
         setCleaningLogs(true);
         const toastId = toast.loading(purgeMode === "all" ? "Membersihkan seluruh riwayat log..." : `Membersihkan log lebih dari ${retentionDays} hari...`);
         try {
-            const url = purgeMode === "all" 
+            const url = purgeMode === "all"
                 ? `/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}&purgeAll=true`
                 : `/api/channex/tasks?hotelCode=${encodeURIComponent(hotelCode)}&retentionDays=${retentionDays}`;
 
@@ -201,7 +183,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
         }
     };
 
-    // Execute Single Log Deletion via CSS Modal
+    // Execute Single Log Deletion
     const handleExecuteDeleteSingle = async () => {
         if (!logToDelete) return;
         setDeletingSingleLog(true);
@@ -273,6 +255,7 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
         return filteredLogs.slice(start, start + pageSize);
     }, [filteredLogs, page, pageSize]);
 
+    // Formatters
     const formatTimestamp = (ts?: string) => {
         if (!ts) return "-";
         try {
@@ -296,993 +279,78 @@ export function ChannelActionLogsTab({ hotelCode }: Props) {
         }
     };
 
-    // Helper to render git-style diff lines matching Channex Screenshot 4
-    const renderDiffLines = (diff: any, selectedEvent: ChannelTaskLog) => {
-        if (Array.isArray(diff)) {
-            // Already structured diff line array
-            return diff.map((line: any, idx: number) => {
-                const isAdd = line.type === "add" || line.sign === "+";
-                const isDel = line.type === "remove" || line.type === "del" || line.sign === "-";
-                return (
-                    <div 
-                        key={idx} 
-                        className={`${styles.diffLine} ${isAdd ? styles.diffLineAdd : isDel ? styles.diffLineDel : ""}`}
-                    >
-                        <span className={styles.diffColNum}>{line.oldLine || (isDel ? idx + 1 : "")}</span>
-                        <span className={styles.diffColNum}>{line.newLine || (isAdd ? idx + 1 : !isDel ? idx + 1 : "")}</span>
-                        <span className={styles.diffSign}>{isAdd ? "+" : isDel ? "-" : " "}</span>
-                        <span className={styles.diffText}>{line.text}</span>
-                    </div>
-                );
-            });
-        }
+    // Telemetry stats
+    const successCount = useMemo(() => logs.filter(l => l.result?.toLowerCase() === "success").length, [logs]);
+    const successRate = useMemo(() => logs.length > 0 ? Math.round((successCount / logs.length) * 100) : 100, [successCount, logs.length]);
 
-        if (diff && typeof diff === "object") {
-            const entries = Object.entries(diff);
-            return (
-                <div>
-                    <div className={styles.diffLine}>
-                        <span className={styles.diffColNum}>1</span>
-                        <span className={styles.diffColNum}>1</span>
-                        <span className={styles.diffSign}> </span>
-                        <span className={styles.diffText}>&#123;</span>
-                    </div>
-                    {entries.map(([key, change]: [string, any], idx) => {
-                        const oldVal = change?.old !== undefined ? JSON.stringify(change.old) : null;
-                        const newVal = change?.new !== undefined ? JSON.stringify(change.new) : JSON.stringify(change);
-                        return (
-                            <React.Fragment key={key}>
-                                {oldVal !== null && (
-                                    <div className={`${styles.diffLine} ${styles.diffLineDel}`}>
-                                        <span className={styles.diffColNum}>{idx + 2}</span>
-                                        <span className={styles.diffColNum}></span>
-                                        <span className={styles.diffSign}>-</span>
-                                        <span className={styles.diffText}>  &quot;{key}&quot;: {oldVal},</span>
-                                    </div>
-                                )}
-                                <div className={`${styles.diffLine} ${styles.diffLineAdd}`}>
-                                    <span className={styles.diffColNum}></span>
-                                    <span className={styles.diffColNum}>{idx + 2}</span>
-                                    <span className={styles.diffSign}>+</span>
-                                    <span className={styles.diffText}>  &quot;{key}&quot;: {newVal},</span>
-                                </div>
-                            </React.Fragment>
-                        );
-                    })}
-                    <div className={styles.diffLine}>
-                        <span className={styles.diffColNum}>{entries.length + 2}</span>
-                        <span className={styles.diffColNum}>{entries.length + 2}</span>
-                        <span className={styles.diffSign}> </span>
-                        <span className={styles.diffText}>&#125;</span>
-                    </div>
-                </div>
-            );
-        }
+    const avgLatency = useMemo(() => {
+        const withLatency = logs.filter(l => typeof l.execution_time_ms === "number" && l.execution_time_ms > 0);
+        if (withLatency.length === 0) return 0;
+        const total = withLatency.reduce((acc, curr) => acc + (curr.execution_time_ms || 0), 0);
+        return Math.round(total / withLatency.length);
+    }, [logs]);
 
-        if (selectedEvent.details) {
-            return (
-                <div style={{ padding: "12px", background: "#f8fafc", color: "#0f172a" }}>
-                    <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontSize: "11px", fontFamily: "var(--font-mono-jb, monospace)" }}>
-                        {typeof selectedEvent.details === "string" 
-                            ? selectedEvent.details 
-                            : JSON.stringify(selectedEvent.details, null, 2)}
-                    </pre>
-                </div>
-            );
-        }
-
-        // Fallback standard diff view
-        return (
-            <div>
-                <div className={styles.diffLine}>
-                    <span className={styles.diffColNum}>1</span>
-                    <span className={styles.diffColNum}>1</span>
-                    <span className={styles.diffSign}> </span>
-                    <span className={styles.diffText}>&#123;</span>
-                </div>
-                <div className={styles.diffLine}>
-                    <span className={styles.diffColNum}>2</span>
-                    <span className={styles.diffColNum}>2</span>
-                    <span className={styles.diffSign}> </span>
-                    <span className={styles.diffText}>  &quot;event&quot;: &quot;{selectedEvent.action}&quot;,</span>
-                </div>
-                <div className={styles.diffLine}>
-                    <span className={styles.diffColNum}>3</span>
-                    <span className={styles.diffColNum}>3</span>
-                    <span className={styles.diffSign}> </span>
-                    <span className={styles.diffText}>  &quot;channel&quot;: &quot;{selectedEvent.channelName}&quot;,</span>
-                </div>
-                <div className={styles.diffLine}>
-                    <span className={styles.diffColNum}>4</span>
-                    <span className={styles.diffColNum}>4</span>
-                    <span className={styles.diffSign}> </span>
-                    <span className={styles.diffText}>  &quot;user&quot;: &quot;{selectedEvent.user}&quot;,</span>
-                </div>
-                <div className={styles.diffLine}>
-                    <span className={styles.diffColNum}>5</span>
-                    <span className={styles.diffColNum}>5</span>
-                    <span className={styles.diffSign}> </span>
-                    <span className={styles.diffText}>  &quot;status&quot;: &quot;{selectedEvent.status}&quot;,</span>
-                </div>
-                <div className={styles.diffLine}>
-                    <span className={styles.diffColNum}>6</span>
-                    <span className={styles.diffColNum}>6</span>
-                    <span className={styles.diffSign}> </span>
-                    <span className={styles.diffText}>  &quot;timestamp&quot;: &quot;{selectedEvent.inserted_at}&quot;</span>
-                </div>
-                <div className={styles.diffLine}>
-                    <span className={styles.diffColNum}>7</span>
-                    <span className={styles.diffColNum}>7</span>
-                    <span className={styles.diffSign}> </span>
-                    <span className={styles.diffText}>&#125;</span>
-                </div>
-            </div>
-        );
+    const viewProps = {
+        hotelCode,
+        logs,
+        filteredLogs,
+        paginatedLogs,
+        loading,
+        cleaningLogs,
+        retentionDays,
+        handleRetentionChange,
+        handleExecutePurge,
+        isPurgeModalOpen,
+        setIsPurgeModalOpen,
+        purgeMode,
+        setPurgeMode,
+        logToDelete,
+        setLogToDelete,
+        handleExecuteDeleteSingle,
+        deletingSingleLog,
+        actionFilter,
+        setActionFilter,
+        actionTypes,
+        startDate,
+        setStartDate,
+        endDate,
+        setEndDate,
+        resultFilter,
+        setResultFilter,
+        channelFilter,
+        setChannelFilter,
+        channelNames,
+        page,
+        setPage,
+        pageSize,
+        setPageSize,
+        totalPages,
+        selectedEvent,
+        setSelectedEvent,
+        activeDetailTab,
+        setActiveDetailTab,
+        fetchingLiveTask,
+        handleFetchLiveTask,
+        copiedField,
+        handleCopy,
+        fetchLogs,
+        formatTimestamp,
+        formatTimestampWithMs,
+        successRate,
+        avgLatency
     };
 
     return (
-        <div className={styles.container}>
-            {/* Header matching Channex Channel Events */}
-            <div className={styles.eventsHeader}>
-                <div className={styles.titleArea}>
-                    <h2 className={styles.mainTitle}>Channel Events</h2>
-                    <span className={styles.channelPill}>
-                        <span className={styles.channelDot} />
-                        <span>{channelNames.length > 0 ? channelNames[0] : "MyTara Open Channel"}</span>
-                    </span>
-                </div>
-
-                {/* Auto-Delete & Retention Badge */}
-                <div className={styles.retentionBadge} title="Automatic log purge active">
-                    <span className={styles.retentionDot} />
-                    <span>Auto-Purge Active (Logs &gt; {retentionDays} Days / ~{Math.round(retentionDays / 30)} Months)</span>
-                </div>
+        <div className={styles.logsContainer}>
+            {/* Desktop View */}
+            <div className={styles.desktopOnly}>
+                <ChannelActionLogsDesktopView {...viewProps} />
             </div>
 
-            {/* PWA Push Notification System (Lockscreen Alerts & Mobile Sound Notifications) */}
-            <ChannelNotificationWidget hotelCode={hotelCode} />
-
-            {/* Retention & Database Optimization Bar */}
-            <div className={styles.retentionBar}>
-                <div className={styles.retentionLeft}>
-                    <span className={styles.retentionTitle}>
-                        <ShieldCheck size={16} color="#059669" />
-                        <span>Log Retention:</span>
-                    </span>
-                    <select
-                        value={retentionDays}
-                        onChange={e => handleRetentionChange(Number(e.target.value))}
-                        className={styles.retentionSelect}
-                        title="Configure automatic log purge threshold"
-                    >
-                        <option value={30}>Keep 30 Days (1 Month)</option>
-                        <option value={60}>Keep 60 Days (2 Months) - Standard</option>
-                        <option value={90}>Keep 90 Days (3 Months) - Recommended</option>
-                    </select>
-                    <span style={{ color: "#64748b", fontSize: "11px" }}>
-                        Logs older than {retentionDays} days are automatically purged to optimize storage quota.
-                    </span>
-                </div>
-
-                <button
-                    type="button"
-                    onClick={() => setIsPurgeModalOpen(true)}
-                    disabled={cleaningLogs}
-                    className={styles.btnCleanLogs}
-                    title="Buka panel pembersihan log"
-                >
-                    <Trash2 size={13} className={cleaningLogs ? "animate-spin" : ""} />
-                    <span>{cleaningLogs ? "Membersihkan..." : "Purge / Hapus Log"}</span>
-                </button>
+            {/* Mobile View */}
+            <div className={styles.mobileOnly}>
+                <ChannelActionLogsMobileView {...viewProps} />
             </div>
-
-            {/* Filter Bar matching Channex UI */}
-            <div className={styles.filterBar}>
-                <div className={styles.filterInputs}>
-                    {/* Action Filter */}
-                    <select
-                        value={actionFilter}
-                        onChange={e => {
-                            setActionFilter(e.target.value);
-                            setPage(1);
-                        }}
-                        className={styles.filterSelect}
-                        style={{ minWidth: "180px" }}
-                    >
-                        <option value="all">Action (All)</option>
-                        {actionTypes.map(act => (
-                            <option key={act} value={act}>{act}</option>
-                        ))}
-                    </select>
-
-                    {/* Date Range */}
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={e => {
-                                setStartDate(e.target.value);
-                                setPage(1);
-                            }}
-                            className={styles.filterDateInput}
-                            placeholder="Start date"
-                            title="Start Date"
-                        />
-                        <span style={{ color: "#94a3b8", fontSize: "12px" }}>→</span>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={e => {
-                                setEndDate(e.target.value);
-                                setPage(1);
-                            }}
-                            className={styles.filterDateInput}
-                            placeholder="End date"
-                            title="End Date"
-                        />
-                    </div>
-
-                    {/* Result Filter */}
-                    <select
-                        value={resultFilter}
-                        onChange={e => {
-                            setResultFilter(e.target.value);
-                            setPage(1);
-                        }}
-                        className={styles.filterSelect}
-                        style={{ minWidth: "120px" }}
-                    >
-                        <option value="all">Result (All)</option>
-                        <option value="Success">Success</option>
-                        <option value="Failed">Failed</option>
-                    </select>
-
-                    {/* Channel Filter if multiple */}
-                    {channelNames.length > 1 && (
-                        <select
-                            value={channelFilter}
-                            onChange={e => {
-                                setChannelFilter(e.target.value);
-                                setPage(1);
-                            }}
-                            className={styles.filterSelect}
-                        >
-                            <option value="all">All Channels</option>
-                            {channelNames.map(cn => (
-                                <option key={cn} value={cn}>{cn}</option>
-                            ))}
-                        </select>
-                    )}
-                </div>
-
-                <button
-                    type="button"
-                    onClick={fetchLogs}
-                    className={styles.btnRefresh}
-                    title="Refresh channel events log"
-                >
-                    <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-                    <span>Refresh</span>
-                </button>
-            </div>
-
-            {/* Table matching Channex */}
-            <div className={styles.tableCard}>
-                <div className={styles.tableResponsive}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th className={`${styles.th} ${styles.thWithSort}`} style={{ minWidth: "160px" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <span>Action</span>
-                                        <ArrowUpDown size={11} color="#94a3b8" />
-                                    </div>
-                                </th>
-                                <th className={styles.th} style={{ minWidth: "350px", width: "350px" }}>Task ID (Channel Manager)</th>
-                                <th className={styles.th} style={{ minWidth: "150px" }}>Channel</th>
-                                <th className={styles.th} style={{ minWidth: "180px" }}>User</th>
-                                <th className={styles.th} style={{ minWidth: "140px" }}>Started At</th>
-                                <th className={styles.th} style={{ minWidth: "100px" }}>Execution Time</th>
-                                <th className={styles.th} style={{ textAlign: "right", minWidth: "90px" }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paginatedLogs.map(item => {
-                                const isSuccess = item.result.toLowerCase() === "success";
-                                const isFailed = item.result.toLowerCase() === "failed";
-
-                                return (
-                                    <tr key={item.id} className={styles.tr}>
-                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <div className={styles.actionCell}>
-                                                <span 
-                                                    className={
-                                                        isSuccess ? styles.statusRingSuccess : 
-                                                        isFailed ? styles.statusRingError : 
-                                                        styles.statusRingWarning
-                                                    } 
-                                                />
-                                                <span style={{ fontWeight: 600, color: "#09090b", fontSize: "11px" }}>{item.action}</span>
-                                            </div>
-                                        </td>
-                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            {(() => {
-                                                const ids = (item.task_ids && item.task_ids.length > 0)
-                                                    ? item.task_ids
-                                                    : (item.task_id ? [item.task_id] : [item.id]);
-
-                                                const isMulti = ids.length > 1;
-
-                                                if (isMulti) {
-                                                    return (
-                                                        <div className={styles.multiTaskGroup}>
-                                                            <div className={styles.multiTaskHeader}>
-                                                                <span className={styles.multiTaskCount}>
-                                                                    {ids.length} Task IDs (Full Sync)
-                                                                </span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleCopy(ids.join("\n"), `task-all-${item.id}`);
-                                                                    }}
-                                                                    className={styles.btnCopyAllTasks}
-                                                                    title="Salin 2 Task ID sekaligus (format 1 ID per baris untuk Form Sertifikasi Test #1)"
-                                                                >
-                                                                    {copiedField === `task-all-${item.id}` ? <Check size={9} color="#34d399" /> : <Copy size={9} />}
-                                                                    <span>{copiedField === `task-all-${item.id}` ? "Tersalin (2 Baris)" : "Salin Keduanya"}</span>
-                                                                </button>
-                                                            </div>
-                                                            <div className={styles.multiTaskList}>
-                                                                {ids.map((tid, idx) => {
-                                                                    const label = idx === 0 ? "Call 1: Avail" : idx === 1 ? "Call 2: Rates" : `Task ${idx + 1}`;
-                                                                    return (
-                                                                        <div key={tid || idx} className={styles.multiTaskRow}>
-                                                                            <span className={styles.multiTaskTag}>{label}</span>
-                                                                            <span className={styles.multiTaskUuid} title={tid}>{tid}</span>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleCopy(tid, `task-${item.id}-${idx}`);
-                                                                                }}
-                                                                                className={styles.multiTaskCopyBtn}
-                                                                                title={`Salin ${label}: ${tid}`}
-                                                                            >
-                                                                                {copiedField === `task-${item.id}-${idx}` ? <Check size={9} color="#059669" /> : <Copy size={9} />}
-                                                                            </button>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                const tid = ids[0];
-                                                return (
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleCopy(tid, `task-${item.id}`);
-                                                        }}
-                                                        className={styles.taskIdChip}
-                                                        title={`Klik untuk menyalin Task ID: ${tid}`}
-                                                    >
-                                                        <span className={styles.taskIdMono}>
-                                                            {tid}
-                                                        </span>
-                                                        {copiedField === `task-${item.id}` ? (
-                                                            <Check size={10} color="#059669" />
-                                                        ) : (
-                                                            <Copy size={10} className={styles.taskIdCopyIcon} />
-                                                        )}
-                                                    </button>
-                                                );
-                                            })()}
-                                        </td>
-                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <span style={{ fontWeight: 500, color: "#334155", fontSize: "11px" }}>
-                                                {item.channelName}
-                                            </span>
-                                        </td>
-                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <span style={{ fontSize: "11px", color: "#64748b" }}>
-                                                {item.user}
-                                            </span>
-                                        </td>
-                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "10.5px", color: "#334155" }}>
-                                                {formatTimestamp(item.started_at || item.inserted_at)}
-                                            </span>
-                                        </td>
-                                        <td className={styles.td} style={{ whiteSpace: "nowrap" }}>
-                                            <span style={{ fontFamily: "var(--font-mono-jb, monospace)", fontSize: "10.5px", color: "#64748b" }}>
-                                                {item.execution_time_ms ? `${item.execution_time_ms} ms` : "-"}
-                                            </span>
-                                        </td>
-                                        <td className={styles.td} style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                                            <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setSelectedEvent(item)}
-                                                    className={styles.btnView}
-                                                >
-                                                    View
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setLogToDelete(item)}
-                                                    className={styles.btnDeleteRow}
-                                                    title="Hapus baris log ini"
-                                                    aria-label={`Hapus log ${item.action}`}
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-
-                            {paginatedLogs.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
-                                        {loading ? "Loading channel events..." : "No channel events found matching the selected filter."}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination */}
-                <div className={styles.paginationRow}>
-                    <button
-                        type="button"
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page <= 1}
-                        className={styles.pageBtn}
-                        title="Previous page"
-                    >
-                        <ChevronLeft size={14} />
-                    </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 5).map(pageNum => (
-                        <button
-                            key={pageNum}
-                            type="button"
-                            onClick={() => setPage(pageNum)}
-                            className={`${styles.pageBtn} ${page === pageNum ? styles.pageBtnActive : ""}`}
-                        >
-                            {pageNum}
-                        </button>
-                    ))}
-
-                    <button
-                        type="button"
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        disabled={page >= totalPages}
-                        className={styles.pageBtn}
-                        title="Next page"
-                    >
-                        <ChevronRight size={14} />
-                    </button>
-
-                    <select
-                        value={pageSize}
-                        onChange={e => {
-                            setPageSize(Number(e.target.value));
-                            setPage(1);
-                        }}
-                        className={styles.filterSelect}
-                        style={{ padding: "3px 8px", fontSize: "11px", marginLeft: "8px" }}
-                    >
-                        <option value={6}>6 / page</option>
-                        <option value={10}>10 / page</option>
-                        <option value={20}>20 / page</option>
-                        <option value={50}>50 / page</option>
-                    </select>
-                </div>
-            </div>
-
-            {/* Slide-Over Drawer Modal: Channel Action View (Matching Channex UI) */}
-            {selectedEvent && (
-                <div className={styles.modalOverlay} onClick={() => setSelectedEvent(null)}>
-                    <div className={styles.modalDrawer} onClick={e => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <div className={styles.modalTitle}>
-                                <button 
-                                    type="button" 
-                                    onClick={() => setSelectedEvent(null)}
-                                    className={styles.modalCloseBtn}
-                                    title="Close View"
-                                >
-                                    <X size={18} />
-                                </button>
-                                <span>Channel Action View</span>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                {(selectedEvent.task_id || selectedEvent.id) && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleFetchLiveTask(selectedEvent.task_id || selectedEvent.id)}
-                                        disabled={fetchingLiveTask}
-                                        className={styles.liveSyncBtn}
-                                        title="Sync live status and OTA responses directly from Channex API"
-                                    >
-                                        <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
-                                        <span>{fetchingLiveTask ? "Syncing Channex..." : "Sync Live Status"}</span>
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={() => setLogToDelete(selectedEvent)}
-                                    className={styles.btnCleanLogs}
-                                    style={{ padding: "4px 10px", fontSize: "11px", color: "#be123c", borderColor: "#fecdd3" }}
-                                    title="Hapus log ini"
-                                >
-                                    <Trash2 size={12} />
-                                    <span>Hapus Log</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className={styles.modalBody}>
-                            {/* Metadata Grid */}
-                            <div className={styles.metaGrid}>
-                                <div className={styles.metaRow}>
-                                    <span className={styles.metaLabel}>Event:</span>
-                                    <span className={styles.metaValue} style={{ fontWeight: 700 }}>
-                                        {selectedEvent.action}
-                                    </span>
-                                </div>
-                                <div className={styles.metaRow}>
-                                    <span className={styles.metaLabel}>Inserted At:</span>
-                                    <span className={styles.metaValue} style={{ fontFamily: "var(--font-mono-jb, monospace)" }}>
-                                        {formatTimestampWithMs(selectedEvent.inserted_at || selectedEvent.started_at)}
-                                    </span>
-                                </div>
-                                <div className={styles.metaRow}>
-                                    <span className={styles.metaLabel}>Result:</span>
-                                    <span className={styles.metaValue} style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                                        <span className={selectedEvent.result.toLowerCase() === "success" ? styles.badgeSuccessOutline : styles.badgeErrorOutline}>
-                                            {selectedEvent.result}
-                                        </span>
-                                        {selectedEvent.is_live_synced && (
-                                            <span style={{ fontSize: "11px", color: "#2563eb", background: "#eff6ff", border: "1px solid #bfdbfe", padding: "1px 6px", borderRadius: "4px", fontWeight: 600 }}>
-                                                ✓ Channex API Live
-                                            </span>
-                                        )}
-                                    </span>
-                                </div>
-                                <div className={styles.metaRow}>
-                                    <span className={styles.metaLabel}>Channel:</span>
-                                    <span className={styles.metaValue} style={{ color: "#2563eb", fontWeight: 600 }}>
-                                        {selectedEvent.channelName}
-                                    </span>
-                                </div>
-                                <div className={styles.metaRow}>
-                                    <span className={styles.metaLabel}>User:</span>
-                                    <span className={styles.metaValue}>
-                                        {selectedEvent.user}
-                                    </span>
-                                </div>
-                                <div className={styles.metaRow}>
-                                    <span className={styles.metaLabel}>Task ID:</span>
-                                    <div className={styles.metaValue} style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
-                                        {(() => {
-                                            const ids = (selectedEvent.task_ids && selectedEvent.task_ids.length > 0)
-                                                ? selectedEvent.task_ids
-                                                : (selectedEvent.task_id ? [selectedEvent.task_id] : [selectedEvent.id]);
-                                            const isMulti = ids.length > 1;
-
-                                            return (
-                                                <>
-                                                    {ids.map((tid, idx) => {
-                                                        const label = isMulti 
-                                                            ? (idx === 0 ? "Call 1 (Availability)" : idx === 1 ? "Call 2 (Rates/Restrictions)" : `Task ${idx + 1}`)
-                                                            : null;
-                                                        return (
-                                                            <div key={tid || idx} style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", background: "#fafafa", border: "1px solid #e4e4e7", borderRadius: "6px", padding: "6px 10px" }}>
-                                                                {label && (
-                                                                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#71717a", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-                                                                        {label}:
-                                                                    </span>
-                                                                )}
-                                                                <span style={{ fontFamily: "var(--font-mono-jb, monospace)", color: "#18181b", fontWeight: 700, fontSize: "11.5px", wordBreak: "break-all" }}>
-                                                                    {tid}
-                                                                </span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleCopy(tid, `modal-task-${idx}`)}
-                                                                    style={{
-                                                                        border: "1px solid #d4d4d8",
-                                                                        borderRadius: "4px",
-                                                                        padding: "2px 8px",
-                                                                        fontSize: "11px",
-                                                                        cursor: "pointer",
-                                                                        backgroundColor: "#ffffff",
-                                                                        color: "#18181b",
-                                                                        display: "inline-flex",
-                                                                        alignItems: "center",
-                                                                        gap: "4px",
-                                                                        marginLeft: "auto"
-                                                                    }}
-                                                                    title="Salin Task ID ini"
-                                                                >
-                                                                    {copiedField === `modal-task-${idx}` ? <Check size={11} color="#09090b" /> : <Copy size={11} />}
-                                                                    <span>{copiedField === `modal-task-${idx}` ? "Disalin" : "Salin"}</span>
-                                                                </button>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                    {isMulti && (
-                                                        <div style={{ marginTop: "4px" }}>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleCopy(ids.join("\n"), "modal-all-tasks")}
-                                                                style={{
-                                                                    border: "1px solid #18181b",
-                                                                    borderRadius: "5px",
-                                                                    padding: "6px 12px",
-                                                                    fontSize: "11.5px",
-                                                                    fontWeight: 600,
-                                                                    cursor: "pointer",
-                                                                    backgroundColor: "#18181b",
-                                                                    color: "#ffffff",
-                                                                    display: "inline-flex",
-                                                                    alignItems: "center",
-                                                                    gap: "6px"
-                                                                }}
-                                                                title="Salin semua Task ID sekaligus dengan format 1 ID per baris untuk form sertifikasi"
-                                                            >
-                                                                {copiedField === "modal-all-tasks" ? <Check size={12} color="#ffffff" /> : <Copy size={12} color="#ffffff" />}
-                                                                <span>{copiedField === "modal-all-tasks" ? "Tersalin (Format 2 Baris)" : "Salin Keduanya (1 ID per baris untuk Form Sertifikasi)"}</span>
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </>
-                                            );
-                                        })()}
-                                    </div>
-                                </div>
-                                {selectedEvent.reason && (
-                                    <div className={styles.metaRow}>
-                                        <span className={styles.metaLabel}>Reason:</span>
-                                        <span className={styles.metaValue} style={{ color: "#475569" }}>
-                                            {selectedEvent.reason}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Detail Tabs Bar matching Channex Inspector */}
-                            <div className={styles.detailTabsRow}>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveDetailTab("diff")}
-                                    className={`${styles.detailTabBtn} ${activeDetailTab === "diff" ? styles.detailTabBtnActive : ""}`}
-                                >
-                                    <GitCompare size={13} />
-                                    <span>Changes &amp; Diff</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveDetailTab("payload")}
-                                    className={`${styles.detailTabBtn} ${activeDetailTab === "payload" ? styles.detailTabBtnActive : ""}`}
-                                >
-                                    <Code2 size={13} />
-                                    <span>Request Payload</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveDetailTab("ota")}
-                                    className={`${styles.detailTabBtn} ${activeDetailTab === "ota" ? styles.detailTabBtnActive : ""}`}
-                                >
-                                    <Globe size={13} />
-                                    <span>OTA Responses {selectedEvent.ota_responses?.length ? `(${selectedEvent.ota_responses.length})` : ""}</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveDetailTab("response")}
-                                    className={`${styles.detailTabBtn} ${activeDetailTab === "response" ? styles.detailTabBtnActive : ""}`}
-                                >
-                                    <Layers size={13} />
-                                    <span>Channex Response</span>
-                                </button>
-                            </div>
-
-                            {/* Tab 1: Diff View */}
-                            {activeDetailTab === "diff" && (
-                                <div>
-                                    <div className={styles.diffViewer}>
-                                        {renderDiffLines(selectedEvent.diff, selectedEvent)}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Tab 2: Request Payload */}
-                            {activeDetailTab === "payload" && (
-                                <div>
-                                    <div className={styles.codeBoxHeader}>
-                                        <span>Request Body (JSON)</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleCopy(
-                                                JSON.stringify(selectedEvent.payload || selectedEvent.diff || selectedEvent.details || { action: selectedEvent.action, task_id: selectedEvent.task_id || selectedEvent.id }, null, 2),
-                                                "Request Payload"
-                                            )}
-                                            className={styles.copyCodeBtn}
-                                        >
-                                            {copiedField === "Request Payload" ? <Check size={12} color="#09090b" /> : <Copy size={12} />}
-                                            <span>{copiedField === "Request Payload" ? "Copied" : "Copy Payload"}</span>
-                                        </button>
-                                    </div>
-                                    <pre className={styles.jsonPre}>
-                                        {JSON.stringify(selectedEvent.payload || selectedEvent.diff || selectedEvent.details || { action: selectedEvent.action, task_id: selectedEvent.task_id || selectedEvent.id }, null, 2)}
-                                    </pre>
-                                </div>
-                            )}
-
-                            {/* Tab 3: OTA Responses */}
-                            {activeDetailTab === "ota" && (
-                                <div className={styles.otaGrid}>
-                                    {Array.isArray(selectedEvent.ota_responses) && selectedEvent.ota_responses.length > 0 ? (
-                                        selectedEvent.ota_responses.map((ota: any, idx: number) => {
-                                            const isOtaSuccess = ota.status?.toString().startsWith("2") || ota.result === "Success" || ota.status === "OK" || ota.success;
-                                            return (
-                                                <div key={idx} className={styles.otaCard}>
-                                                    <div className={styles.otaCardTop}>
-                                                        <div className={styles.otaChannelTitle}>
-                                                            <Globe size={14} color="#09090b" />
-                                                            <span>{ota.channel_name || ota.channel || ota.ota || "Connected OTA Channel"}</span>
-                                                        </div>
-                                                        <span className={`${styles.otaStatusBadge} ${isOtaSuccess ? styles.otaStatusSuccess : styles.otaStatusFailed}`}>
-                                                            {isOtaSuccess ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                                                            <span>{ota.status_code || ota.status || (isOtaSuccess ? "200 OK" : "Failed")}</span>
-                                                        </span>
-                                                    </div>
-                                                    {ota.latency_ms && (
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#64748b" }}>
-                                                            <Clock size={11} />
-                                                            <span>Latency: {ota.latency_ms} ms</span>
-                                                        </div>
-                                                    )}
-                                                    <div className={styles.otaDetailText}>
-                                                        {typeof ota.body === "string" 
-                                                            ? ota.body 
-                                                            : JSON.stringify(ota.body || ota.response || ota.message || ota, null, 2)}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        <div style={{ padding: "30px 20px", textAlign: "center", background: "#f8fafc", borderRadius: "6px", border: "1px dashed #cbd5e1", color: "#64748b" }}>
-                                            <p style={{ margin: "0 0 6px", fontWeight: 600, fontSize: "13px" }}>No Direct OTA Acknowledgements</p>
-                                            <p style={{ margin: 0, fontSize: "11px" }}>
-                                                This task was processed directly by Channex or internal CRS dispatch without separate third-party OTA roundtrips.
-                                            </p>
-                                            {!selectedEvent.is_live_synced && (selectedEvent.task_id || selectedEvent.id) && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleFetchLiveTask(selectedEvent.task_id || selectedEvent.id)}
-                                                    disabled={fetchingLiveTask}
-                                                    className={styles.liveSyncBtn}
-                                                    style={{ marginTop: "12px" }}
-                                                >
-                                                    <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
-                                                    <span>Fetch Live OTA Responses from Channex</span>
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Tab 4: Channex API Response */}
-                            {activeDetailTab === "response" && (
-                                <div>
-                                    <div className={styles.codeBoxHeader}>
-                                        <span>Channex API Response (JSON)</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleCopy(
-                                                JSON.stringify(selectedEvent.response || selectedEvent.details || { status: selectedEvent.status, result: selectedEvent.result }, null, 2),
-                                                "Channex Response"
-                                            )}
-                                            className={styles.copyCodeBtn}
-                                        >
-                                            {copiedField === "Channex Response" ? <Check size={12} color="#09090b" /> : <Copy size={12} />}
-                                            <span>{copiedField === "Channex Response" ? "Copied" : "Copy Response"}</span>
-                                        </button>
-                                    </div>
-                                    <pre className={styles.jsonPre}>
-                                        {JSON.stringify(selectedEvent.response || selectedEvent.details || { status: selectedEvent.status, result: selectedEvent.result }, null, 2)}
-                                    </pre>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Custom CSS Confirmation Modal: Purge Logs */}
-            {isPurgeModalOpen && (
-                <div 
-                    className={styles.confirmModalOverlay} 
-                    onClick={() => !cleaningLogs && setIsPurgeModalOpen(false)}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="purge-dialog-title"
-                >
-                    <div className={styles.confirmModalCard} onClick={e => e.stopPropagation()}>
-                        <div className={styles.confirmModalHeader}>
-                            <div className={`${styles.confirmModalIcon} ${styles.confirmModalIconWarning}`}>
-                                <AlertTriangle size={20} />
-                            </div>
-                            <div>
-                                <h3 id="purge-dialog-title" className={styles.confirmModalTitle}>
-                                    Pembersihan Log Channel Events
-                                </h3>
-                                <p className={styles.confirmModalSubtitle}>
-                                    Pilih opsi pembersihan data riwayat audit untuk mengoptimalkan kuota dan performa.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className={styles.confirmModalBody}>
-                            <div 
-                                className={`${styles.confirmOptionCard} ${purgeMode === "all" ? styles.confirmOptionCardActive : ""}`}
-                                onClick={() => setPurgeMode("all")}
-                            >
-                                <input 
-                                    type="radio" 
-                                    name="purgeOption" 
-                                    checked={purgeMode === "all"} 
-                                    onChange={() => setPurgeMode("all")}
-                                    className={styles.confirmOptionRadio}
-                                />
-                                <div>
-                                    <div className={styles.confirmOptionTitle}>
-                                        Hapus Seluruh Log (Reset Tabel Bersih)
-                                    </div>
-                                    <div className={styles.confirmOptionDesc}>
-                                        Menghapus semua catatan event lokal dan menyembunyikan riwayat cloud yang ada saat ini. Daftar log akan langsung kosong.
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div 
-                                className={`${styles.confirmOptionCard} ${purgeMode === "obsolete" ? styles.confirmOptionCardActive : ""}`}
-                                onClick={() => setPurgeMode("obsolete")}
-                            >
-                                <input 
-                                    type="radio" 
-                                    name="purgeOption" 
-                                    checked={purgeMode === "obsolete"} 
-                                    onChange={() => setPurgeMode("obsolete")}
-                                    className={styles.confirmOptionRadio}
-                                />
-                                <div>
-                                    <div className={styles.confirmOptionTitle}>
-                                        Purge Log Kedaluwarsa (&gt; {retentionDays} Hari)
-                                    </div>
-                                    <div className={styles.confirmOptionDesc}>
-                                        Hanya menghapus berkas audit yang lebih tua dari batas retensi {retentionDays} hari (~{Math.round(retentionDays / 30)} bulan).
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={styles.confirmModalNotice}>
-                                <strong>Catatan Keamanan:</strong> Tindakan pembersihan ini murni membersihkan catatan audit log, dan tidak mengubah ketersediaan kamar (allotment) atau reservasi tamu yang sedang berjalan.
-                            </div>
-                        </div>
-
-                        <div className={styles.confirmModalFooter}>
-                            <button
-                                type="button"
-                                onClick={() => setIsPurgeModalOpen(false)}
-                                disabled={cleaningLogs}
-                                className={styles.btnCancelModal}
-                            >
-                                Batal
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleExecutePurge}
-                                disabled={cleaningLogs}
-                                className={styles.btnDangerModal}
-                            >
-                                {cleaningLogs ? (
-                                    <>
-                                        <RefreshCw size={13} className="animate-spin" />
-                                        <span>Membersihkan...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Trash2 size={13} />
-                                        <span>{purgeMode === "all" ? "Hapus Semua Sekarang" : "Purge Log Kedaluwarsa"}</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Custom CSS Confirmation Modal: Single Log Delete */}
-            {logToDelete && (
-                <div 
-                    className={styles.confirmModalOverlay} 
-                    onClick={() => !deletingSingleLog && setLogToDelete(null)}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="delete-single-title"
-                >
-                    <div className={styles.confirmModalCard} onClick={e => e.stopPropagation()}>
-                        <div className={styles.confirmModalHeader}>
-                            <div className={styles.confirmModalIcon}>
-                                <Trash2 size={20} />
-                            </div>
-                            <div>
-                                <h3 id="delete-single-title" className={styles.confirmModalTitle}>
-                                    Hapus Log Channel Event
-                                </h3>
-                                <p className={styles.confirmModalSubtitle}>
-                                    Log ini akan dihapus secara permanen dari daftar riwayat audit.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className={styles.confirmModalBody}>
-                            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                                <div style={{ fontSize: "13px" }}><strong>Aksi:</strong> {logToDelete.action}</div>
-                                <div style={{ fontSize: "12.5px" }}><strong>Channel:</strong> {logToDelete.channelName}</div>
-                                <div style={{ fontSize: "12px", color: "#64748b" }}>
-                                    <strong>Waktu:</strong> {formatTimestamp(logToDelete.started_at || logToDelete.inserted_at)}
-                                </div>
-                                <div style={{ fontSize: "11px", color: "#64748b", fontFamily: "var(--font-mono-jb, monospace)" }}>
-                                    <strong>Task ID:</strong> {logToDelete.task_id || logToDelete.id}
-                                </div>
-                            </div>
-                            <p style={{ margin: 0, fontSize: "12.5px", color: "#475569" }}>
-                                Apakah Anda yakin ingin menghapus baris log ini?
-                            </p>
-                        </div>
-
-                        <div className={styles.confirmModalFooter}>
-                            <button
-                                type="button"
-                                onClick={() => setLogToDelete(null)}
-                                disabled={deletingSingleLog}
-                                className={styles.btnCancelModal}
-                            >
-                                Batal
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleExecuteDeleteSingle}
-                                disabled={deletingSingleLog}
-                                className={styles.btnDangerModal}
-                            >
-                                {deletingSingleLog ? (
-                                    <>
-                                        <RefreshCw size={13} className="animate-spin" />
-                                        <span>Menghapus...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Trash2 size={13} />
-                                        <span>Hapus Log Ini</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

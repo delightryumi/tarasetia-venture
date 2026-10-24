@@ -1,0 +1,400 @@
+/* RateParityMatrixDesktopView.module.css — Midday & Linear Executive Minimalist Table */
+
+.desktopContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Context Educational Card */
+.contextCard {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid #e4e4e7;
+    background: #fafafa;
+}
+
+.contextIconWrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #09090b;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.contextContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contextTitle {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.contextDesc {
+    font-size: 12px;
+    color: #52525b;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* 4-Column Metrics Grid */
+.metricsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+}
+
+.metricCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: border-color 0.15s ease;
+}
+
+.metricCard:hover {
+    border-color: #d4d4d8;
+}
+
+.metricLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #71717a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.metricValue {
+    font-size: 16px;
+    font-weight: 700;
+    color: #09090b;
+    letter-spacing: -0.015em;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.metricSub {
+    font-size: 11px;
+    color: #a1a1aa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Main Table Card */
+.tableCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.tableHeaderBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    background: #fafafa;
+    border-bottom: 1px solid #e4e4e7;
+}
+
+.tableTitleWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tableTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tableSubtitle {
+    font-size: 12px;
+    color: #71717a;
+    margin: 0;
+}
+
+/* View Mode Segmented Switcher */
+.segmentWrap {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 8px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+}
+
+.segmentBtn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: #52525b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.segmentBtn:hover {
+    color: #09090b;
+}
+
+.segmentBtnActive {
+    background: #ffffff;
+    color: #09090b;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Table Scroll Wrapper */
+.tableWrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.matrixTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+}
+
+.thStickyPlan {
+    position: sticky;
+    left: 0;
+    background: #f4f4f5;
+    z-index: 10;
+    min-width: 220px;
+    max-width: 260px;
+    padding: 12px 18px;
+    font-weight: 600;
+    color: #09090b;
+    border-bottom: 1px solid #e4e4e7;
+    border-right: 1px solid #e4e4e7;
+    white-space: nowrap;
+}
+
+.thBaseNet {
+    padding: 12px 16px;
+    text-align: right;
+    background: #fafafa;
+    min-width: 130px;
+    font-weight: 600;
+    color: #09090b;
+    border-bottom: 1px solid #e4e4e7;
+    white-space: nowrap;
+}
+
+.thChannel {
+    padding: 12px 16px;
+    text-align: center;
+    min-width: 170px;
+    border-bottom: 1px solid #e4e4e7;
+    border-left: 1px solid #e4e4e7;
+    background: #fafafa;
+}
+
+.channelThHeader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #09090b;
+    white-space: nowrap;
+}
+
+.channelThMeta {
+    font-size: 10px;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+    margin-top: 2px;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+/* Table Body Cells */
+.tdStickyPlan {
+    position: sticky;
+    left: 0;
+    background: #ffffff;
+    z-index: 9;
+    padding: 12px 18px;
+    border-bottom: 1px solid #f4f4f5;
+    border-right: 1px solid #e4e4e7;
+    min-width: 220px;
+    max-width: 260px;
+}
+
+.planName {
+    font-weight: 600;
+    font-size: 12px;
+    color: #09090b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.planMeta {
+    font-size: 10.5px;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tdBaseNet {
+    padding: 12px 16px;
+    text-align: right;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #09090b;
+    background: #fafafa;
+    border-bottom: 1px solid #f4f4f5;
+    white-space: nowrap;
+}
+
+.tdChannel {
+    padding: 12px 16px;
+    text-align: center;
+    border-bottom: 1px solid #f4f4f5;
+    border-left: 1px solid #f4f4f5;
+    vertical-align: middle;
+}
+
+.priceGross {
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 12px;
+    color: #09090b;
+    white-space: nowrap;
+}
+
+.priceNetBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #059669;
+    font-size: 10.5px;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    margin-top: 4px;
+    white-space: nowrap;
+}
+
+.priceNetLabel {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #047857;
+}
+
+/* Empty State */
+.emptyState {
+    padding: 48px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.emptyIcon {
+    color: #a1a1aa;
+    margin-bottom: 4px;
+}
+
+.emptyTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #09090b;
+}
+
+.emptyDesc {
+    font-size: 12px;
+    color: #71717a;
+    max-width: 360px;
+}
+
+/* Dark Mode Parity */
+:global(.dark) .contextCard,
+:global(.dark) .tableHeaderBar,
+:global(.dark) .thStickyPlan,
+:global(.dark) .thBaseNet,
+:global(.dark) .thChannel,
+:global(.dark) .tdBaseNet {
+    background: #121215;
+    border-color: #27272a;
+}
+
+:global(.dark) .metricCard,
+:global(.dark) .tableCard,
+:global(.dark) .tdStickyPlan {
+    background: #18181b;
+    border-color: #27272a;
+}
+
+:global(.dark) .contextTitle,
+:global(.dark) .metricValue,
+:global(.dark) .tableTitle,
+:global(.dark) .thStickyPlan,
+:global(.dark) .thBaseNet,
+:global(.dark) .channelThHeader,
+:global(.dark) .planName,
+:global(.dark) .tdBaseNet,
+:global(.dark) .priceGross,
+:global(.dark) .emptyTitle {
+    color: #f4f4f5;
+}
+
+:global(.dark) .segmentWrap {
+    background: #121215;
+    border-color: #27272a;
+}
+
+:global(.dark) .segmentBtnActive {
+    background: #27272a;
+    color: #f4f4f5;
+}

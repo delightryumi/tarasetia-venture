@@ -1,0 +1,22 @@
+/* RateParityMatrix.module.css — Responsive Container for Desktop & Mobile Views */
+
+.matrixContainer {
+    width: 100%;
+}
+
+.desktopOnly {
+    display: block;
+}
+
+.mobileOnly {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .desktopOnly {
+        display: none;
+    }
+    .mobileOnly {
+        display: block;
+    }
+}

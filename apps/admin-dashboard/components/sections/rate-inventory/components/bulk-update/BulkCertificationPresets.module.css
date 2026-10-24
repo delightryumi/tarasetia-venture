@@ -45,53 +45,6 @@
     color: #94a3b8;
 }
 
-.presetBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    background-color: #f8fafc;
-    border: 1px solid #cbd5e1;
-    color: #1e293b;
-    cursor: pointer;
-    transition: all 0.15s ease-in-out;
-}
-
-.presetBtn:hover {
-    background-color: #f1f5f9;
-    border-color: #94a3b8;
-}
-
-:global(.dark) .presetBtn {
-    background-color: #0f172a;
-    border-color: #334155;
-    color: #f8fafc;
-}
-
-:global(.dark) .presetBtn:hover {
-    background-color: #1e293b;
-}
-
-.presetBtnSpecial {
-    background-color: #fdf2f4;
-    border-color: #fbcfe8;
-    color: #72263d;
-}
-
-.presetBtnSpecial:hover {
-    background-color: #fce7f3;
-    border-color: #f472b6;
-    color: #501627;
-}
-
-:global(.dark) .presetBtnSpecial {
-    background-color: #3f1220;
-    border-color: #72263d;
-    color: #f472b6;
-}
 
 .actionBtn {
     display: inline-flex;

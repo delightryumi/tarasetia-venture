@@ -1,0 +1,26 @@
+/* ChannelSandbox.module.css
+   Container Orchestrator for Sandbox Suite
+   Midday & Linear Executive Minimalist Architecture
+*/
+
+.sandboxContainer {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.desktopOnly {
+  display: block;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktopOnly {
+    display: none;
+  }
+  .mobileOnly {
+    display: block;
+  }
+}

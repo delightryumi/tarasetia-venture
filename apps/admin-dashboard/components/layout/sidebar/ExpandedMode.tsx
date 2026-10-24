@@ -65,10 +65,10 @@ export function ExpandedMode({
 
             {groupedNavItems ? (
                 groupedNavItems.map(group => (
-                    <div key={group.title} className="mb-4 w-full flex flex-col">
+                    <div key={group.title} className="mb-2 w-full flex flex-col">
                         <button
                             onClick={() => toggleGroup(group.title)}
-                            className="w-full flex items-center justify-between px-3 py-3 text-[12px] font-medium uppercase tracking-wider text-[var(--sidebar-text)] opacity-75 hover:opacity-100 transition-all text-left mb-1"
+                            className="w-full flex items-center justify-between px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--sidebar-text)] opacity-75 hover:opacity-100 transition-all text-left mb-0.5"
                         >
                             <span>{group.title}</span>
                             <CaretDown

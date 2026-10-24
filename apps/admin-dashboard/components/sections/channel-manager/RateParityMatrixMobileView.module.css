@@ -1,0 +1,339 @@
+/* RateParityMatrixMobileView.module.css — Mobile Card-Reflow Parity Architecture */
+
+.mobileContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+/* Mobile Context Card */
+.mobileContextCard {
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.mobileContextIcon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: #09090b;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mobileContextText {
+    font-size: 11.5px;
+    color: #52525b;
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* Metrics Summary Bar */
+.metricsStrip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.metricMiniCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.metricMiniLabel {
+    font-size: 10px;
+    font-weight: 600;
+    color: #71717a;
+    text-transform: uppercase;
+}
+
+.metricMiniValue {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #09090b;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Filter Bar */
+.filterBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+.filterLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #71717a;
+}
+
+.segmentWrap {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 6px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+}
+
+.segmentBtn {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: #52525b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.segmentBtnActive {
+    background: #ffffff;
+    color: #09090b;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Rate Plan Mobile Cards List */
+.cardsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.planCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.planCardHeader {
+    padding: 12px 14px;
+    background: #fafafa;
+    border-bottom: 1px solid #e4e4e7;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.planTitleWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.planName {
+    font-size: 13px;
+    font-weight: 700;
+    color: #09090b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.planMeta {
+    font-size: 10px;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.baseNetBadge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.baseNetLabel {
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #71717a;
+}
+
+.baseNetValue {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #09090b;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Channels Accordion/Grid inside card */
+.channelGrid {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.channelItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: #fafafa;
+    border: 1px solid #f4f4f5;
+    border-radius: 8px;
+    gap: 10px;
+}
+
+.channelIdentity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.channelNameWrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.channelName {
+    font-size: 12px;
+    font-weight: 600;
+    color: #09090b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.channelMeta {
+    font-size: 9.5px;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+    white-space: nowrap;
+}
+
+.channelPrices {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.grossPrice {
+    font-size: 12px;
+    font-weight: 700;
+    color: #09090b;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.netBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #059669;
+    font-size: 10px;
+    font-family: var(--font-geist-mono, monospace);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.netBadgeLabel {
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Empty State */
+.emptyState {
+    padding: 36px 16px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.emptyTitle {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #09090b;
+}
+
+.emptyDesc {
+    font-size: 11.5px;
+    color: #71717a;
+}
+
+/* Dark Mode Parity */
+:global(.dark) .mobileContextCard,
+:global(.dark) .planCardHeader,
+:global(.dark) .channelItem {
+    background: #121215;
+    border-color: #27272a;
+}
+
+:global(.dark) .metricMiniCard,
+:global(.dark) .filterBar,
+:global(.dark) .planCard,
+:global(.dark) .emptyState {
+    background: #18181b;
+    border-color: #27272a;
+}
+
+:global(.dark) .metricMiniValue,
+:global(.dark) .planName,
+:global(.dark) .baseNetValue,
+:global(.dark) .channelName,
+:global(.dark) .grossPrice,
+:global(.dark) .emptyTitle {
+    color: #f4f4f5;
+}
+
+:global(.dark) .segmentWrap {
+    background: #121215;
+    border-color: #27272a;
+}
+
+:global(.dark) .segmentBtnActive {
+    background: #27272a;
+    color: #f4f4f5;
+}

@@ -44,6 +44,19 @@ export function ChannelVccViewerModal({
     const [statusMessage, setStatusMessage] = useState<string>("");
     const [showCVV, setShowCVV] = useState<boolean>(false);
 
+    // Keyboard accessibility: close modal on Escape key
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && isOpen) {
+                onClose();
+            }
+        };
+        if (isOpen) {
+            window.addEventListener("keydown", handleKeyDown);
+        }
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, onClose]);
+
     // Fetch real OTA bookings from hotel daily revenue
     useEffect(() => {
         if (!isOpen || !hotelCode) return;
@@ -66,7 +79,7 @@ export function ChannelVccViewerModal({
         };
 
         loadOtaBookings();
-    }, [isOpen, hotelCode]);
+    }, [isOpen, hotelCode, selectedBookingId]);
 
     if (!isOpen) return null;
 
@@ -75,11 +88,11 @@ export function ChannelVccViewerModal({
     const handleVerifyPin = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedBookingId) {
-            toast.error("Please select an OTA reservation ID first.");
+            toast.error("Pilih reservasi OTA terlebih dahulu.");
             return;
         }
         if (!pin) {
-            toast.error("Please enter the cashier or supervisor security PIN.");
+            toast.error("Masukkan PIN keamanan kasir atau supervisor.");
             return;
         }
 
@@ -97,15 +110,15 @@ export function ChannelVccViewerModal({
             const data = await res.json();
             if (data.success) {
                 setIsAuthenticated(true);
-                setHasCard(!!data.hasCard);
+                setHasCard(Boolean(data.hasCard));
                 setCardData(data.card || null);
                 setStatusMessage(data.message || "");
-                toast.success(data.message || "VCC details decrypted successfully.");
+                toast.success(data.message || "Rincian VCC berhasil didekripsi.");
             } else {
-                toast.error(data.error || "PIN authorization failed. Access denied.");
+                toast.error(data.error || "Otorisasi PIN gagal. Akses ditolak.");
             }
         } catch (err) {
-            toast.error("Network communication error during verification.");
+            toast.error("Gangguan komunikasi jaringan saat verifikasi PIN.");
         } finally {
             setLoading(false);
         }
@@ -114,7 +127,7 @@ export function ChannelVccViewerModal({
     const copyToClipboard = (text: string, label: string) => {
         if (!text) return;
         navigator.clipboard.writeText(text);
-        toast.success(`${label} copied to clipboard!`);
+        toast.success(`${label} disalin ke clipboard.`);
     };
 
     const handleReset = () => {
@@ -126,35 +139,49 @@ export function ChannelVccViewerModal({
     };
 
     return (
-        <div className={styles.backdrop}>
-            <div className={styles.modal}>
+        <div
+            className={styles.backdrop}
+            onClick={onClose}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="vcc-modal-title"
+        >
+            <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <ShieldCheck size={18} color="#bfdbfe" />
+                        <div className={styles.headerIconBox}>
+                            <ShieldCheck size={18} />
+                        </div>
                         <div>
-                            <div className={styles.title}>PCI Virtual Credit Card (VCC) Viewer</div>
-                            <div style={{ fontSize: "10px", opacity: 0.8 }}>PCI-DSS Level 1 Compliance &amp; Security Standard</div>
+                            <div className={styles.headerTag}>PCI-DSS Level 1 Security Gateway</div>
+                            <h3 id="vcc-modal-title" className={styles.title}>
+                                Virtual Credit Card (VCC) Viewer
+                            </h3>
+                            <div className={styles.subtitle}>
+                                Standar Enkripsi Tokenisasi Kartu Virtual OTA • Properti: <b>{hotelCode}</b>
+                            </div>
                         </div>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        style={{ background: "none", border: "none", color: "#ffffff", cursor: "pointer" }}
+                        className={styles.closeBtn}
+                        aria-label="Tutup jendela VCC viewer"
                     >
-                        <X size={18} />
+                        <X size={16} />
                     </button>
                 </div>
 
                 <div className={styles.body}>
-                    {/* Real OTA Booking Selector */}
-                    <div style={{ marginBottom: "16px", background: "#fafafa", padding: "12px 14px", borderRadius: "6px", border: "1px solid #e4e4e7" }}>
-                        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "#09090b", marginBottom: "6px" }}>
-                            Select OTA Reservation Source:
+                    {/* Booking Selector Section */}
+                    <div className={styles.selectorCard}>
+                        <label className={styles.selectorLabel}>
+                            Pilih Reservasi OTA Sumber:
                         </label>
 
                         {loadingBookings ? (
-                            <div style={{ fontSize: "12px", color: "#71717a" }}>Loading OTA reservations from Front Office...</div>
+                            <div className={styles.loadingText}>Memuat reservasi OTA dari Front Office...</div>
                         ) : bookings.length > 0 ? (
                             <select
                                 value={selectedBookingId}
@@ -162,29 +189,51 @@ export function ChannelVccViewerModal({
                                     setSelectedBookingId(e.target.value);
                                     handleReset();
                                 }}
-                                style={{ width: "100%", padding: "8px 10px", borderRadius: "6px", border: "1px solid #e4e4e7", fontSize: "12px", fontWeight: 600, background: "#ffffff", color: "#09090b" }}
+                                className={styles.selectInput}
                             >
                                 {bookings.map(b => (
                                     <option key={b.bookingId} value={b.bookingId}>
-                                        {b.channel} • #{b.bookingId} - {b.guestName} (Rp {b.totalAmount.toLocaleString("en-US")})
+                                        {b.channel} • #{b.bookingId} : {b.guestName} (Rp {b.totalAmount.toLocaleString("en-US")})
                                     </option>
                                 ))}
                             </select>
                         ) : (
-                            <div style={{ fontSize: "12px", color: "#71717a" }}>
-                                No active OTA reservations found in the Front Office system.
+                            <div className={styles.emptyText}>
+                                Tidak ada reservasi OTA aktif yang ditemukan pada sistem Front Office.
                             </div>
                         )}
 
-                        {/* Selected Booking Details Card */}
+                        {/* Selected Booking Details */}
                         {currentBooking && (
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "10px", fontSize: "11px", color: "#3f3f46" }}>
-                                <div>Guest: <b>{currentBooking.guestName}</b></div>
-                                <div>Channel: <b>{currentBooking.channel}</b></div>
-                                <div>Room: <b>{currentBooking.roomType}</b></div>
-                                <div>Total: <b style={{ fontFamily: "var(--font-geist-mono, monospace)" }}>Rp {currentBooking.totalAmount.toLocaleString("en-US")}</b></div>
-                                <div>Stay Period: <b>{currentBooking.checkInDate} to {currentBooking.checkOutDate}</b></div>
-                                <div>Status: <b>{currentBooking.status}</b></div>
+                            <div className={styles.bookingGrid}>
+                                <div className={styles.bookingGridItem}>
+                                    <span className={styles.gridLabel}>Tamu:</span>
+                                    <span className={styles.gridValue}>{currentBooking.guestName}</span>
+                                </div>
+                                <div className={styles.bookingGridItem}>
+                                    <span className={styles.gridLabel}>Saluran:</span>
+                                    <span className={styles.gridValue}>{currentBooking.channel}</span>
+                                </div>
+                                <div className={styles.bookingGridItem}>
+                                    <span className={styles.gridLabel}>Kamar:</span>
+                                    <span className={styles.gridValue}>{currentBooking.roomType}</span>
+                                </div>
+                                <div className={styles.bookingGridItem}>
+                                    <span className={styles.gridLabel}>Total Tagihan:</span>
+                                    <span className={`${styles.gridValue} ${styles.numericValue}`}>
+                                        Rp {currentBooking.totalAmount.toLocaleString("en-US")}
+                                    </span>
+                                </div>
+                                <div className={styles.bookingGridItem}>
+                                    <span className={styles.gridLabel}>Periode Menginap:</span>
+                                    <span className={styles.gridValue}>
+                                        {currentBooking.checkInDate} s/d {currentBooking.checkOutDate}
+                                    </span>
+                                </div>
+                                <div className={styles.bookingGridItem}>
+                                    <span className={styles.gridLabel}>Status:</span>
+                                    <span className={styles.statusBadge}>{currentBooking.status}</span>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -192,17 +241,17 @@ export function ChannelVccViewerModal({
                     {!isAuthenticated ? (
                         /* PIN Gate */
                         <form onSubmit={handleVerifyPin} className={styles.pinBox}>
-                            <div style={{ width: "44px", height: "44px", borderRadius: "6px", background: "#f4f4f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <Lock size={20} color="#09090b" />
+                            <div className={styles.pinIconBox}>
+                                <Lock size={20} />
                             </div>
 
-                            <div style={{ textAlign: "center" }}>
-                                <div style={{ fontSize: "14px", fontWeight: 700, color: "#09090b" }}>
-                                    Card Access Security Authorization
+                            <div className={styles.pinPromptWrap}>
+                                <div className={styles.pinTitle}>
+                                    Otorisasi Keamanan Akses Kartu
                                 </div>
-                                <div style={{ fontSize: "11px", color: "#71717a", marginTop: "4px" }}>
-                                    All virtual credit card decryption events are recorded in the permanent PCI DSS compliance audit trail.
-                                </div>
+                                <p className={styles.pinDesc}>
+                                    Setiap aksi pembukaan kartu virtual dicatat pada audit log kepatuhan PCI-DSS.
+                                </p>
                             </div>
 
                             <input
@@ -214,8 +263,8 @@ export function ChannelVccViewerModal({
                                 className={styles.pinInput}
                                 autoFocus
                             />
-                            <div style={{ fontSize: "11px", color: "#71717a" }}>
-                                Enter Security Master PIN (Default: <b>1234</b>)
+                            <div className={styles.pinHint}>
+                                Masukkan Master PIN Keamanan Kasir (Default: <b>1234</b>)
                             </div>
 
                             <button
@@ -223,26 +272,26 @@ export function ChannelVccViewerModal({
                                 disabled={loading || !pin || !selectedBookingId}
                                 className={styles.btnAction}
                             >
-                                {loading ? "Verifying & Decrypting..." : "Decrypt & Reveal VCC Details"}
+                                {loading ? "Memverifikasi & Mendekripsi..." : "Dekripsi & Tampilkan Rincian VCC"}
                             </button>
                         </form>
                     ) : hasCard && cardData ? (
                         /* Authenticated Card Details */
-                        <>
+                        <div className={styles.cardDetailsWrap}>
                             {/* Visual Virtual Card */}
                             <div className={styles.cardVisual}>
                                 <div className={styles.cardTopRow}>
                                     <div className={styles.cardChip} />
-                                    <span className={styles.cardBrand}>{cardData?.card_type}</span>
+                                    <span className={styles.cardBrand}>{cardData?.card_type || "VISA VCC"}</span>
                                 </div>
 
                                 <div className={styles.cardNumberRow}>
                                     <span>{cardData?.card_number}</span>
                                     <button
                                         type="button"
-                                        onClick={() => copyToClipboard(cardData?.card_number?.replace(/\s/g, ""), "VCC Card Number")}
-                                        style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
-                                        title="Copy Card Number"
+                                        onClick={() => copyToClipboard(cardData?.card_number?.replace(/\s/g, ""), "Nomor Kartu VCC")}
+                                        className={styles.copyBtn}
+                                        title="Salin Nomor Kartu"
                                     >
                                         <Copy size={16} />
                                     </button>
@@ -250,13 +299,13 @@ export function ChannelVccViewerModal({
 
                                 <div className={styles.cardBottomRow}>
                                     <div>
-                                        <div className={styles.cardLabel}>Cardholder Name</div>
-                                        <div className={styles.cardHolderName}>{cardData?.cardholder_name}</div>
+                                        <div className={styles.cardLabel}>Nama Pemegang Kartu</div>
+                                        <div className={styles.cardHolderName}>{cardData?.cardholder_name || "VIRTUAL CARD HOLDER"}</div>
                                     </div>
 
                                     <div className={styles.cardExpiryCVV}>
                                         <div>
-                                            <div className={styles.cardLabel}>Valid Thru</div>
+                                            <div className={styles.cardLabel}>Masa Berlaku</div>
                                             <div className={styles.cardMetaVal}>
                                                 {cardData?.expiry_month}/{cardData?.expiry_year?.slice(-2)}
                                             </div>
@@ -264,14 +313,15 @@ export function ChannelVccViewerModal({
 
                                         <div>
                                             <div className={styles.cardLabel}>CVV / CVC</div>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                            <div className={styles.cvvWrap}>
                                                 <span className={styles.cardMetaVal}>
                                                     {showCVV ? cardData?.cvv : "•••"}
                                                 </span>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowCVV(!showCVV)}
-                                                    style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
+                                                    className={styles.eyeBtn}
+                                                    title={showCVV ? "Sembunyikan CVV" : "Tampilkan CVV"}
                                                 >
                                                     {showCVV ? <EyeOff size={14} /> : <Eye size={14} />}
                                                 </button>
@@ -281,76 +331,76 @@ export function ChannelVccViewerModal({
                                 </div>
                             </div>
 
-                            {/* Balance & Merchant Settlement Box */}
+                            {/* Settlement Balance Box */}
                             <div className={styles.balanceNotice}>
                                 <div>
-                                    <div style={{ fontWeight: 700, fontSize: "13px", fontFamily: "var(--font-geist-mono, monospace)" }}>
-                                        Available Settlement Balance: {formatCurrencyAmount(Number(cardData?.current_balance || currentBooking?.totalAmount || 0), cardData?.currency || cardData?.virtual_card_currency_code || "IDR")}
+                                    <div className={styles.balanceAmount}>
+                                        Saldo Tersedia: {formatCurrencyAmount(Number(cardData?.current_balance || currentBooking?.totalAmount || 0), cardData?.currency || cardData?.virtual_card_currency_code || "IDR")}
                                     </div>
-                                    <div style={{ fontSize: "11px", color: "#71717a" }}>
-                                        Active from {cardData?.activation_date || "-"} to {cardData?.expiration_date || "-"}
+                                    <div className={styles.balanceDates}>
+                                        Aktif dari {cardData?.activation_date || "-"} s/d {cardData?.expiration_date || "-"}
                                     </div>
                                 </div>
-                                <span style={{ fontSize: "11px", fontWeight: 700, background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "3px 8px", borderRadius: "4px" }}>
-                                    READY FOR POS / EDC TERMINAL CHARGE
+                                <span className={styles.readyBadge}>
+                                    SIAP DI-DEBET EDC / POS
                                 </span>
                             </div>
 
-                            {/* Instructions & Audit Confirmation */}
+                            {/* Audit Instructions */}
                             <div className={styles.pciAuditNotice}>
-                                <b style={{ color: "#09090b" }}>Front Desk Cashier Instructions:</b>
-                                <div>{cardData?.settlement_instruction}</div>
-                                <div style={{ marginTop: "6px", color: "#71717a", fontSize: "10px" }}>
-                                    PCI Session ID: <code>pci-sess-{Date.now().toString(36)}</code> • Access logged and audited.
+                                <div className={styles.instructionHeader}>Instruksi Kasir Front Desk:</div>
+                                <div className={styles.instructionBody}>{cardData?.settlement_instruction || "Lakukan debet sesuai nominal di atas pada mesin EDC terminal bank hotel."}</div>
+                                <div className={styles.sessionMeta}>
+                                    PCI Session ID: <code>pci-sess-{Date.now().toString(36)}</code> • Akses tercatat dalam audit log.
                                 </div>
                             </div>
 
-                            <div style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
+                            <div className={styles.actionRow}>
                                 <button
                                     type="button"
                                     onClick={handleReset}
-                                    style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid #e4e4e7", background: "#ffffff", fontSize: "12px", cursor: "pointer", color: "#18181b" }}
+                                    className={styles.btnSecondary}
                                 >
-                                    Select Another Reservation
+                                    Pilih Reservasi Lain
                                 </button>
                                 <button
                                     type="button"
                                     onClick={onClose}
                                     className={styles.btnAction}
                                 >
-                                    Close Card Viewer
+                                    Tutup Card Viewer
                                 </button>
                             </div>
-                        </>
+                        </div>
                     ) : (
                         /* Case: Hotel Collect / No VCC issued by OTA */
-                        <div style={{ background: "#fafafa", border: "1px solid #e4e4e7", borderRadius: "6px", padding: "20px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                            <div style={{ width: "40px", height: "40px", borderRadius: "6px", background: "#f4f4f5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <CheckCircle2 size={20} color="#09090b" />
+                        <div className={styles.hotelCollectBox}>
+                            <div className={styles.hotelCollectIconBox}>
+                                <CheckCircle2 size={20} />
                             </div>
                             <div>
-                                <div style={{ fontSize: "13px", fontWeight: 700, color: "#09090b" }}>
-                                    Payment Method: Property Collect / Pay at Front Desk
+                                <div className={styles.hotelCollectTitle}>
+                                    Metode Pembayaran: Property Collect / Bayar di Tempat
                                 </div>
-                                <p style={{ fontSize: "12px", color: "#71717a", maxWidth: "420px", margin: "6px auto 0" }}>
-                                    {statusMessage || "This booking does not require virtual card settlement because the guest pays directly at the hotel front desk during check-in or check-out."}
+                                <p className={styles.hotelCollectDesc}>
+                                    {statusMessage || "Reservasi ini tidak memerlukan pemotongan kartu virtual karena tamu membayar langsung di front desk hotel saat check-in atau check-out."}
                                 </p>
                             </div>
 
-                            <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                            <div className={styles.actionRow}>
                                 <button
                                     type="button"
                                     onClick={handleReset}
-                                    style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid #e4e4e7", background: "#ffffff", fontSize: "12px", cursor: "pointer", color: "#18181b" }}
+                                    className={styles.btnSecondary}
                                 >
-                                    Select Another Reservation
+                                    Pilih Reservasi Lain
                                 </button>
                                 <button
                                     type="button"
                                     onClick={onClose}
                                     className={styles.btnAction}
                                 >
-                                    Close
+                                    Tutup
                                 </button>
                             </div>
                         </div>

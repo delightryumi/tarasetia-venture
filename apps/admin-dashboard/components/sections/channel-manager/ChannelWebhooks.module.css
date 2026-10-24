@@ -1,0 +1,24 @@
+/* ChannelWebhooks.module.css - Responsive Wrapper */
+
+.tabContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.desktopOnly {
+  display: block;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .desktopOnly {
+    display: none;
+  }
+  .mobileOnly {
+    display: block;
+  }
+}

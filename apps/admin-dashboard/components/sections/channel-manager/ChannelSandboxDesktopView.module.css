@@ -1,0 +1,597 @@
+/* ChannelSandboxDesktopView.module.css
+   Midday & Linear Executive Minimalist Architecture
+   High-Density Desktop Layout for Sandbox API Tester & Certification Suite
+*/
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 1. Readiness Summary Bar */
+.readinessBar {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.readinessLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.readinessTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.readinessTitle {
+  font-family: var(--font-plus-jakarta, 'Plus Jakarta Sans', var(--font-inter, sans-serif));
+  font-size: 15px;
+  font-weight: 600;
+  color: #09090b;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.envBadge {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #e4e4e7;
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+.envBadgeStaging {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.envBadgeProd {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+
+.readinessDesc {
+  font-size: 11.5px;
+  color: #71717a;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.readinessRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.readinessScoreBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.readinessScoreLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #71717a;
+}
+
+.readinessScoreValue {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 15px;
+  font-weight: 600;
+  color: #09090b;
+  font-variant-numeric: tabular-nums;
+}
+
+.progressBarTrack {
+  width: 90px;
+  height: 6px;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: #09090b;
+  transition: width 0.4s ease;
+}
+
+/* 2. Sub-Navigation Tabs */
+.tabNavRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #e4e4e7;
+  padding-bottom: 8px;
+}
+
+.tabNavBtn {
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
+  color: #52525b;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.tabNavBtn:hover {
+  background: #f4f4f5;
+  color: #09090b;
+}
+
+.tabNavBtnActive {
+  background: #09090b;
+  color: #ffffff;
+  border-color: #09090b;
+}
+
+.tabCountBadge {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.tabNavBtnActive .tabCountBadge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* 3. Suite Card & Table */
+.suiteCard {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.suiteHeader {
+  padding: 12px 18px;
+  background: #fafafa;
+  border-bottom: 1px solid #e4e4e7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.suiteTitleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.suiteTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #09090b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.suiteDesc {
+  font-size: 11px;
+  color: #71717a;
+  margin: 0;
+}
+
+.suiteActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnActionPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #09090b;
+  color: #fafafa;
+  border: 1px solid #09090b;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnActionPrimary:hover {
+  background: #27272a;
+}
+
+.btnActionPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Stage Rows */
+.stageList {
+  display: flex;
+  flex-direction: column;
+  divide-y: 1px solid #f4f4f5;
+}
+
+.stageRow {
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #f4f4f5;
+  transition: background-color 0.12s ease;
+}
+
+.stageRow:hover {
+  background-color: #fafafa;
+}
+
+.stageLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.stageNumberBadge {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  color: #18181b;
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.stageInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.stageTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stageTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #09090b;
+}
+
+.stageDesc {
+  font-size: 11px;
+  color: #71717a;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.stageDetail {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 10.5px;
+  margin: 2px 0 0 0;
+  line-height: 1.35;
+}
+
+.stageDetailSuccess {
+  color: #059669;
+}
+
+.stageDetailError {
+  color: #991b1b;
+}
+
+.taskIdsRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 10px;
+  color: #71717a;
+  flex-wrap: wrap;
+}
+
+.taskIdPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 9.5px;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: #18181b;
+  cursor: pointer;
+}
+
+.taskIdPill:hover {
+  background: #ffffff;
+  border-color: #09090b;
+}
+
+.stageStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.statusPassed {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.statusFailed {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.statusRunning {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.statusPending {
+  background: #f4f4f5;
+  color: #71717a;
+  border: 1px solid #e4e4e7;
+}
+
+.btnRunSingle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #18181b;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btnRunSingle:hover {
+  background: #f4f4f5;
+  border-color: #09090b;
+}
+
+.btnRunSingle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 4. Simulator Layout (Master-Detail Grid) */
+.simulatorGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.simFormColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.simFormRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.simFormGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.simLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #09090b;
+}
+
+.simInput,
+.simSelect {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #09090b;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.simInput:focus,
+.simSelect:focus {
+  border-color: #09090b;
+}
+
+.simActionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  flex-wrap: wrap;
+}
+
+.btnSimSubmit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #09090b;
+  color: #ffffff;
+  border: 1px solid #09090b;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnSimSubmit:hover {
+  background: #27272a;
+}
+
+.btnSimCancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnSimCancel:hover {
+  background: #fef2f2;
+}
+
+/* Terminal Console */
+.terminalCard {
+  background: #09090b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.terminalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #18181b;
+  border-bottom: 1px solid #27272a;
+}
+
+.terminalTitle {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminalHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusOkPill {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.btnCopyTerminal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 9.5px;
+  color: #d4d4d8;
+  cursor: pointer;
+  font-family: var(--font-geist-mono, monospace);
+}
+
+.btnCopyTerminal:hover {
+  background: #3f3f46;
+  color: #ffffff;
+}
+
+.terminalBody {
+  padding: 12px;
+  overflow-y: auto;
+  max-height: 290px;
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 11px;
+  color: #34d399;
+  line-height: 1.45;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

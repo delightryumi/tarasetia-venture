@@ -1,0 +1,349 @@
+/* RatePlanMobileView.module.css
+   Midday & Linear Executive Architecture for Touch & Mobile Devices
+   Touch-Friendly Rate Plan Folio Reflow
+*/
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2px 0 16px 0;
+}
+
+/* Mobile Masthead */
+.mastheadMobile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.mastheadTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mastheadEyebrow {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #71717a;
+}
+
+.mastheadTitle {
+  font-family: var(--font-plus-jakarta, 'Plus Jakarta Sans', var(--font-inter, sans-serif));
+  font-size: 18px;
+  font-weight: 600;
+  color: #09090b;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.currencyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #09090b;
+}
+
+/* Mobile Metrics Bar (2x2 Grid) */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.metricBox {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metricLabel {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #71717a;
+}
+
+.metricValue {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #09090b;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mobile Search & Actions */
+.searchWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #09090b;
+  width: 100%;
+}
+
+.mobileActionsRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.btnMobileCreate {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #09090b;
+  color: #ffffff;
+  border: 1px solid #09090b;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnMobileSeed {
+  min-height: 44px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #09090b;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Mobile Card List */
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobileCard {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardTitleArea {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.codeBadge {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #f4f4f5;
+  color: #18181b;
+  border: 1px solid #e4e4e7;
+}
+
+.planName {
+  font-family: var(--font-plus-jakarta, 'Plus Jakarta Sans', var(--font-inter, sans-serif));
+  font-size: 14px;
+  font-weight: 600;
+  color: #09090b;
+  line-height: 1.25;
+}
+
+.priceStrip {
+  background: #fafafa;
+  border: 1px solid #f4f4f5;
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.priceAmount {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 15px;
+  font-weight: 600;
+  color: #09090b;
+  font-variant-numeric: tabular-nums;
+}
+
+.priceLabel {
+  font-size: 10px;
+  color: #71717a;
+}
+
+/* Specs Strip */
+.specsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  padding: 2px 0;
+  font-size: 11px;
+}
+
+.specItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.specLabel {
+  font-size: 9.5px;
+  color: #71717a;
+}
+
+.specValue {
+  font-size: 11px;
+  font-weight: 500;
+  color: #18181b;
+}
+
+.dotBlack {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #09090b;
+  display: inline-block;
+}
+
+.dotGray {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #d4d4d8;
+  display: inline-block;
+}
+
+/* Room Category Row */
+.roomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 10.5px;
+  color: #52525b;
+}
+
+.roomPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f4f4f5;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+/* Touch Action Buttons Row (min 44px tap targets) */
+.cardActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f4f4f5;
+}
+
+.btnActionTouch {
+  flex: 1;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #18181b;
+  cursor: pointer;
+}
+
+.btnActionTouch:hover {
+  background: #f4f4f5;
+}
+
+.btnDeleteTouch {
+  min-width: 40px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btnPingTouch {
+  min-height: 40px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #27272a;
+  cursor: pointer;
+}

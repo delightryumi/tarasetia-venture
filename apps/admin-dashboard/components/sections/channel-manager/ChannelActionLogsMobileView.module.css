@@ -1,0 +1,247 @@
+/* ChannelActionLogsMobileView.module.css
+   Midday & Linear Executive Minimalist Architecture
+   Mobile Touch-Friendly Layout for Action Logs & Webhook Traces
+   ENERGY 1 / RHYTHM 2 / MOTION 1
+*/
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2px 0 16px 0;
+}
+
+/* 1. Mobile KPI Strip */
+.kpiGridMobile {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.kpiCardMobile {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpiLabelMobile {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.kpiValueMobile {
+  font-family: var(--font-geist-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  font-weight: 700;
+  color: #09090b;
+}
+
+/* 2. Mobile Retention & Refresh Bar */
+.actionHeaderMobile {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.retentionSelectMobile {
+  padding: 5px 8px;
+  font-size: 11px;
+  border: 1px solid #e4e4e7;
+  border-radius: 5px;
+  background: #fafafa;
+  color: #09090b;
+  min-height: 34px;
+}
+
+.btnRefreshMobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #09090b;
+  color: #ffffff;
+  border: 1px solid #09090b;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 34px;
+  cursor: pointer;
+}
+
+/* 3. Filter Row Mobile */
+.filterRowMobile {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.filterSelectMobile {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 11px;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #09090b;
+  min-height: 38px;
+}
+
+/* 4. Log Cards List Mobile */
+.logListMobile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logCardMobile {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.cardTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.actionBadgeGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusDotSuccess {
+  background: #10b981;
+}
+
+.statusDotError {
+  background: #ef4444;
+}
+
+.statusDotWarning {
+  background: #f59e0b;
+}
+
+.actionTitleMobile {
+  font-size: 12px;
+  font-weight: 600;
+  color: #09090b;
+}
+
+.timestampMobile {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 10px;
+  color: #71717a;
+}
+
+.cardMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #52525b;
+}
+
+.channelPillMobile {
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 10.5px;
+}
+
+.cardActionsMobile {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.btnDetailMobile {
+  flex: 1;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #09090b;
+  cursor: pointer;
+}
+
+.btnDeleteMobile {
+  min-height: 36px;
+  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* 5. Mobile Pagination */
+.paginationMobile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+}
+
+.btnPageMobile {
+  min-height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #09090b;
+  cursor: pointer;
+}
+
+.pageInfoMobile {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 11px;
+  color: #71717a;
+}

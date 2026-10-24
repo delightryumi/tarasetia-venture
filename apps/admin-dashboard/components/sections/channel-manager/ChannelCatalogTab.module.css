@@ -1,0 +1,964 @@
+/* ── ChannelCatalogTab.module.css ── */
+/* Enterprise Zinc Design System for Channel Distribution Catalog */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* ── 1. Top Stat Summary Cards Strip ── */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 14px;
+}
+
+@media (min-width: 640px) {
+    .statsGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .statsGrid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.statCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.statCard:hover {
+    border-color: #d4d4d8;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.statHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.statTitle {
+    font-size: 11px;
+    font-weight: 600;
+    color: #71717a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.statIconBox {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #f4f4f5;
+    color: #27272a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.statIconBoxSuccess {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #ecfdf5;
+    color: #059669;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.statValue {
+    font-size: 24px;
+    font-weight: 700;
+    color: #09090b;
+    letter-spacing: -0.02em;
+    margin-top: 8px;
+    line-height: 1.2;
+}
+
+.statValueSuccess {
+    font-size: 24px;
+    font-weight: 700;
+    color: #059669;
+    letter-spacing: -0.02em;
+    margin-top: 8px;
+    line-height: 1.2;
+}
+
+.statSub {
+    font-size: 12px;
+    color: #71717a;
+    margin-top: 4px;
+    display: block;
+}
+
+/* ── 2. Main Catalog Card & Header ── */
+.catalogCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cardHeader {
+    padding: 16px 18px 14px 18px;
+    border-bottom: 1px solid #e4e4e7;
+    background: #fafafa;
+}
+
+.headerTop {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (min-width: 640px) {
+    .headerTop {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.headerTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.headerTitleIcon {
+    color: #181d26;
+    flex-shrink: 0;
+}
+
+.headerDesc {
+    font-size: 12px;
+    color: #71717a;
+    margin: 3px 0 0 0;
+    line-height: 1.4;
+}
+
+/* View Switcher: Table vs Grid */
+.viewSwitcher {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 8px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    gap: 2px;
+    align-self: flex-start;
+}
+
+@media (min-width: 640px) {
+    .viewSwitcher {
+        align-self: auto;
+    }
+}
+
+.viewBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #52525b;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.viewBtn:hover {
+    color: #09090b;
+}
+
+.viewBtnActive {
+    background: #ffffff;
+    color: #09090b;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ── 3. Toolbar (Search & Filter Pills) ── */
+.toolbar {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #e4e4e7;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (min-width: 768px) {
+    .toolbar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.searchWrapper {
+    position: relative;
+    flex: 1;
+    max-width: 420px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a1a1aa;
+    pointer-events: none;
+}
+
+.searchInput {
+    width: 100%;
+    height: 34px;
+    padding: 0 32px 0 34px;
+    font-size: 12px;
+    background: #ffffff;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    color: #09090b;
+    outline: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.searchInput:focus {
+    border-color: #181d26;
+    box-shadow: 0 0 0 1px #181d26;
+}
+
+.searchClearBtn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a1a1aa;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.searchClearBtn:hover {
+    color: #52525b;
+}
+
+.categoryPillsList {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    max-width: 100%;
+}
+
+.categoryPill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    white-space: nowrap;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    color: #52525b;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: all 0.15s ease;
+}
+
+.categoryPill:hover {
+    background: #f4f4f5;
+    color: #09090b;
+}
+
+.categoryPillActive {
+    background: #09090b;
+    border-color: #09090b;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.categoryPillActive:hover {
+    background: #181d26;
+    color: #ffffff;
+}
+
+.categoryCountBadge {
+    font-size: 10px;
+    font-family: var(--font-mono, monospace);
+    padding: 0 5px;
+    border-radius: 4px;
+    background: #f4f4f5;
+    color: #71717a;
+}
+
+.categoryCountBadgeActive {
+    background: #27272a;
+    color: #f4f4f5;
+}
+
+/* ── 4. Empty State ── */
+.emptyState {
+    padding: 56px 16px;
+    text-align: center;
+    max-width: 440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.emptyIconBox {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #52525b;
+}
+
+.emptyTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #09090b;
+    margin: 0;
+}
+
+.emptyDesc {
+    font-size: 12px;
+    color: #71717a;
+    line-height: 1.5;
+    margin: 4px 0 0 0;
+}
+
+.emptyActions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 6px;
+    flex-wrap: wrap;
+}
+
+/* ── 5. Table View ── */
+.tableWrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    text-align: left;
+    font-size: 12px;
+    border-collapse: collapse;
+}
+
+.tableHeaderRow {
+    border-bottom: 1px solid #e4e4e7;
+    background: rgba(250, 250, 250, 0.95);
+    color: #3f3f46;
+    font-weight: 600;
+    font-size: 11.5px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+}
+
+.th {
+    padding: 12px 14px;
+    font-weight: 600;
+}
+
+.thDistribution {
+    padding: 12px 14px 12px 18px;
+}
+
+.thAction {
+    padding: 12px 18px 12px 14px;
+    text-align: right;
+}
+
+.tableBody {
+    background: #ffffff;
+}
+
+.tableRow {
+    border-bottom: 1px solid #f4f4f5;
+    transition: background-color 0.12s ease;
+}
+
+.tableRow:hover {
+    background: rgba(244, 244, 245, 0.5);
+}
+
+.td {
+    padding: 12px 14px;
+    vertical-align: middle;
+}
+
+.tdDistribution {
+    padding: 12px 14px 12px 18px;
+    vertical-align: middle;
+}
+
+.tdAction {
+    padding: 12px 18px 12px 14px;
+    text-align: right;
+    vertical-align: middle;
+}
+
+.channelIdentity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.channelLogoBox {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #e4e4e7;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.channelName {
+    font-size: 12px;
+    font-weight: 600;
+    color: #09090b;
+    line-height: 1.3;
+}
+
+.channelCode {
+    font-size: 10px;
+    color: #a1a1aa;
+    font-family: var(--font-mono, monospace);
+    margin-top: 1px;
+}
+
+/* Category Semantic Badges */
+.badgeOta {
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.badgeWholesaler {
+    border: 1px solid #e9d5ff;
+    background: #faf5ff;
+    color: #7e22ce;
+}
+
+.badgeMeta {
+    border: 1px solid #fde68a;
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.badgeVacation {
+    border: 1px solid #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.badgeEngine {
+    border: 1px solid #a5f3fc;
+    background: #ecfeff;
+    color: #0e7490;
+}
+
+.badgeCorporate {
+    border: 1px solid #e4e4e7;
+    background: #f4f4f5;
+    color: #3f3f46;
+}
+
+.categoryBadgeBase {
+    font-size: 10px;
+    font-family: var(--font-mono, monospace);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-weight: 500;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+/* Commission Tags */
+.commissionTag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: var(--font-mono, monospace);
+    font-weight: 500;
+    color: #27272a;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+}
+
+.commissionTagDirect {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+    color: #047857;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+}
+
+/* Protocol Tag */
+.protocolTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-family: var(--font-mono, monospace);
+    color: #52525b;
+    background: #f4f4f5;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #e4e4e7;
+    white-space: nowrap;
+}
+
+.protocolDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    flex-shrink: 0;
+}
+
+/* Status Badges */
+.statusBadgeConnected {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    white-space: nowrap;
+}
+
+.statusBadgeAvailable {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #f4f4f5;
+    color: #71717a;
+    border: 1px solid #e4e4e7;
+    white-space: nowrap;
+}
+
+/* Action Buttons */
+.btnConnect {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #e4e4e7;
+    color: #27272a;
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.btnConnect:hover {
+    background: #f4f4f5;
+    color: #09090b;
+    border-color: #d4d4d8;
+}
+
+.btnConnected {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    background: rgba(236, 253, 245, 0.7);
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.btnConnected:hover {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.btnManageLabel {
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* ── 6. Grid View ── */
+.gridBody {
+    padding: 16px;
+}
+
+.cardsGrid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 14px;
+}
+
+@media (min-width: 640px) {
+    .cardsGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 768px) {
+    .cardsGrid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .cardsGrid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.cardItem {
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cardItem:hover {
+    border-color: #d4d4d8;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+}
+
+.cardItemConnected {
+    border-color: #bbf7d0;
+    background: rgba(240, 253, 244, 0.35);
+}
+
+.cardItemConnected:hover {
+    border-color: #86efac;
+}
+
+.cardTopRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.cardLogoBox {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #e4e4e7;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.cardTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #09090b;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cardMetaRow {
+    font-size: 11px;
+    color: #71717a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #f4f4f5;
+    border-bottom: 1px solid #f4f4f5;
+    padding: 6px 0;
+    margin-top: 8px;
+}
+
+.cardMetaVal {
+    font-weight: 700;
+    color: #27272a;
+    font-family: var(--font-mono, monospace);
+}
+
+.btnGridConnect {
+    width: 100%;
+    height: 32px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid #e4e4e7;
+    color: #27272a;
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btnGridConnect:hover {
+    background: #f4f4f5;
+    color: #09090b;
+    border-color: #d4d4d8;
+}
+
+.btnGridConnected {
+    width: 100%;
+    height: 32px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    background: rgba(236, 253, 245, 0.7);
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btnGridConnected:hover {
+    background: #d1fae5;
+    color: #047857;
+}
+
+/* ── 7. Pagination Bar ── */
+.paginationBar {
+    padding: 12px 18px;
+    border-top: 1px solid #e4e4e7;
+    background: rgba(250, 250, 250, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 12px;
+    color: #52525b;
+}
+
+@media (min-width: 640px) {
+    .paginationBar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.paginationSummary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.divider {
+    color: #d4d4d8;
+}
+
+.pageSizeGroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pageSizeLabel {
+    color: #71717a;
+}
+
+.pageSizeBtn {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: var(--font-mono, monospace);
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    color: #52525b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pageSizeBtn:hover {
+    background: #f4f4f5;
+    color: #09090b;
+}
+
+.pageSizeBtnActive {
+    background: #09090b;
+    color: #ffffff;
+    border-color: #09090b;
+    font-weight: 600;
+}
+
+.pageSizeBtnActive:hover {
+    background: #181d26;
+    color: #ffffff;
+}
+
+.paginationControls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pageNavBtn {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid #d4d4d8;
+    background: #ffffff;
+    color: #3f3f46;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pageNavBtn:hover:not(:disabled) {
+    background: #f4f4f5;
+    color: #09090b;
+    border-color: #a1a1aa;
+}
+
+.pageNavBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pageNumberGroup {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+}
+
+.pageNumberBtn {
+    width: 28px;
+    height: 30px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--font-mono, monospace);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    color: #52525b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pageNumberBtn:hover {
+    background: #f4f4f5;
+    color: #09090b;
+}
+
+.pageNumberBtnActive {
+    background: #09090b;
+    color: #ffffff;
+    border-color: #09090b;
+    font-weight: 600;
+}
+
+.pageNumberBtnActive:hover {
+    background: #181d26;
+    color: #ffffff;
+}
+
+.pageDots {
+    color: #a1a1aa;
+    padding: 0 2px;
+}

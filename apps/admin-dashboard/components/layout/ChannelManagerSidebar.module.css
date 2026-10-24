@@ -1,0 +1,470 @@
+/* ChannelManagerSidebar.module.css - Midday & Linear Executive Minimalist Architecture */
+
+.sidebarContainer {
+    height: calc(100vh - 60px);
+    position: fixed;
+    left: 0;
+    top: 60px;
+    background: #ffffff;
+    border-right: 1px solid #e4e4e7;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 10px;
+    z-index: 50;
+    box-shadow: 1px 0 2px rgba(0, 0, 0, 0.02);
+    overflow-y: hidden;
+    overflow-x: visible;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+/* Sidebar Toggle */
+.sidebarToggle {
+    position: fixed;
+    top: 76px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    cursor: pointer;
+    color: #27272a;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease, border-color 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    z-index: 100;
+    flex-shrink: 0;
+}
+
+.sidebarToggle:hover {
+    background: #f4f4f5;
+    border-color: #a1a1aa;
+    color: #09090b;
+}
+
+/* Header */
+.sidebarHeader {
+    height: 50px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #f4f4f5;
+}
+
+.headerExpanded {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+}
+
+.headerTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #71717a;
+}
+
+.hotelName {
+    font-size: 12px;
+    font-weight: 700;
+    color: #09090b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 210px;
+}
+
+.headerCollapsed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    color: #09090b;
+}
+
+/* Navigation Group */
+.navGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: visible;
+    padding: 2px 4px;
+    margin: 0;
+}
+
+.navGroup::-webkit-scrollbar {
+    width: 3px;
+}
+
+.navGroup::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+}
+
+/* Module Switcher Button */
+.selectModuleBtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    color: #27272a;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.15s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.selectModuleBtn:hover {
+    background: #f4f4f5;
+    border-color: #a1a1aa;
+    color: #09090b;
+}
+
+.selectModuleCollapsedBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    color: #27272a;
+    cursor: pointer;
+    margin: 0 auto 12px auto;
+    transition: all 0.15s ease;
+}
+
+.selectModuleCollapsedBtn:hover {
+    background: #f4f4f5;
+    border-color: #09090b;
+    color: #09090b;
+}
+
+/* Group Accordion in Expanded Mode */
+.groupWrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 6px;
+    position: relative;
+}
+
+.groupHeaderBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 6px;
+    transition: background-color 0.12s ease;
+}
+
+.groupHeaderBtn:hover {
+    background: #f4f4f5;
+}
+
+.groupHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #71717a;
+}
+
+.groupHeaderActiveDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2563eb;
+}
+
+.groupItemsList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-left: 8px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+/* Nav Item */
+.navItem {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    color: #3f3f46;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    transition: all 0.12s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.navItem:hover {
+    background: #f4f4f5;
+    color: #09090b;
+}
+
+.navItemActive {
+    background: #09090b !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.navItemActive svg,
+.navItemActive span {
+    color: #ffffff !important;
+}
+
+.itemLabel {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.itemBadge {
+    font-size: 9.5px;
+    font-family: var(--font-geist-mono, monospace);
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.badgeDark {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.badgeLight {
+    background: #f4f4f5;
+    color: #52525b;
+    border: 1px solid #e4e4e7;
+}
+
+/* Collapsed Dock Mode */
+.dockColumn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 4px 0;
+}
+
+.dockGroupBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #71717a;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dockGroupBtn:hover {
+    background: #f4f4f5;
+    color: #09090b;
+    border-color: #e4e4e7;
+}
+
+.dockGroupBtnActive {
+    background: #09090b !important;
+    color: #ffffff !important;
+    border-color: #09090b !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dockActiveDot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2563eb;
+    border: 1.5px solid #ffffff;
+}
+
+/* Floating Hover Flyout Submenu on the Right */
+.flyoutCard {
+    position: fixed;
+    width: 260px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    z-index: 9999;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+/* Invisible hover tunnel bridging the gap between sidebar button and flyout card */
+.flyoutCard::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: -18px;
+    width: 20px;
+    bottom: -8px;
+    background: transparent;
+    pointer-events: auto;
+}
+
+.flyoutHeader {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f4f4f5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.flyoutTitle {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #71717a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flyoutCount {
+    font-size: 10px;
+    color: #a1a1aa;
+    font-family: var(--font-geist-mono, monospace);
+}
+
+.flyoutItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #18181b;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.12s ease;
+    width: 100%;
+}
+
+.flyoutItem:hover {
+    background: #f4f4f5;
+    color: #09090b;
+}
+
+.flyoutItemActive {
+    background: #09090b !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.flyoutItemActive svg,
+.flyoutItemActive span {
+    color: #ffffff !important;
+}
+
+.flyoutItemLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Sidebar Footer */
+.sidebarFooter {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid #f4f4f5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.syncIndicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #52525b;
+}
+
+.syncPulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.notifBtn {
+    background: transparent;
+    border: none;
+    color: #71717a;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s ease;
+}
+
+.notifBtn:hover {
+    background: #f4f4f5;
+    color: #09090b;
+}

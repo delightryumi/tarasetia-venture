@@ -1,82 +1,267 @@
-/* ChannelNotificationWidget.module.css — Clean Monochrome & Subtle Executive Slate & Royal Sapphire */
+/* ==========================================================================
+   ChannelNotificationWidget.module.css
+   Modern High-Density Executive Light Theme for Channel & OTA Notification Center
+   ========================================================================== */
 
-.card {
-    background: #ffffff;
-    border: 1px solid #e4e4e7;
-    border-radius: 8px;
-    padding: 18px 22px;
+.container {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    gap: 16px;
+    width: 100%;
+    font-family: var(--font-plus-jakarta, 'Plus Jakarta Sans', var(--font-inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif));
+    color: #09090b;
 }
 
-.topRow {
+/* ── 1. Top Channel Status Summary Overview Strip ── */
+.overviewStrip {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .overviewStrip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.overviewCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    padding: 12px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
 }
 
-.titleArea {
+.overviewCard:hover {
+    border-color: #cbd5e1;
+    background: #fafafa;
+    transform: translateY(-1px);
+}
+
+.overviewCardActive {
+    border-color: #09090b;
+    background: #fafafa;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.overviewLeft {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    min-width: 0;
 }
 
-.iconCircle {
-    width: 36px;
-    height: 36px;
-    border-radius: 6px;
-    background: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
+.overviewIconBox {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #f4f4f5;
+    color: #09090b;
+    border: 1px solid #e4e4e7;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
 
+.overviewIconBoxActive {
+    background: #09090b;
+    color: #ffffff;
+    border-color: #09090b;
+}
+
+.overviewMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.overviewTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #09090b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.overviewSubtitle {
+    font-size: 11px;
+    color: #71717a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+/* ── 2. Executive Segmented Sub-Navigation Bar ── */
+.navTabBar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    border-radius: 9px;
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.navTabBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #71717a;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.navTabBtn:hover {
+    color: #09090b;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.navTabBtnActive {
+    background: #ffffff;
+    color: #09090b;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.navTabBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    background: #e4e4e7;
+    color: #27272a;
+}
+
+.navTabBadgeActive {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+/* ── 3. Main Channel Card Container ── */
+.card,
+.waCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+.topRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.titleArea {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 280px;
+}
+
+.iconCircle {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: #f4f4f5;
+    color: #09090b;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.iconCircleSuccess {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+.iconCircleMeta {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
 .titleText {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 700;
     color: #09090b;
     margin: 0;
     letter-spacing: -0.01em;
+    line-height: 1.3;
 }
 
 .subtitleText {
     font-size: 12px;
     color: #71717a;
     margin: 3px 0 0;
-    line-height: 1.4;
+    line-height: 1.45;
 }
 
+/* ── 4. Badges & Dots ── */
 .badgeActive {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: #09090b;
-    border: 1px solid #09090b;
-    color: #ffffff;
-    font-size: 10.5px;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
 }
 
 .badgeInactive {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 8px;
-    border-radius: 4px;
+    padding: 3px 9px;
+    border-radius: 9999px;
     background: #f4f4f5;
     border: 1px solid #e4e4e7;
     color: #71717a;
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 600;
 }
 
@@ -84,23 +269,24 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 8px;
-    border-radius: 4px;
+    padding: 3px 9px;
+    border-radius: 9999px;
     background: #fef2f2;
     border: 1px solid #fecaca;
     color: #991b1b;
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 600;
 }
 
 .dot {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .dotGreen {
-    background: #ffffff;
+    background: #10b981;
 }
 
 .dotGray {
@@ -111,126 +297,7 @@
     background: #ef4444;
 }
 
-.bottomRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #f4f4f5;
-}
-
-.featureList {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    font-size: 11px;
-    color: #71717a;
-}
-
-.featureItem {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.btnGroup {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.btnPrimary {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 6px;
-    background: #09090b;
-    color: #ffffff;
-    border: 1px solid #09090b;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.btnPrimary:hover:not(:disabled) {
-    background: #2563eb;
-    border-color: #2563eb;
-}
-
-.btnPrimary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.btnSecondary {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #18181b;
-    border: 1px solid #e4e4e7;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.btnSecondary:hover:not(:disabled) {
-    background: #f4f4f5;
-    border-color: #a1a1aa;
-    color: #09090b;
-}
-
-.btnSecondary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.btnDangerOutline {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.btnDangerOutline:hover:not(:disabled) {
-    background: #fef2f2;
-    border-color: #f87171;
-}
-
-.btnDangerOutline:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* WhatsApp Notification Clean Aesthetics */
-.waCard {
-    background: #ffffff;
-    border: 1px solid #e4e4e7;
-    border-radius: 8px;
-    padding: 18px 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
+/* ── 5. Gateway Master Credentials Banner ── */
 .metaMasterBanner {
     display: flex;
     align-items: center;
@@ -240,7 +307,7 @@
     padding: 12px 16px;
     background: #fafafa;
     border: 1px solid #e4e4e7;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 12px;
     color: #18181b;
 }
@@ -249,6 +316,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
+    min-width: 260px;
 }
 
 .metaMasterPills {
@@ -265,8 +334,8 @@
     padding: 3px 8px;
     background: #ffffff;
     border: 1px solid #e4e4e7;
-    border-radius: 4px;
-    font-family: var(--font-geist-mono, monospace);
+    border-radius: 5px;
+    font-family: var(--font-geist-mono, var(--font-mono, monospace));
     font-variant-numeric: tabular-nums;
     font-size: 11px;
     font-weight: 600;
@@ -278,12 +347,12 @@
     align-items: center;
     gap: 5px;
     padding: 3px 8px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 4px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 5px;
     font-size: 11px;
     font-weight: 600;
-    color: #2563eb;
+    color: #065f46;
 }
 
 .metaMasterRight {
@@ -295,9 +364,9 @@
 .btnLockToggle {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 5px 10px;
-    font-size: 11px;
+    gap: 6px;
+    padding: 6px 11px;
+    font-size: 11.5px;
     font-weight: 600;
     border-radius: 6px;
     background: #ffffff;
@@ -310,14 +379,15 @@
 .btnLockToggle:hover {
     background: #f4f4f5;
     color: #09090b;
-    border-color: #a1a1aa;
+    border-color: #d4d4d8;
 }
 
+/* Admin PIN Verification Unlock Box */
 .metaUnlockBox {
     padding: 12px 16px;
-    background: #fafafa;
-    border: 1px solid #e4e4e7;
-    border-radius: 6px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -325,20 +395,23 @@
 }
 
 .pinInput {
-    padding: 6px 10px;
+    padding: 6px 11px;
     font-size: 12px;
     border: 1px solid #e4e4e7;
     border-radius: 6px;
     background: #ffffff;
     color: #09090b;
-    width: 140px;
+    width: 150px;
+    transition: border-color 0.15s ease;
 }
 
 .pinInput:focus {
     outline: none;
     border-color: #09090b;
+    box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.05);
 }
 
+/* ── 6. Form Fields & Multi-Recipient Inputs ── */
 .waInputsGridSingle {
     display: grid;
     grid-template-columns: 1fr;
@@ -363,6 +436,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    width: 100%;
 }
 
 .waLabelRow {
@@ -372,6 +446,8 @@
     font-size: 12px;
     font-weight: 600;
     color: #27272a;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .waLabel {
@@ -388,7 +464,7 @@
     color: #2563eb;
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     text-decoration: none;
     font-weight: 600;
 }
@@ -398,11 +474,11 @@
 }
 
 .waInput {
-    padding: 8px 12px;
+    padding: 9px 12px;
     font-size: 13px;
-    font-family: var(--font-geist-mono, monospace);
+    font-family: var(--font-geist-mono, var(--font-mono, monospace));
     font-variant-numeric: tabular-nums;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid #e4e4e7;
     background: #ffffff;
     color: #09090b;
@@ -415,37 +491,128 @@
     outline: none;
     border-color: #09090b;
     background: #ffffff;
-    box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.06);
+    box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.05);
+}
+
+.waInput:disabled {
+    background: #fafafa;
+    color: #a1a1aa;
+    cursor: not-allowed;
+}
+
+.recipientTagList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
 }
 
 .recipientTag {
     font-size: 11px;
-    padding: 3px 8px;
-    background: #fafafa;
-    border-radius: 4px;
+    padding: 3px 9px;
+    background: #f4f4f5;
+    border-radius: 6px;
     color: #18181b;
     border: 1px solid #e4e4e7;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-family: var(--font-geist-mono, monospace);
+    gap: 5px;
+    font-family: var(--font-geist-mono, var(--font-mono, monospace));
     font-variant-numeric: tabular-nums;
 }
 
-.waBottomControls {
+/* ── 7. Notification Trigger Cards Grid ── */
+.triggerSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.triggerSectionHeader {
+    font-size: 12px;
+    font-weight: 700;
+    color: #27272a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.triggerGrid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .triggerGrid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.triggerCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.triggerCard:hover {
+    border-color: #cbd5e1;
+    background: #fafafa;
+}
+
+.triggerCardActive {
+    background: #fafafa;
+    border-color: #09090b;
+}
+
+.triggerTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.triggerTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #09090b;
+}
+
+.triggerDesc {
+    font-size: 11px;
+    color: #71717a;
+    margin: 0;
+    line-height: 1.35;
+}
+
+/* ── 8. Bottom Controls & Action Buttons ── */
+.waBottomControls,
+.bottomRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 16px;
-    padding-top: 10px;
+    gap: 12px;
+    padding-top: 14px;
     border-top: 1px solid #f4f4f5;
 }
 
 .waCheckboxes {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 14px;
     flex-wrap: wrap;
 }
 
@@ -465,42 +632,103 @@
     height: 15px;
     accent-color: #09090b;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 4px;
 }
 
-.waBtnRow {
+.waBtnRow,
+.btnGroup {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
+/* Standard Executive Buttons */
+.btnPrimary,
 .btnSuccess {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
+    gap: 7px;
+    padding: 8px 15px;
     font-size: 12px;
     font-weight: 600;
-    border-radius: 6px;
-    background: #09090b;
+    border-radius: 8px;
+    background-color: #09090b;
     color: #ffffff;
     border: 1px solid #09090b;
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+.btnPrimary:hover:not(:disabled),
 .btnSuccess:hover:not(:disabled) {
-    background: #2563eb;
-    border-color: #2563eb;
+    background-color: #27272a;
+    border-color: #27272a;
+    transform: translateY(-0.5px);
 }
 
+.btnPrimary:disabled,
 .btnSuccess:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
+.btnSecondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #18181b;
+    border: 1px solid #e4e4e7;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btnSecondary:hover:not(:disabled) {
+    background: #f4f4f5;
+    border-color: #d4d4d8;
+    color: #09090b;
+}
+
+.btnSecondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnDangerOutline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 13px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btnDangerOutline:hover:not(:disabled) {
+    background: #fef2f2;
+    border-color: #f87171;
+}
+
+.btnDangerOutline:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── 9. Info Bar & Trust Footnote ── */
 .metaInfoBar {
     display: flex;
     align-items: center;
@@ -508,10 +736,88 @@
     flex-wrap: wrap;
     gap: 8px;
     padding: 10px 14px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 11px;
     font-weight: 500;
     background: #fafafa;
     border: 1px solid #e4e4e7;
     color: #52525b;
+}
+
+.featureList {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 11.5px;
+    color: #71717a;
+}
+
+.featureItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ── 10. Dark Mode Support (R-34 Compliant) ── */
+:global(.dark) .card,
+:global(.dark) .waCard,
+:global(.dark) .overviewCard {
+    background: #18181b;
+    border-color: #27272a;
+    color: #f4f4f5;
+}
+
+:global(.dark) .overviewCard:hover,
+:global(.dark) .overviewCardActive {
+    background: #27272a;
+    border-color: #3f3f46;
+}
+
+:global(.dark) .titleText,
+:global(.dark) .overviewTitle {
+    color: #f4f4f5;
+}
+
+:global(.dark) .subtitleText,
+:global(.dark) .overviewSubtitle {
+    color: #a1a1aa;
+}
+
+:global(.dark) .navTabBar {
+    background: #27272a;
+    border-color: #3f3f46;
+}
+
+:global(.dark) .navTabBtn {
+    color: #a1a1aa;
+}
+
+:global(.dark) .navTabBtnActive {
+    background: #18181b;
+    color: #ffffff;
+}
+
+:global(.dark) .metaMasterBanner,
+:global(.dark) .metaInfoBar {
+    background: #27272a;
+    border-color: #3f3f46;
+    color: #e4e4e7;
+}
+
+:global(.dark) .waInput,
+:global(.dark) .pinInput {
+    background: #27272a;
+    border-color: #3f3f46;
+    color: #f4f4f5;
+}
+
+:global(.dark) .btnSecondary {
+    background: #27272a;
+    border-color: #3f3f46;
+    color: #f4f4f5;
+}
+
+:global(.dark) .btnSecondary:hover:not(:disabled) {
+    background: #3f3f46;
 }

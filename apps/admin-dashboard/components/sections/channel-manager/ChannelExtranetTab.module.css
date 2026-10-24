@@ -1,0 +1,501 @@
+/* ── ChannelExtranetTab.module.css ── */
+/* Enterprise Zinc Design System for Channex Visual Extranet SSO */
+
+.cardContainer {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cardHeader {
+    padding: 16px 20px 14px 20px;
+    border-bottom: 1px solid #e4e4e7;
+    background: rgba(250, 250, 250, 0.7);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (min-width: 640px) {
+    .cardHeader {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.headerTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.headerTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.headerTitleIcon {
+    color: #181d26;
+    flex-shrink: 0;
+}
+
+.envBadgeProd {
+    font-size: 10px;
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.envBadgeStaging {
+    font-size: 10px;
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 6px;
+    border: 1px solid #fde68a;
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.headerDesc {
+    font-size: 12px;
+    color: #71717a;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.btnActionOutline {
+    height: 32px;
+    padding: 0 13px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid #d4d4d8;
+    color: #27272a;
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btnActionOutline:hover {
+    background: #f4f4f5;
+    color: #09090b;
+    border-color: #a1a1aa;
+}
+
+.btnActionOutline:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── SSO Dynamic Status Strip ── */
+.statusBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid #e4e4e7;
+    background: rgba(250, 250, 250, 0.9);
+    font-size: 12px;
+    color: #52525b;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.statusLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.statusRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #71717a;
+    font-family: var(--font-mono, monospace);
+}
+
+.beaconWrap {
+    position: relative;
+    display: flex;
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+}
+
+.beaconPing {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #34d399;
+    opacity: 0.75;
+    animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.beaconDot {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+@keyframes ping {
+    75%, 100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.textStatusActive {
+    font-weight: 600;
+    color: #065f46;
+}
+
+.textStatusError {
+    font-weight: 600;
+    color: #be123c;
+}
+
+.textStatusWarning {
+    font-weight: 500;
+    color: #92400e;
+}
+
+.textStatusLoading {
+    font-weight: 600;
+    color: #3f3f46;
+}
+
+.divider {
+    color: #d4d4d8;
+}
+
+.propertyCode {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: #52525b;
+}
+
+/* ── Content Container & Loading View ── */
+.contentArea {
+    width: 100%;
+    position: relative;
+}
+
+.loadingBox {
+    padding: 80px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.loadingSpinner {
+    color: #71717a;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loadingTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+}
+
+.loadingDesc {
+    font-size: 12px;
+    color: #71717a;
+    max-width: 440px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ── Iframe Wrapper ── */
+.iframeWrapper {
+    position: relative;
+    width: 100%;
+}
+
+.iframeOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 8px;
+    z-index: 10;
+}
+
+.iframeOverlayTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3f3f46;
+}
+
+.iframeOverlaySub {
+    font-size: 11px;
+    color: #a1a1aa;
+}
+
+.extranetIframe {
+    width: 100%;
+    height: calc(100vh - 210px);
+    min-height: 520px;
+    border: none;
+    background: #ffffff;
+    display: block;
+}
+
+.iframeFooter {
+    padding: 10px 20px;
+    background: rgba(250, 250, 250, 0.85);
+    border-top: 1px solid #e4e4e7;
+    font-size: 12px;
+    color: #71717a;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+@media (min-width: 640px) {
+    .iframeFooter {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.securityNote {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+}
+
+.securityIcon {
+    color: #059669;
+    flex-shrink: 0;
+}
+
+.quickNavLinks {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.quickLinkBtn {
+    background: transparent;
+    border: none;
+    color: #52525b;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+}
+
+.quickLinkBtn:hover {
+    color: #09090b;
+}
+
+/* ── Error Diagnostics State ── */
+.errorCard {
+    padding: 48px 24px;
+    text-align: center;
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.errorIconBox {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d97706;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.errorTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0 0 6px 0;
+}
+
+.errorCallout {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(254, 243, 199, 0.6);
+    border: 1px solid #fde68a;
+    color: #78350f;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.solutionsBox {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.solutionsTitle {
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.solutionsList {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11.5px;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.errorActions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 4px;
+    flex-wrap: wrap;
+}
+
+.btnPrimaryAction {
+    height: 34px;
+    padding: 0 16px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #09090b;
+    color: #ffffff;
+    border: 1px solid #09090b;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btnPrimaryAction:hover {
+    background: #27272a;
+    border-color: #27272a;
+}
+
+/* ── Ready Initial State ── */
+.readyState {
+    padding: 60px 20px;
+    text-align: center;
+    max-width: 440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.readyIconBox {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #27272a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.readyTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+}
+
+.readyDesc {
+    font-size: 12px;
+    color: #71717a;
+    line-height: 1.5;
+    margin: 4px 0 0 0;
+}

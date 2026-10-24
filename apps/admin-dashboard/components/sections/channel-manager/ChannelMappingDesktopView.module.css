@@ -1,0 +1,793 @@
+/* ChannelMappingDesktopView.module.css — Midday & Linear Master-Detail Split Layout */
+
+.desktopContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* ── 1. OTA Launchpad (Empty State) ── */
+.launchpadContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.launchpadBanner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+}
+
+.launchpadBannerInfo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 760px;
+}
+
+.launchpadBannerIconBox {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #09090b;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.launchpadBannerText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.launchpadBannerHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.launchpadBannerTitle {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.launchpadPill {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 600;
+    background: #f4f4f5;
+    color: #52525b;
+    border: 1px solid #e4e4e7;
+}
+
+.launchpadBannerDesc {
+    font-size: 12px;
+    color: #71717a;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.launchpadBannerActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.launchpadGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+    width: 100%;
+}
+
+.launchpadCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    transition: all 0.15s ease;
+}
+
+.launchpadCard:hover {
+    border-color: #d4d4d8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.launchpadCardTop {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.launchpadCardHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.launchpadBrandLockup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.launchpadLogoBox {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.launchpadChannelName {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.launchpadChannelCategory {
+    font-size: 11px;
+    color: #71717a;
+    font-weight: 500;
+    margin-top: 1px;
+    display: block;
+}
+
+.launchpadBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    background: #f4f4f5;
+    color: #52525b;
+    border: 1px solid #e4e4e7;
+    white-space: nowrap;
+}
+
+.launchpadMetricsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #f4f4f5;
+}
+
+.launchpadMetricItem {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.launchpadMetricLabel {
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #a1a1aa;
+}
+
+.launchpadMetricValue {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #09090b;
+    font-family: var(--font-geist-mono, monospace);
+}
+
+.btnLaunchpadConnect {
+    width: 100%;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 14px;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #18181b;
+    border: 1px solid #e4e4e7;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btnLaunchpadConnect:hover {
+    background: #f4f4f5;
+    color: #09090b;
+    border-color: #d4d4d8;
+}
+
+/* ── 2. Master-Detail Two-Column Layout ── */
+.masterDetailLayout {
+    display: grid;
+    grid-template-columns: 310px 1fr;
+    gap: 18px;
+    align-items: start;
+    width: 100%;
+}
+
+/* Left Master Panel */
+.masterPanel {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.masterHeader {
+    padding: 14px 16px;
+    border-bottom: 1px solid #e4e4e7;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.masterHeaderTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.masterTitleWrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #09090b;
+}
+
+.channelBadgeCount {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    background: #e4e4e7;
+    color: #27272a;
+}
+
+.searchInput {
+    height: 34px;
+    width: 100%;
+    padding: 0 10px;
+    font-size: 12px;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #09090b;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.searchInput:focus {
+    border-color: #09090b;
+    box-shadow: 0 0 0 1px #09090b;
+}
+
+.channelList {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+}
+
+.channelItemBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-align: left;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+    background: transparent;
+    color: #09090b;
+}
+
+.channelItemBtn:hover:not(.channelItemBtnActive) {
+    background: #f4f4f5;
+}
+
+.channelItemBtnActive {
+    background: #09090b !important;
+    border-color: #09090b !important;
+    color: #ffffff !important;
+}
+
+.channelItemBtnActive span,
+.channelItemBtnActive code {
+    color: #ffffff !important;
+}
+
+.channelItemLogoWrap {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.channelItemInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.channelItemName {
+    font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.channelItemMeta {
+    font-size: 10.5px;
+    opacity: 0.75;
+    font-family: var(--font-geist-mono, monospace);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.statusDotGreen {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    flex-shrink: 0;
+}
+
+.statusDotAmber {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f59e0b;
+    flex-shrink: 0;
+}
+
+/* Right Detail Panel */
+.detailPanel {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px 22px;
+}
+
+.detailHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e4e4e7;
+}
+
+.detailTitleLockup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.detailLogoBox {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.detailChannelName {
+    font-size: 16px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+}
+
+.detailChannelMeta {
+    font-size: 12px;
+    color: #71717a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.channelCodeBadge {
+    font-family: var(--font-geist-mono, monospace);
+    font-weight: 700;
+    color: #09090b;
+}
+
+.pricingModelTag {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-family: var(--font-geist-mono, monospace);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #e4e4e7;
+    background: #fafafa;
+    color: #52525b;
+}
+
+.actionsToolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btnPrimaryAction {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 6px;
+    background: #09090b;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #09090b;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btnPrimaryAction:hover:not(:disabled) {
+    background: #27272a;
+    border-color: #27272a;
+}
+
+.btnSecondaryAction {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #18181b;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #e4e4e7;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btnSecondaryAction:hover:not(:disabled) {
+    background: #f4f4f5;
+    color: #09090b;
+}
+
+.btnIconAction {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    color: #71717a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btnIconAction:hover {
+    background: #f4f4f5;
+    color: #09090b;
+}
+
+.btnDangerIconAction {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btnDangerIconAction:hover {
+    background: #fef2f2;
+}
+
+/* Config Section Cards */
+.configSectionCard {
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid #e4e4e7;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sectionHeader {
+    font-size: 12px;
+    font-weight: 700;
+    color: #09090b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.configFieldsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.fieldItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fieldLabel {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #3f3f46;
+}
+
+.fieldInput {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #09090b;
+    outline: none;
+    font-family: var(--font-geist-mono, monospace);
+    transition: all 0.15s ease;
+}
+
+.fieldInput:focus {
+    border-color: #09090b;
+    box-shadow: 0 0 0 1px #09090b;
+}
+
+.fieldSelect {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #09090b;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.fieldSelect:focus {
+    border-color: #09090b;
+    box-shadow: 0 0 0 1px #09090b;
+}
+
+.fieldHint {
+    font-size: 10.5px;
+    color: #71717a;
+}
+
+/* Mapping Table Block */
+.mappingBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mappingBlockHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mappingCount {
+    font-size: 11.5px;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+}
+
+.mappingListWrap {
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.mappingRow {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 1px solid #f4f4f5;
+    transition: background-color 0.15s ease;
+}
+
+.mappingRow:last-child {
+    border-bottom: none;
+}
+
+.mappingRow:hover {
+    background: #fafafa;
+}
+
+.mappingIdentity {
+    min-width: 220px;
+    max-width: 260px;
+    overflow: hidden;
+}
+
+.mappingItemName {
+    font-weight: 600;
+    font-size: 12px;
+    color: #09090b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mappingItemMeta {
+    font-size: 10.5px;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+.mappingControlWrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 440px;
+}
+
+.mappingSelect {
+    height: 32px;
+    width: 100%;
+    padding: 0 10px;
+    font-size: 12px;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #09090b;
+    outline: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mappingSelect:focus {
+    border-color: #09090b;
+    box-shadow: 0 0 0 1px #09090b;
+}
+
+/* Save Bottom Bar */
+.saveBottomBar {
+    padding-top: 16px;
+    border-top: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.saveNotice {
+    font-size: 12px;
+    color: #71717a;
+}
+
+/* Dark Mode Parity */
+:global(.dark) .masterPanel,
+:global(.dark) .detailPanel,
+:global(.dark) .launchpadCard,
+:global(.dark) .mappingListWrap {
+    background: #18181b;
+    border-color: #27272a;
+}
+
+:global(.dark) .masterHeader,
+:global(.dark) .launchpadBanner,
+:global(.dark) .configSectionCard,
+:global(.dark) .launchpadLogoBox,
+:global(.dark) .detailLogoBox {
+    background: #121215;
+    border-color: #27272a;
+}
+
+:global(.dark) .masterTitleWrap,
+:global(.dark) .channelItemName,
+:global(.dark) .detailChannelName,
+:global(.dark) .sectionHeader,
+:global(.dark) .mappingItemName,
+:global(.dark) .channelCodeBadge {
+    color: #f4f4f5;
+}
+
+:global(.dark) .searchInput,
+:global(.dark) .fieldInput,
+:global(.dark) .fieldSelect,
+:global(.dark) .mappingSelect,
+:global(.dark) .btnSecondaryAction,
+:global(.dark) .btnLaunchpadConnect {
+    background: #18181b;
+    border-color: #27272a;
+    color: #f4f4f5;
+}
+
+:global(.dark) .mappingRow {
+    border-color: #27272a;
+}
+
+:global(.dark) .mappingRow:hover {
+    background: #121215;
+}

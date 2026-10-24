@@ -1,0 +1,296 @@
+/* ChannelExtranetMobileView.module.css - Midday & Linear Mobile Architecture */
+
+.mobileContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.topBar {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.titleRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: -0.01em;
+}
+
+.desc {
+    font-size: 11.5px;
+    color: #71717a;
+    line-height: 1.4;
+}
+
+.envBadgeProd {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    font-family: var(--font-geist-mono, monospace);
+    flex-shrink: 0;
+}
+
+.envBadgeStaging {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    border-radius: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    font-family: var(--font-geist-mono, monospace);
+    flex-shrink: 0;
+}
+
+/* Status Pill */
+.statusRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #fafafa;
+    border: 1px solid #f4f4f5;
+    border-radius: 6px;
+    font-size: 11px;
+}
+
+.statusIndicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.statusActive {
+    color: #15803d;
+}
+
+.statusError {
+    color: #b91c1c;
+}
+
+.statusPending {
+    color: #b45309;
+}
+
+.statusPulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.propertyPill {
+    font-family: var(--font-geist-mono, monospace);
+    color: #52525b;
+    font-size: 10.5px;
+}
+
+/* Action Area */
+.actionsStack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.btnPrimaryLarge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 16px;
+    background: #09090b;
+    color: #ffffff;
+    border: 1px solid #09090b;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.btnPrimaryLarge:active {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.btnSecondaryAction {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 14px;
+    background: #ffffff;
+    color: #27272a;
+    border: 1px solid #e4e4e7;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Quick Routing Cards */
+.routingGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.routeCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.routeCard:active {
+    background: #fafafa;
+}
+
+.routeCardLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.routeTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: #09090b;
+}
+
+.routeDesc {
+    font-size: 11px;
+    color: #71717a;
+}
+
+/* Inline Iframe Preview Section */
+.previewSection {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.previewHeader {
+    padding: 10px 14px;
+    background: #fafafa;
+    border-bottom: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.previewTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: #09090b;
+}
+
+.toggleBtn {
+    background: transparent;
+    border: none;
+    font-size: 11px;
+    font-weight: 600;
+    color: #2563eb;
+    cursor: pointer;
+    padding: 0;
+}
+
+.iframeWrapper {
+    position: relative;
+    width: 100%;
+    height: 580px;
+    background: #ffffff;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.iframe {
+    width: 100%;
+    min-width: 600px; /* Ensures desktop extranet controls aren't smashed */
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+.noticeBar {
+    padding: 8px 12px;
+    background: #fffbeb;
+    border-top: 1px solid #fde68a;
+    font-size: 10.5px;
+    color: #92400e;
+    line-height: 1.35;
+}
+
+/* Error Card Mobile */
+.errorCard {
+    background: #ffffff;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+}
+
+.errorTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #09090b;
+}
+
+.errorMsg {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11.5px;
+    color: #92400e;
+}

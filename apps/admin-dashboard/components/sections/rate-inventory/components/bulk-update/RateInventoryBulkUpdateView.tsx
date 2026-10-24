@@ -30,7 +30,7 @@ import { BulkDateRangeSelector } from "./BulkDateRangeSelector";
 import { BulkDaysChannelsSelector } from "./BulkDaysChannelsSelector";
 import { BulkSummaryStep } from "./BulkSummaryStep";
 import { BulkConfirmModal } from "./BulkConfirmModal";
-import { BulkCertificationPresets, ChannexCertificationPresetKey } from "./BulkCertificationPresets";
+import { BulkCertificationPresets } from "./BulkCertificationPresets";
 import { BulkUpdateItem } from "../../RateInventoryTypes";
 import styles from "./RateInventoryBulkUpdateView.module.css";
 
@@ -164,175 +164,6 @@ export function RateInventoryBulkUpdateView({
         toast.success("Formulir bulk update telah direset.");
     };
 
-    // 1-Click Preset Selection for Official Channex Certification Scenarios
-    const handleSelectPreset = (preset: ChannexCertificationPresetKey) => {
-        const twinRt = roomTypes.find(r => r.name?.toLowerCase().includes("twin") || r.code?.toLowerCase().includes("twin")) || roomTypes[0] || { id: "all", name: "Twin Room" };
-        const doubleRt = roomTypes.find(r => r.name?.toLowerCase().includes("double") || r.code?.toLowerCase().includes("double")) || roomTypes[1] || roomTypes[0] || { id: "all", name: "Double Room" };
-
-        const barRp = ratePlans.find(p => p.name?.toLowerCase().includes("best") || p.name?.toLowerCase().includes("bar") || p.name?.toLowerCase().includes("standard")) || ratePlans[0] || { id: "all", name: "Best Available Rate" };
-        const bbRp = ratePlans.find(p => p.name?.toLowerCase().includes("breakfast") || p.name?.toLowerCase().includes("bb")) || ratePlans[1] || ratePlans[0] || { id: "all", name: "Bed & Breakfast" };
-
-        if (preset === "test_4_multi_rate") {
-            const rule1: BulkRuleState = {
-                ...createDefaultRule(0, ["rate"]),
-                title: "Aturan #1 (Twin Room BAR: 241)",
-                roomTypeIds: [twinRt.id],
-                ratePlanIds: [barRp.id],
-                dateFrom: "2026-11-01",
-                dateTo: "2026-11-10",
-                rateAction: "set",
-                rateValue: 241,
-                rateValueStr: "241"
-            };
-            const rule2: BulkRuleState = {
-                ...createDefaultRule(1, ["rate"]),
-                title: "Aturan #2 (Double Room BAR: 312.66)",
-                roomTypeIds: [doubleRt.id],
-                ratePlanIds: [barRp.id],
-                dateFrom: "2026-11-10",
-                dateTo: "2026-11-16",
-                rateAction: "set",
-                rateValue: 312.66,
-                rateValueStr: "312.66"
-            };
-            const rule3: BulkRuleState = {
-                ...createDefaultRule(2, ["rate"]),
-                title: "Aturan #3 (Double Room BB: 111)",
-                roomTypeIds: [doubleRt.id],
-                ratePlanIds: [bbRp.id],
-                dateFrom: "2026-11-01",
-                dateTo: "2026-11-20",
-                rateAction: "set",
-                rateValue: 111,
-                rateValueStr: "111"
-            };
-            setRules([rule1, rule2, rule3]);
-            toast.success("Preset Test 4 Channex (Multi-Date Multi-Rate) dimuat.");
-        } else if (preset === "test_7_multi_restrictions") {
-            const rule1: BulkRuleState = {
-                ...createDefaultRule(0, ["cta", "ctd", "max_stay", "min_stay_arrival", "min_stay_through"]),
-                title: "Aturan #1 (Twin BAR: CTA True, CTD False, Max 4, Min 1)",
-                roomTypeIds: [twinRt.id],
-                ratePlanIds: [barRp.id],
-                dateFrom: "2026-11-01",
-                dateTo: "2026-11-10",
-                ctaAction: "true",
-                closedToArrival: true,
-                ctdAction: "false",
-                closedToDeparture: false,
-                maxStayAction: "set",
-                maxStayValue: 4,
-                minStayArrivalAction: "set",
-                minStayArrivalValue: 1,
-                minStayThroughAction: "set",
-                minStayThroughValue: 1
-            };
-            const rule2: BulkRuleState = {
-                ...createDefaultRule(1, ["cta", "ctd", "min_stay_arrival", "min_stay_through"]),
-                title: "Aturan #2 (Twin BB: CTA False, CTD True, Min 6)",
-                roomTypeIds: [twinRt.id],
-                ratePlanIds: [bbRp.id],
-                dateFrom: "2026-11-12",
-                dateTo: "2026-11-16",
-                ctaAction: "false",
-                closedToArrival: false,
-                ctdAction: "true",
-                closedToDeparture: true,
-                minStayArrivalAction: "set",
-                minStayArrivalValue: 6,
-                minStayThroughAction: "set",
-                minStayThroughValue: 6
-            };
-            const rule3: BulkRuleState = {
-                ...createDefaultRule(2, ["cta", "min_stay_arrival", "min_stay_through"]),
-                title: "Aturan #3 (Double BAR: CTA True, Min 2)",
-                roomTypeIds: [doubleRt.id],
-                ratePlanIds: [barRp.id],
-                dateFrom: "2026-11-10",
-                dateTo: "2026-11-16",
-                ctaAction: "true",
-                closedToArrival: true,
-                minStayArrivalAction: "set",
-                minStayArrivalValue: 2,
-                minStayThroughAction: "set",
-                minStayThroughValue: 2
-            };
-            const rule4: BulkRuleState = {
-                ...createDefaultRule(3, ["min_stay_arrival", "min_stay_through"]),
-                title: "Aturan #4 (Double BB: Min 10)",
-                roomTypeIds: [doubleRt.id],
-                ratePlanIds: [bbRp.id],
-                dateFrom: "2026-11-01",
-                dateTo: "2026-11-20",
-                minStayArrivalAction: "set",
-                minStayArrivalValue: 10,
-                minStayThroughAction: "set",
-                minStayThroughValue: 10
-            };
-            setRules([rule1, rule2, rule3, rule4]);
-            toast.success("Preset Test 7 Channex (Multi-Restriksi Kompleks) dimuat.");
-        } else if (preset === "test_8_half_year") {
-            const rule1: BulkRuleState = {
-                ...createDefaultRule(0, ["rate", "cta", "ctd", "min_stay_arrival", "min_stay_through"]),
-                title: "Aturan #1 (Twin BAR 5 Bulan: $432, CTA/CTD False, Min 2)",
-                roomTypeIds: [twinRt.id],
-                ratePlanIds: [barRp.id],
-                dateFrom: "2026-12-01",
-                dateTo: "2027-05-01",
-                rateAction: "set",
-                rateValue: 432,
-                rateValueStr: "432",
-                ctaAction: "false",
-                closedToArrival: false,
-                ctdAction: "false",
-                closedToDeparture: false,
-                minStayArrivalAction: "set",
-                minStayArrivalValue: 2,
-                minStayThroughAction: "set",
-                minStayThroughValue: 2
-            };
-            const rule2: BulkRuleState = {
-                ...createDefaultRule(1, ["rate", "min_stay_arrival", "min_stay_through"]),
-                title: "Aturan #2 (Double BAR 5 Bulan: $342, Min 3)",
-                roomTypeIds: [doubleRt.id],
-                ratePlanIds: [barRp.id],
-                dateFrom: "2026-12-01",
-                dateTo: "2027-05-01",
-                rateAction: "set",
-                rateValue: 342,
-                rateValueStr: "342",
-                minStayArrivalAction: "set",
-                minStayArrivalValue: 3,
-                minStayThroughAction: "set",
-                minStayThroughValue: 3
-            };
-            setRules([rule1, rule2]);
-            toast.success("Preset Test 8 Channex (Pembaruan Semester 5 Bulan) dimuat.");
-        } else if (preset === "test_10_multi_avail") {
-            const rule1: BulkRuleState = {
-                ...createDefaultRule(0, ["inventory"]),
-                title: "Aturan #1 (Twin Room: 3 Kamar, 10-16 Nov)",
-                roomTypeIds: [twinRt.id],
-                ratePlanIds: ["all"],
-                dateFrom: "2026-11-10",
-                dateTo: "2026-11-16",
-                inventoryAction: "set",
-                inventoryValue: 3
-            };
-            const rule2: BulkRuleState = {
-                ...createDefaultRule(1, ["inventory"]),
-                title: "Aturan #2 (Double Room: 4 Kamar, 17-24 Nov)",
-                roomTypeIds: [doubleRt.id],
-                ratePlanIds: ["all"],
-                dateFrom: "2026-11-17",
-                dateTo: "2026-11-24",
-                inventoryAction: "set",
-                inventoryValue: 4
-            };
-            setRules([rule1, rule2]);
-            toast.success("Preset Test 10 Channex (Multi-Date Availability) dimuat.");
-        }
-    };
 
     // Step validation helpers
     const validateStep = (step: BulkStepId): boolean => {
@@ -579,7 +410,6 @@ export function RateInventoryBulkUpdateView({
                             onSyncDates={handleSyncDatesFromFirst}
                             onReset={() => setShowResetConfirm(true)}
                             rulesCount={rules.length}
-                            onSelectPreset={handleSelectPreset}
                         />
 
                         {/* Target Rule Cards: Dynamic Components & Values */}

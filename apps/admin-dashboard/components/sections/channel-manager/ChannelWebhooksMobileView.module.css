@@ -1,0 +1,277 @@
+/* ChannelWebhooksMobileView.module.css
+   Mobile & Responsive Layout for Webhook Traces & Inbound Monitor
+   Meets accessibility guidelines (minimum 44px touch targets)
+*/
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 4px;
+}
+
+/* Endpoint Card */
+.endpointCard {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.endpointHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.endpointTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #09090b;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.statusLive {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.pulseDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.urlBox {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 11px;
+  background: #f4f4f5;
+  color: #27272a;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #e4e4e7;
+  word-break: break-all;
+}
+
+.btnRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.actionBtn {
+  flex: 1;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.actionBtnPrimary {
+  background: #09090b;
+  color: #ffffff;
+  border: 1px solid #09090b;
+}
+
+.actionBtnSecondary {
+  background: #ffffff;
+  color: #18181b;
+  border: 1px solid #e4e4e7;
+}
+
+/* KPI Grid 2x2 */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.kpiCard {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpiLabel {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+.kpiVal {
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 16px;
+  font-weight: 700;
+  color: #09090b;
+}
+
+/* Mobile Filter */
+.filterRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.filterSelect {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  color: #18181b;
+  flex: 1;
+}
+
+/* Mobile Event Cards */
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eventCard {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+
+.eventCard:hover {
+  border-color: #a1a1aa;
+}
+
+.eventTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eventName {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #09090b;
+}
+
+.eventMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #71717a;
+  font-family: var(--font-geist-mono, monospace);
+}
+
+.channelTag {
+  display: inline-block;
+  background: #f4f4f5;
+  color: #27272a;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Mobile Sheet Drawer */
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.sheetContent {
+  background: #ffffff;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sheetHeader {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e4e4e7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheetBody {
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.jsonBox {
+  background: #09090b;
+  color: #e4e4e7;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-x: auto;
+  max-height: 300px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.sheetFooter {
+  padding: 12px 16px;
+  border-top: 1px solid #e4e4e7;
+}
+
+.sheetCloseBtn {
+  min-height: 44px;
+  width: 100%;
+  background: #09090b;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}

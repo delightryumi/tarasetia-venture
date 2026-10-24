@@ -1,120 +1,256 @@
-/* ChannelTaxes.module.css — Clean Monochrome & Subtle Executive Slate & Royal Sapphire Tax & Fee Sets */
+/* ChannelTaxes.module.css — Midday & Linear Executive Minimalist Fiscal Policy Modal */
 
 .backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(9, 9, 11, 0.45);
+    background: rgba(9, 9, 11, 0.55);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 99999;
-    padding: 20px;
+    padding: 16px;
 }
 
 .modal {
     background: #ffffff;
-    border-radius: 8px;
+    border-radius: 14px;
     width: 100%;
-    max-width: 520px;
+    max-width: 540px;
+    max-height: min(90vh, 760px);
     border: 1px solid #e4e4e7;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .header {
-    padding: 14px 18px;
+    padding: 16px 20px;
     background: #fafafa;
     border-bottom: 1px solid #e4e4e7;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 12px;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.headerIconBox {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #09090b;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.headerTag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #71717a;
+    margin-bottom: 2px;
 }
 
 .title {
-    font-size: 14px;
+    font-size: 14.5px;
     font-weight: 700;
     color: #09090b;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.subtitle {
+    font-size: 11.5px;
+    color: #71717a;
+    margin: 3px 0 0 0;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #71717a;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.closeBtn:hover {
+    background: #f4f4f5;
+    color: #09090b;
 }
 
 .body {
-    padding: 20px;
+    padding: 18px 20px;
+    overflow-y: auto;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
 }
 
 .taxCard {
-    background: #fafafa;
+    background: #ffffff;
     border: 1px solid #e4e4e7;
-    border-radius: 6px;
+    border-radius: 10px;
     padding: 14px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    transition: border-color 0.15s ease;
+}
+
+.taxCard:hover {
+    border-color: #d4d4d8;
 }
 
 .taxHeader {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 10px;
 }
 
 .taxTitle {
     font-size: 13px;
     font-weight: 600;
     color: #09090b;
+    display: block;
+}
+
+.taxSubtitle {
+    font-size: 11px;
+    color: #71717a;
+    display: block;
+    margin-top: 2px;
+}
+
+.badgeStandard {
+    font-size: 10px;
+    font-weight: 600;
+    color: #059669;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    padding: 1px 7px;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.badgeOptional {
+    font-size: 10px;
+    font-weight: 600;
+    color: #71717a;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    padding: 1px 7px;
+    border-radius: 9999px;
+    white-space: nowrap;
 }
 
 .taxInputRow {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .input {
-    height: 34px;
-    width: 100px;
+    height: 36px;
+    width: 90px;
     padding: 0 10px;
     font-size: 13px;
     border: 1px solid #e4e4e7;
-    border-radius: 4px;
+    border-radius: 6px;
     outline: none;
-    font-weight: 600;
+    font-weight: 700;
+    color: #09090b;
     font-family: var(--font-geist-mono, monospace);
     font-variant-numeric: tabular-nums;
+    transition: all 0.15s ease;
 }
 
 .input:focus {
     border-color: #09090b;
+    box-shadow: 0 0 0 1px #09090b;
+}
+
+.percentSymbol {
+    font-size: 13px;
+    font-weight: 700;
+    color: #09090b;
+    font-family: var(--font-geist-mono, monospace);
+}
+
+.inputHint {
+    font-size: 11px;
+    color: #71717a;
+    line-height: 1.4;
 }
 
 .select {
-    height: 34px;
-    flex: 1;
+    height: 36px;
+    width: 100%;
     padding: 0 10px;
     font-size: 12px;
     border: 1px solid #e4e4e7;
-    border-radius: 4px;
+    border-radius: 6px;
     background: #ffffff;
+    color: #09090b;
     outline: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.select:focus {
+    border-color: #09090b;
+    box-shadow: 0 0 0 1px #09090b;
 }
 
 .infoBox {
     background: #fafafa;
     border: 1px solid #e4e4e7;
-    border-radius: 6px;
-    padding: 10px 14px;
-    font-size: 11px;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 11.5px;
     color: #52525b;
     line-height: 1.5;
 }
 
+.infoBoxHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #09090b;
+    margin-bottom: 4px;
+}
+
+.infoIcon {
+    color: #71717a;
+}
+
+.infoBoxText {
+    margin: 0;
+    font-size: 11px;
+    color: #71717a;
+}
+
 .footer {
-    padding: 12px 18px;
+    padding: 12px 20px;
     background: #fafafa;
     border-top: 1px solid #e4e4e7;
     display: flex;
@@ -126,11 +262,13 @@
     height: 34px;
     padding: 0 14px;
     font-size: 12px;
+    font-weight: 500;
     border: 1px solid #e4e4e7;
     background: #ffffff;
-    color: #27272a;
-    border-radius: 4px;
+    color: #18181b;
+    border-radius: 6px;
     cursor: pointer;
+    transition: all 0.15s ease;
 }
 
 .btnCancel:hover {
@@ -146,12 +284,55 @@
     background: #09090b;
     color: #ffffff;
     border: 1px solid #09090b;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 .btnSave:hover {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: #27272a;
+    border-color: #27272a;
+}
+
+.btnSave:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Dark Mode Parity */
+:global(.dark) .modal {
+    background: #18181b;
+    border-color: #27272a;
+}
+
+:global(.dark) .header,
+:global(.dark) .footer,
+:global(.dark) .infoBox {
+    background: #121215;
+    border-color: #27272a;
+}
+
+:global(.dark) .title,
+:global(.dark) .taxTitle,
+:global(.dark) .percentSymbol,
+:global(.dark) .infoBoxHeader {
+    color: #f4f4f5;
+}
+
+:global(.dark) .taxCard {
+    background: #18181b;
+    border-color: #27272a;
+}
+
+:global(.dark) .input,
+:global(.dark) .select {
+    background: #121215;
+    border-color: #27272a;
+    color: #f4f4f5;
+}
+
+:global(.dark) .btnCancel {
+    background: #18181b;
+    border-color: #27272a;
+    color: #f4f4f5;
 }

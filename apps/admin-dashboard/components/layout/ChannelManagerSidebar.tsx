@@ -1,39 +1,42 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { NotificationSettingsDrawer } from "./NotificationSettingsDrawer";
-import { motion } from "framer-motion";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import {
-    Globe,
-    BedDouble,
-    Sliders,
-    Table,
-    TrendingUp,
+    CaretLeft,
+    CaretRight,
+    CaretDown,
+    SquaresFour,
+    Bell,
     Key,
-    Shield,
-    Search,
+    Table,
+    Globe,
+    UsersThree,
+    Browsers,
+    ShieldCheck,
+    TrendUp,
     Tag,
-    UploadCloud,
-    MessageSquare,
+    MagnifyingGlass,
+    Image,
+    ChatCircleDots,
     Star,
     CreditCard,
-    Terminal,
-    Zap,
-    LayoutGrid,
-    Lock,
-    RefreshCw,
-    ArrowLeft,
-    CheckCircle2,
-    Bell,
-    Users,
+    Receipt,
+    Bed,
+    SlidersHorizontal,
+    Buildings,
     Compass,
-    Building2
-} from "lucide-react";
+    ArrowsClockwise,
+    TerminalWindow,
+    CheckSquare,
+    PlugsConnected,
+    Check,
+    Broadcast
+} from "@phosphor-icons/react";
 import { useAuth } from "@/context/AuthContext";
-import { isUserSuperadmin } from "@/lib/permissionCheck";
-import "./layout.css";
+import styles from "./ChannelManagerSidebar.module.css";
 
 interface ChannelManagerSidebarProps {
     isCollapsed: boolean;
@@ -46,11 +49,11 @@ interface CmMenuItem {
     shortLabel: string;
     icon: React.ElementType;
     badge?: string;
-    badgeColor?: string;
 }
 
 interface CmMenuGroup {
     title: string;
+    icon: React.ElementType;
     items: CmMenuItem[];
 }
 
@@ -62,47 +65,145 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
     const { activeHotelCode, activeHotelName, user } = useAuth();
     const [currentTab, setCurrentTab] = useState<string>("mapping");
     const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState<boolean>(false);
-    const navGroupRef = React.useRef<HTMLDivElement>(null);
 
-    // Sync active tab with URL query parameter ?tab=
+    // Hover flyout submenu state
+    const [hoveredGroup, setHoveredGroup] = useState<CmMenuGroup | null>(null);
+    const [flyoutTop, setFlyoutTop] = useState<number>(100);
+    const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Collapsible group state for expanded mode
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+        "Distribusi Saluran": true,
+        "Yield & Revenue": true,
+        "Komunikasi & Tamu": true,
+        "Finansial & Booking": true,
+        "Master Data Properti": true,
+        "Log & Audit Sistem": true,
+        "Sertifikasi & Gateway": true,
+    });
+
+    const toggleGroup = (title: string) => {
+        setExpandedGroups(prev => {
+            const nextState = !prev[title];
+            if (nextState) {
+                // When expanding a group, suppress flyout immediately
+                setHoveredGroup(null);
+            }
+            return {
+                ...prev,
+                [title]: nextState
+            };
+        });
+    };
+
+    // Sync active tab with URL query parameter ?tab= and events
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const params = new URLSearchParams(window.location.search);
-            const tabParam = params.get("tab");
-            if (tabParam) {
-                setCurrentTab(tabParam);
-            }
+            const syncFromUrl = () => {
+                const params = new URLSearchParams(window.location.search);
+                const tabParam = params.get("tab");
+                if (tabParam) {
+                    setCurrentTab(tabParam);
+                }
+            };
+
+            syncFromUrl();
 
             const handleCustomTab = (e: any) => {
-                if (e.detail) setCurrentTab(e.detail);
+                const tab = typeof e.detail === "string" ? e.detail : e.detail?.tab;
+                if (tab) setCurrentTab(tab);
             };
+
             window.addEventListener("channel-tab-change", handleCustomTab);
-            return () => window.removeEventListener("channel-tab-change", handleCustomTab);
+            window.addEventListener("popstate", syncFromUrl);
+
+            return () => {
+                window.removeEventListener("channel-tab-change", handleCustomTab);
+                window.removeEventListener("popstate", syncFromUrl);
+            };
         }
     }, []);
 
-    // Auto-scroll sidebar so active menu item is smoothly positioned near the top of the sidebar viewport
+    const MENU_GROUPS: CmMenuGroup[] = [
+        {
+            title: "Distribusi Saluran",
+            icon: PlugsConnected,
+            items: [
+                { id: "mapping", label: "Saluran & Pemetaan", shortLabel: "Pemetaan", icon: PlugsConnected },
+                { id: "matrix", label: "Matriks Paritas Tarif", shortLabel: "Matriks", icon: Table },
+                { id: "catalog", label: "Katalog Saluran OTA", shortLabel: "Katalog", icon: Globe, badge: "68+" },
+                { id: "travel_agents", label: "Travel Agent & B2B", shortLabel: "B2B", icon: UsersThree },
+                { id: "iframe", label: "Ekstranet Visual Channex", shortLabel: "Channex", icon: Browsers }
+            ]
+        },
+        {
+            title: "Yield & Revenue",
+            icon: TrendUp,
+            items: [
+                { id: "rules", label: "Aturan Yield & Restriksi", shortLabel: "Restriksi", icon: ShieldCheck },
+                { id: "dynamic_pricing", label: "Dynamic Pricing RMS", shortLabel: "RMS", icon: TrendUp, badge: "RMS" },
+                { id: "promotions", label: "Promo & Diskon OTA", shortLabel: "Promo", icon: Tag },
+                { id: "google", label: "Google Hotel Free Links", shortLabel: "Google", icon: MagnifyingGlass, badge: "0%" },
+                { id: "content", label: "Konten & Foto Kamar", shortLabel: "Konten", icon: Image }
+            ]
+        },
+        {
+            title: "Komunikasi & Tamu",
+            icon: ChatCircleDots,
+            items: [
+                { id: "messages", label: "Pusat Pesan Tamu", shortLabel: "Pesan", icon: ChatCircleDots },
+                { id: "reviews", label: "Ulasan & Reputasi Tamu", shortLabel: "Review", icon: Star }
+            ]
+        },
+        {
+            title: "Finansial & Booking",
+            icon: CreditCard,
+            items: [
+                { id: "payments", label: "PCI Card Vault & VCC", shortLabel: "PCI Vault", icon: CreditCard, badge: "PCI-DSS" },
+                { id: "payment_gateway", label: "Direct Booking Engine", shortLabel: "Gateway", icon: Receipt }
+            ]
+        },
+        {
+            title: "Master Data Properti",
+            icon: Buildings,
+            items: [
+                { id: "rooms", label: "Master Tipe Kamar", shortLabel: "Kamar", icon: Bed },
+                { id: "rateplans", label: "Master Rate Plan", shortLabel: "Rate Plan", icon: SlidersHorizontal },
+                { id: "groups", label: "Grup Hotel & Multi-Properti", shortLabel: "Grup", icon: Buildings },
+                { id: "tutorial", label: "Roadmap Go-Live Produksi", shortLabel: "Roadmap", icon: Compass, badge: "5 Tahap" }
+            ]
+        },
+        {
+            title: "Log & Audit Sistem",
+            icon: TerminalWindow,
+            items: [
+                { id: "logs", label: "Audit Log", shortLabel: "Audit Log", icon: TerminalWindow },
+                { id: "webhooks", label: "Webhook Traces", shortLabel: "Webhook", icon: Broadcast },
+                { id: "sync", label: "Live ARI Sync Feed", shortLabel: "Sync Feed", icon: ArrowsClockwise }
+            ]
+        },
+        {
+            title: "Sertifikasi & Gateway",
+            icon: CheckSquare,
+            items: [
+                { id: "sandbox", label: "Skenario Sertifikasi", shortLabel: "Sertifikasi", icon: CheckSquare, badge: "8 Tes" },
+                { id: "golive", label: "Kredensial & Webhook", shortLabel: "Kredensial", icon: Key }
+            ]
+        }
+    ];
+
+    // Ensure the group containing the active tab is expanded in expanded mode
     useEffect(() => {
         if (!currentTab) return;
-        const timer = setTimeout(() => {
-            const navContainer = navGroupRef.current;
-            const targetEl = document.getElementById(`cm-sidebar-item-${currentTab}`);
-            if (navContainer && targetEl) {
-                const containerRect = navContainer.getBoundingClientRect();
-                const targetRect = targetEl.getBoundingClientRect();
-                const relativeOffset = targetRect.top - containerRect.top;
-
-                navContainer.scrollTo({
-                    top: navContainer.scrollTop + relativeOffset - 12,
-                    behavior: "smooth"
-                });
-            }
-        }, 50);
-        return () => clearTimeout(timer);
+        const group = MENU_GROUPS.find(g => g.items.some(i => i.id === currentTab));
+        if (group && !expandedGroups[group.title]) {
+            setExpandedGroups(prev => ({ ...prev, [group.title]: true }));
+        }
     }, [currentTab]);
 
     const handleSelectTab = (tabId: string) => {
         setCurrentTab(tabId);
+        setHoveredGroup(null);
         if (typeof window !== "undefined") {
             const url = new URL(window.location.href);
             url.searchParams.set("tab", tabId);
@@ -115,283 +216,314 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
         router.push("/select-module");
     };
 
+    // Handle mouse enter for hover flyout submenu
+    // Appears when:
+    // 1) Sidebar is in collapsed dock mode, OR
+    // 2) An accordion menu group in expanded sidebar is currently closed (posisi side bar menu tertutup)
+    const handleGroupMouseEnter = (group: CmMenuGroup, e: React.MouseEvent<HTMLElement>, isFromExpandedHeader: boolean = false) => {
+        // If sidebar is expanded and this menu group is already OPEN, do not show the right flyout
+        if (!isCollapsed && isFromExpandedHeader && expandedGroups[group.title]) {
+            setHoveredGroup(null);
+            return;
+        }
+
+        if (leaveTimeoutRef.current) {
+            clearTimeout(leaveTimeoutRef.current);
+            leaveTimeoutRef.current = null;
+        }
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        // Position flyout aligned to button, clamped within viewport
+        const maxTop = typeof window !== "undefined" ? Math.max(68, window.innerHeight - 380) : 400;
+        const targetTop = Math.min(Math.max(68, rect.top), maxTop);
+        setFlyoutTop(targetTop);
+        setHoveredGroup(group);
+    };
+
+    const handleGroupMouseLeave = () => {
+        if (leaveTimeoutRef.current) {
+            clearTimeout(leaveTimeoutRef.current);
+        }
+        leaveTimeoutRef.current = setTimeout(() => {
+            setHoveredGroup(null);
+        }, 280);
+    };
+
+    const handleFlyoutMouseEnter = () => {
+        if (leaveTimeoutRef.current) {
+            clearTimeout(leaveTimeoutRef.current);
+            leaveTimeoutRef.current = null;
+        }
+    };
+
+    const handleFlyoutMouseLeave = () => {
+        if (leaveTimeoutRef.current) {
+            clearTimeout(leaveTimeoutRef.current);
+        }
+        leaveTimeoutRef.current = setTimeout(() => {
+            setHoveredGroup(null);
+        }, 200);
+    };
+
     const sidebarVariants: any = {
         expanded: {
             width: "var(--sidebar-width)",
-            transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
         },
         collapsed: {
-            width: "100px",
-            transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+            width: "var(--sidebar-collapsed-width, 64px)",
+            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
         },
     };
 
-    const MENU_GROUPS: CmMenuGroup[] = [
-        {
-            title: "Line 1: Setup & Koneksi",
-            items: [
-                { id: "groups", label: "Jaringan Hotel & Grup", shortLabel: "Grup", icon: Building2, badge: "Multi-Hotel", badgeColor: "#2563eb" },
-                { id: "golive", label: "Kredensial API & Go-Live", shortLabel: "Go-Live", icon: Lock, badge: "Step 1", badgeColor: "#2563eb" },
-                { id: "iframe", label: "Konsol Ekstranet (SSO)", shortLabel: "SSO", icon: LayoutGrid }
-            ]
-        },
-        {
-            title: "Line 2: Master Kamar & Harga",
-            items: [
-                { id: "rooms", label: "Tipe Kamar & Alotmen", shortLabel: "Kamar", icon: BedDouble },
-                { id: "rateplans", label: "Master Rate Plans", shortLabel: "Rates", icon: Sliders },
-                { id: "matrix", label: "Kalkulator Rate Matrix", shortLabel: "Matrix", icon: Table, badge: "Nett/Gross", badgeColor: "#2563eb" }
-            ]
-        },
-        {
-            title: "Line 3: Distribusi OTA & RMS",
-            items: [
-                { id: "mapping", label: "Pemetaan Saluran & OTA", shortLabel: "Mapping", icon: Key, badge: "68+ OTA", badgeColor: "#2563eb" },
-                { id: "dynamic_pricing", label: "Yield & Dynamic RMS", shortLabel: "RMS", icon: TrendingUp },
-                { id: "promotions", label: "Promosi & Diskon OTA", shortLabel: "Promo", icon: Tag },
-                { id: "google", label: "Google Hotel Free Links", shortLabel: "Google", icon: Search, badge: "0%", badgeColor: "#16a34a" },
-                { id: "travel_agents", label: "Travel Agent & B2B", shortLabel: "B2B", icon: Users },
-                { id: "content", label: "Konten & Foto Kamar", shortLabel: "Konten", icon: UploadCloud }
-            ]
-        },
-        {
-            title: "Line 4: Direct Guest & Booking",
-            items: [
-                { id: "booking_engine", label: "Direct Booking Engine", shortLabel: "Direct", icon: Globe, badge: "Web Suite", badgeColor: "#2563eb" },
-                { id: "messages", label: "Kotak Masuk Pesan Tamu", shortLabel: "Pesan", icon: MessageSquare },
-                { id: "reviews", label: "Ulasan & Reputasi Tamu", shortLabel: "Ulasan", icon: Star }
-            ]
-        },
-        {
-            title: "Line 5: Keamanan & Monitoring",
-            items: [
-                { id: "logs", label: "Log Transmisi & Webhook", shortLabel: "Logs", icon: Terminal },
-                { id: "sync", label: "Live ARI Sync Feed", shortLabel: "Sync Feed", icon: RefreshCw },
-                { id: "payments", label: "PCI Card Vault & VCC", shortLabel: "PCI Vault", icon: CreditCard }
-            ]
-        }
-    ];
-
     return (
-        <motion.aside
-            className={`sidebar ${isCollapsed ? "collapsed" : ""}`}
-            initial="expanded"
-            animate={isCollapsed ? "collapsed" : "expanded"}
-            variants={sidebarVariants}
-        >
-            {/* Absolute toggle button on border */}
-            <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="sidebar-toggle"
-                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        <>
+            <motion.aside
+                className={styles.sidebarContainer}
+                initial="expanded"
+                animate={isCollapsed ? "collapsed" : "expanded"}
+                variants={sidebarVariants}
             >
-                {isCollapsed ? (
-                    <CaretRight size={12} weight="bold" />
-                ) : (
-                    <CaretLeft size={12} weight="bold" />
-                )}
-            </motion.button>
-
-            {/* Sidebar Header: Suite Brand & Switch Back Button */}
-            <div style={{ padding: isCollapsed ? "10px 0" : "4px 8px 12px 8px", borderBottom: "1px solid var(--sidebar-border, #e4e4e7)" }}>
-                {/* Back to PMS Module button */}
+                {/* Sidebar Toggle Button */}
                 <button
-                    type="button"
-                    onClick={handleBackToPms}
-                    title="Return to PMS Module Selection"
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className={styles.sidebarToggle}
                     style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        width: "100%",
-                        padding: isCollapsed ? "8px 0" : "7px 10px",
-                        justifyContent: isCollapsed ? "center" : "flex-start",
-                        borderRadius: "6px",
-                        background: "#fafafa",
-                        border: "1px solid #e4e4e7",
-                        color: "#27272a",
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        marginBottom: "10px",
-                        transition: "all 0.15s ease"
+                        left: isCollapsed
+                            ? "calc(var(--sidebar-collapsed-width, 64px) - 11px)"
+                            : "calc(var(--sidebar-width) - 11px)"
                     }}
+                    aria-label="Toggle sidebar width"
                 >
-                    <ArrowLeft size={14} />
-                    {!isCollapsed && <span>Back to PMS Hub</span>}
+                    {isCollapsed ? (
+                        <CaretRight size={11} weight="bold" />
+                    ) : (
+                        <CaretLeft size={11} weight="bold" />
+                    )}
                 </button>
 
-                {/* Brand Identity */}
-                {!isCollapsed ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 2px" }}>
-                        <div style={{
-                            width: "32px",
-                            height: "32px",
-                            borderRadius: "6px",
-                            background: "#eff6ff",
-                            color: "#2563eb",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1px solid #bfdbfe",
-                            boxShadow: "0 1px 2px rgba(37, 99, 235, 0.08)",
-                            flexShrink: 0
-                        }}>
-                            <Globe size={16} />
-                        </div>
-                        <div style={{ overflow: "hidden" }}>
-                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap" }}>
-                                Global Channel Manager
+                {/* Sidebar Header */}
+                <div className={styles.sidebarHeader}>
+                    {!isCollapsed ? (
+                        <div className={styles.headerExpanded}>
+                            <div className={styles.headerTitleRow}>
+                                <Globe size={13} weight="bold" color="#71717a" />
+                                <span>Channel Manager</span>
                             </div>
-                            <div style={{ fontSize: "10.5px", color: "#64748b", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
-                                {activeHotelName || "My Tara Hotel"} ({activeHotelCode})
-                            </div>
+                            <span className={styles.hotelName}>
+                                {activeHotelName || `Properti: ${activeHotelCode || "0"}`}
+                            </span>
                         </div>
-                    </div>
-                ) : (
-                    <div style={{ display: "flex", justifyContent: "center", padding: "4px 0" }}>
-                        <div style={{
-                            width: "34px",
-                            height: "34px",
-                            borderRadius: "6px",
-                            background: "#eff6ff",
-                            color: "#2563eb",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1px solid #bfdbfe",
-                            boxShadow: "0 1px 2px rgba(37, 99, 235, 0.08)"
-                        }}>
-                            <Globe size={18} />
+                    ) : (
+                        <div className={styles.headerCollapsed}>
+                            <Globe size={18} weight="bold" />
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
 
-            {/* Navigation Groups Container */}
-            <div ref={navGroupRef} className="nav-group" style={{ marginTop: "8px" }}>
-                {MENU_GROUPS.map((group, gIdx) => (
-                    <div key={gIdx} style={{ marginBottom: "14px" }}>
-                        {!isCollapsed && (
-                            <div style={{
-                                fontSize: "9.5px",
-                                fontWeight: 700,
-                                textTransform: "uppercase",
-                                letterSpacing: "0.06em",
-                                color: "#94a3b8",
-                                padding: "4px 10px 6px 10px"
-                            }}>
-                                {group.title}
-                            </div>
-                        )}
+                {/* Navigation Scroll Container */}
+                <nav className={styles.navGroup}>
+                    {/* Pilih Modul Switcher */}
+                    {!isCollapsed ? (
+                        <button
+                            className={styles.selectModuleBtn}
+                            onClick={handleBackToPms}
+                        >
+                            <SquaresFour size={16} weight="bold" />
+                            <span>Pilih Modul</span>
+                        </button>
+                    ) : (
+                        <button
+                            className={styles.selectModuleCollapsedBtn}
+                            onClick={handleBackToPms}
+                        >
+                            <SquaresFour size={16} weight="bold" />
+                        </button>
+                    )}
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                            {group.items.map(item => {
-                                const isActive = currentTab === item.id;
-                                const IconComponent = item.icon;
+                    {/* Navigation Items / Groups */}
+                    {!isCollapsed ? (
+                        /* Expanded View: Groups with accordion */
+                        MENU_GROUPS.map(group => {
+                            const isGroupActive = group.items.some(i => i.id === currentTab);
+                            const GroupIcon = group.icon;
+                            return (
+                                <div
+                                    key={group.title}
+                                    className={styles.groupWrapper}
+                                >
+                                    <button
+                                        onClick={() => toggleGroup(group.title)}
+                                        onMouseEnter={e => handleGroupMouseEnter(group, e, true)}
+                                        onMouseLeave={handleGroupMouseLeave}
+                                        className={styles.groupHeaderBtn}
+                                        aria-label={group.title}
+                                    >
+                                        <div className={styles.groupHeaderLeft}>
+                                            <GroupIcon size={16} weight={isGroupActive ? "bold" : "regular"} />
+                                            <span>{group.title}</span>
+                                            {isGroupActive && <span className={styles.groupHeaderActiveDot} />}
+                                        </div>
+                                        <CaretDown
+                                            size={13}
+                                            weight="bold"
+                                            color="#71717a"
+                                            style={{
+                                                transform: expandedGroups[group.title] ? "rotate(0deg)" : "rotate(-90deg)",
+                                                transition: "transform 0.18s ease"
+                                            }}
+                                        />
+                                    </button>
 
+                                    <AnimatePresence initial={false}>
+                                        {expandedGroups[group.title] && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: "auto", opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.16 }}
+                                                className={styles.groupItemsList}
+                                            >
+                                                {group.items.map(item => {
+                                                    const isActive = currentTab === item.id;
+                                                    const ItemIcon = item.icon;
+                                                    return (
+                                                        <button
+                                                            key={item.id}
+                                                            className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
+                                                            onClick={() => handleSelectTab(item.id)}
+                                                            aria-label={item.label}
+                                                        >
+                                                            <ItemIcon size={15} weight={isActive ? "bold" : "regular"} />
+                                                            <span className={styles.itemLabel}>{item.label}</span>
+                                                            {item.badge && (
+                                                                <span className={`${styles.itemBadge} ${isActive ? styles.badgeDark : styles.badgeLight}`}>
+                                                                    {item.badge}
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            );
+                        })
+                    ) : (
+                        /* Collapsed / Dock Mode: 6 Category Icons with Hover Flyout on the right */
+                        <div className={styles.dockColumn}>
+                            {MENU_GROUPS.map(group => {
+                                const isGroupActive = group.items.some(i => i.id === currentTab);
+                                const GroupIcon = group.icon;
+                                const isHovered = hoveredGroup?.title === group.title;
                                 return (
                                     <button
-                                        id={`cm-sidebar-item-${item.id}`}
-                                        key={item.id}
-                                        type="button"
-                                        onClick={() => handleSelectTab(item.id)}
-                                        className="nav-item"
-                                        style={{
-                                            backgroundColor: isActive ? "#eff6ff" : "transparent",
-                                            color: isActive ? "#1e40af" : "#475569",
-                                            fontWeight: isActive ? 600 : 500,
-                                            border: isActive ? "1px solid #bfdbfe" : "1px solid transparent",
-                                            borderLeft: isActive ? "3px solid #2563eb" : "1px solid transparent",
-                                            borderRadius: "6px",
-                                            boxShadow: isActive ? "0 1px 2px rgba(37, 99, 235, 0.06)" : "none",
-                                            position: "relative"
+                                        key={group.title}
+                                        className={`${styles.dockGroupBtn} ${isGroupActive ? styles.dockGroupBtnActive : ""}`}
+                                        onMouseEnter={e => handleGroupMouseEnter(group, e)}
+                                        onMouseLeave={handleGroupMouseLeave}
+                                        onClick={() => {
+                                            // Jump to first item in group if clicked directly
+                                            if (group.items[0]) handleSelectTab(group.items[0].id);
                                         }}
-                                        title={item.label}
+                                        aria-label={group.title}
                                     >
-                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: "20px" }}>
-                                            <IconComponent size={15} color={isActive ? "#2563eb" : "#64748b"} />
-                                        </div>
-
-                                        {!isCollapsed && (
-                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, minWidth: 0, gap: "6px" }}>
-                                                <span className="nav-label" style={{ fontSize: "12px", color: isActive ? "#1e40af" : "#334155" }}>
-                                                    {item.label}
-                                                </span>
-                                                {item.badge && (
-                                                    <span style={{
-                                                        fontSize: "9px",
-                                                        fontWeight: 700,
-                                                        padding: "1px 6px",
-                                                        borderRadius: "6px",
-                                                        background: isActive ? "#dbeafe" : "#f1f5f9",
-                                                        color: isActive ? "#1e40af" : (item.badgeColor || "#64748b"),
-                                                        border: isActive ? "1px solid #bfdbfe" : "1px solid #e2e8f0",
-                                                        flexShrink: 0
-                                                    }}>
-                                                        {item.badge}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
+                                        <GroupIcon size={18} weight={isGroupActive || isHovered ? "bold" : "regular"} />
+                                        {isGroupActive && <span className={styles.dockActiveDot} />}
                                     </button>
                                 );
                             })}
                         </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Footer: Sync Status + Notification Settings Bell */}
-            <div style={{
-                padding: isCollapsed ? "10px 0" : "10px 12px",
-                borderTop: "1px solid var(--sidebar-border, #e4e4e7)",
-                fontSize: "10px",
-                color: "#71717a",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: isCollapsed ? "center" : "space-between",
-                flexDirection: isCollapsed ? "column" : "row",
-                gap: "8px"
-            }}>
-                {!isCollapsed && (
-                    <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                        <CheckCircle2 size={12} style={{ color: "#2563eb" }} />
-                        <span>Direct 2-Way OTA Sync</span>
-                    </span>
-                )}
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    {!isCollapsed && (
-                        <span style={{ fontWeight: 700, color: "#27272a" }}>CRS v2.6</span>
                     )}
-                    {/* PWA Notification Settings Bell Button */}
-                    <button
-                        type="button"
-                        onClick={() => setIsNotifDrawerOpen(true)}
-                        title="Pengaturan Notifikasi Push HP / Browser"
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: "28px",
-                            height: "28px",
-                            borderRadius: "6px",
-                            background: "#ffffff",
-                            border: "1px solid #e4e4e7",
-                            color: "#52525b",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                            flexShrink: 0
-                        }}
-                    >
-                        <Bell size={13} />
-                    </button>
-                </div>
-            </div>
+                </nav>
 
-            {/* Notification Settings Slide-Over Drawer */}
+                {/* Sidebar Footer */}
+                <div className={styles.sidebarFooter}>
+                    {!isCollapsed ? (
+                        <>
+                            <div className={styles.syncIndicator}>
+                                <span className={styles.syncPulse} />
+                                <span>2-Way Live Sync</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsNotifDrawerOpen(true)}
+                                aria-label="Pengaturan Notifikasi Push Channel"
+                                className={styles.notifBtn}
+                            >
+                                <Bell size={15} weight="bold" />
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setIsNotifDrawerOpen(true)}
+                            aria-label="Pengaturan Notifikasi Push Channel"
+                            className={styles.notifBtn}
+                            style={{ margin: "0 auto" }}
+                        >
+                            <Bell size={17} weight="bold" />
+                        </button>
+                    )}
+                </div>
+            </motion.aside>
+
+            {/* Hover Flyout Submenu on the Right (Active in collapsed dock mode OR when a menu group is closed) */}
+            <AnimatePresence>
+                {hoveredGroup && (isCollapsed || !expandedGroups[hoveredGroup.title]) && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -4 }}
+                        transition={{ duration: 0.12 }}
+                        className={styles.flyoutCard}
+                        style={{
+                            left: isCollapsed ? "70px" : "230px",
+                            top: `${flyoutTop}px`
+                        }}
+                        onMouseEnter={handleFlyoutMouseEnter}
+                        onMouseLeave={handleFlyoutMouseLeave}
+                    >
+                        <div className={styles.flyoutHeader}>
+                            <span className={styles.flyoutTitle}>
+                                <hoveredGroup.icon size={15} weight="bold" />
+                                <span>{hoveredGroup.title}</span>
+                            </span>
+                            <span className={styles.flyoutCount}>
+                                {hoveredGroup.items.length} Modul
+                            </span>
+                        </div>
+
+                        {hoveredGroup.items.map(item => {
+                            const isActive = currentTab === item.id;
+                            const ItemIcon = item.icon;
+                            return (
+                                <button
+                                    key={item.id}
+                                    className={`${styles.flyoutItem} ${isActive ? styles.flyoutItemActive : ""}`}
+                                    onClick={() => handleSelectTab(item.id)}
+                                >
+                                    <div className={styles.flyoutItemLeft}>
+                                        <ItemIcon size={14} weight={isActive ? "bold" : "regular"} />
+                                        <span>{item.label}</span>
+                                    </div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                        {item.badge && (
+                                            <span className={`${styles.itemBadge} ${isActive ? styles.badgeDark : styles.badgeLight}`}>
+                                                {item.badge}
+                                            </span>
+                                        )}
+                                        {isActive && <Check size={12} weight="bold" />}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Notification Drawer */}
             <NotificationSettingsDrawer
                 isOpen={isNotifDrawerOpen}
                 onClose={() => setIsNotifDrawerOpen(false)}
@@ -399,6 +531,6 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                 userId={user?.uid || user?.email || "guest"}
                 userEmail={user?.email || undefined}
             />
-        </motion.aside>
+        </>
     );
 };

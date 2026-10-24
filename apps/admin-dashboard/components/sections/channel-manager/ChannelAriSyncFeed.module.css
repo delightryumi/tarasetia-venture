@@ -1,0 +1,26 @@
+/* ChannelAriSyncFeed.module.css
+   Container Orchestrator for Live ARI Feed
+   Midday & Linear Executive Minimalist Architecture
+*/
+
+.syncContainer {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.desktopOnly {
+  display: block;
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktopOnly {
+    display: none;
+  }
+  .mobileOnly {
+    display: block;
+  }
+}

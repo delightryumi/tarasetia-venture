@@ -1,0 +1,414 @@
+/* ChannelMappingMobileView.module.css — Mobile Card-Reflow Mapping Architecture */
+
+.mobileContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding-bottom: 72px; /* Extra padding for sticky bottom bar */
+}
+
+/* ── Launchpad Empty State (Mobile) ── */
+.launchpadMobileBanner {
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.launchpadMobileIconBox {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #09090b;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.launchpadMobileTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    margin: 0;
+}
+
+.launchpadMobileDesc {
+    font-size: 11.5px;
+    color: #52525b;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.launchpadMobileList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.launchpadMobileCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.launchpadMobileCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.launchpadMobileIdentity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.launchpadMobileName {
+    font-size: 13px;
+    font-weight: 700;
+    color: #09090b;
+}
+
+.launchpadMobileMeta {
+    font-size: 10.5px;
+    color: #71717a;
+}
+
+.btnMobileConnect {
+    height: 34px;
+    border-radius: 6px;
+    background: #09090b;
+    color: #ffffff;
+    border: 1px solid #09090b;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* ── Active Channel Top Selector (Swipeable Pills) ── */
+.channelSelectorBar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 4px 2px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.channelSelectorPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    color: #3f3f46;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.channelSelectorPillActive {
+    background: #09090b;
+    color: #ffffff;
+    border-color: #09090b;
+}
+
+.addPillBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    border: 1px dashed #a1a1aa;
+    background: transparent;
+    color: #09090b;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* ── Active Channel Mobile Card ── */
+.channelDetailCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.channelDetailHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e4e4e7;
+}
+
+.channelTitleIdentity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.channelTitleName {
+    font-size: 14px;
+    font-weight: 700;
+    color: #09090b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.channelTitleCode {
+    font-size: 10.5px;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+}
+
+.mobileToolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.mobileBtnAction {
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    color: #18181b;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.mobileBtnIcon {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    color: #71717a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.mobileBtnDangerIcon {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* ── Section Cards (Credentials, Rooms, Rates) ── */
+.mobileSectionCard {
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mobileSectionTitle {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #09090b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mobileFieldRow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mobileFieldLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #3f3f46;
+}
+
+.mobileInput {
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    font-size: 12px;
+    color: #09090b;
+    outline: none;
+    font-family: var(--font-geist-mono, monospace);
+}
+
+.mobileInput:focus {
+    border-color: #09090b;
+}
+
+.mobileSelect {
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #e4e4e7;
+    background: #ffffff;
+    font-size: 12px;
+    color: #09090b;
+    outline: none;
+}
+
+/* ── Mobile Mapping Item Card ── */
+.mobileMappingList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mobileMappingCard {
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mobileMappingHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mobileMappingName {
+    font-size: 12px;
+    font-weight: 700;
+    color: #09090b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobileMappingMeta {
+    font-size: 10px;
+    color: #71717a;
+    font-family: var(--font-geist-mono, monospace);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobileMappingControls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Sticky Bottom Save Bar ── */
+.stickyBottomBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 1px solid #e4e4e7;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    z-index: 50;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.stickyNotice {
+    font-size: 11px;
+    color: #71717a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stickySaveBtn {
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 8px;
+    background: #09090b;
+    color: #ffffff;
+    border: 1px solid #09090b;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Dark Mode Parity */
+:global(.dark) .launchpadMobileBanner,
+:global(.dark) .launchpadMobileCard,
+:global(.dark) .channelDetailCard,
+:global(.dark) .mobileSectionCard,
+:global(.dark) .mobileMappingCard,
+:global(.dark) .stickyBottomBar {
+    background: #18181b;
+    border-color: #27272a;
+}
+
+:global(.dark) .launchpadMobileTitle,
+:global(.dark) .launchpadMobileName,
+:global(.dark) .channelTitleName,
+:global(.dark) .mobileSectionTitle,
+:global(.dark) .mobileMappingName {
+    color: #f4f4f5;
+}
+
+:global(.dark) .channelSelectorPill,
+:global(.dark) .mobileBtnAction,
+:global(.dark) .mobileInput,
+:global(.dark) .mobileSelect {
+    background: #121215;
+    border-color: #27272a;
+    color: #f4f4f5;
+}

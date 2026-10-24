@@ -492,8 +492,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
         },
         collapsed: {
-            width: "100px",
-            transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] },
+            width: "var(--sidebar-collapsed-width, 64px)",
+            transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
         },
     };
 
