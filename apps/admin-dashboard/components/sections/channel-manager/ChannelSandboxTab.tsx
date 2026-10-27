@@ -344,7 +344,7 @@ export const ChannelSandboxTab: React.FC<ChannelSandboxTabProps> = ({
                     ...s,
                     status: "passed",
                     detail: data.message || "Payload ARI valid & diterima gateway.",
-                    taskIds: data.task_ids || (data.task_id ? [data.task_id] : [])
+                    taskIds: data.taskIds || data.task_ids || (data.task_id ? [data.task_id] : [])
                 } : s));
                 return true;
             } else {
