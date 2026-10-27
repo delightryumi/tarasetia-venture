@@ -1378,6 +1378,7 @@ export class ChannexSyncService {
         }>;
     }): Promise<{
         success: boolean;
+        skipped?: boolean;
         taskIds: string[];
         restrictionsTaskId?: string;
         availabilityTaskId?: string;
@@ -1396,7 +1397,13 @@ export class ChannexSyncService {
         const env = hotelData?.channelManager?.environment || hotelData?.channelManager?.env || (process.env.CHANNEX_ENV as any) || "staging";
 
         if (!channexPropertyId) {
-            throw new Error(`Hotel ${hotelCode} has no Channex Property ID configured.`);
+            return {
+                success: true,
+                skipped: true,
+                taskIds: [],
+                latencyMs: Date.now() - startTime,
+                message: `Pembaruan tersimpan di database internal CRS. Saluran OTA belum dikonfigurasi pada properti [${hotelCode}].`
+            };
         }
 
         // Fetch Room Types and Rate Plans to resolve channex IDs if needed
@@ -1607,7 +1614,13 @@ export class ChannexSyncService {
         const env = hotelData?.channelManager?.environment || hotelData?.channelManager?.env || (process.env.CHANNEX_ENV as any) || "staging";
 
         if (!channexPropertyId) {
-            throw new Error(`Hotel ${hotelCode} has no Channex Property ID configured.`);
+            return {
+                taskIds: [],
+                availabilityCount: 0,
+                restrictionsCount: 0,
+                latencyMs: Date.now() - startTime,
+                message: `Pembaruan tersimpan di database internal CRS. Saluran OTA belum dikonfigurasi pada properti [${hotelCode}].`
+            };
         }
 
         const startDate = new Date();

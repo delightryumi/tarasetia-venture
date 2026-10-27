@@ -17,6 +17,7 @@ import {
     ChevronRight
 } from "lucide-react";
 import { OtaLogo } from "./OtaLogo";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import type { ChannelMappingConfig } from "./ChannelManagerSection";
 import styles from "./ChannelCatalogTab.module.css";
 
@@ -247,7 +248,7 @@ export const ChannelCatalogTab: React.FC<ChannelCatalogTabProps> = ({
                     <div className={styles.statHeader}>
                         <span className={styles.statTitle}>Katalog Saluran Publik</span>
                         <div className={styles.statIconBox}>
-                            <Globe size={15} />
+                            <img src="/images/icons-3d/icon-3d-49.webp" alt="Katalog Global" className={styles.statIcon3d} />
                         </div>
                     </div>
                     <div className={styles.statValue}>
@@ -262,7 +263,7 @@ export const ChannelCatalogTab: React.FC<ChannelCatalogTabProps> = ({
                     <div className={styles.statHeader}>
                         <span className={styles.statTitle}>Saluran Terhubung</span>
                         <div className={styles.statIconBoxSuccess}>
-                            <Check size={16} strokeWidth={2.5} />
+                            <img src="/images/icons-3d/icon-3d-27.webp" alt="Saluran Terhubung" className={styles.statIcon3d} />
                         </div>
                     </div>
                     <div className={styles.statValueSuccess}>
@@ -277,7 +278,7 @@ export const ChannelCatalogTab: React.FC<ChannelCatalogTabProps> = ({
                     <div className={styles.statHeader}>
                         <span className={styles.statTitle}>Protokol Sinkronisasi</span>
                         <div className={styles.statIconBox}>
-                            <Radio size={15} />
+                            <img src="/images/icons-3d/icon-3d-45.webp" alt="Sync Live Feed" className={styles.statIcon3d} />
                         </div>
                     </div>
                     <div className={styles.statValue}>
@@ -292,7 +293,7 @@ export const ChannelCatalogTab: React.FC<ChannelCatalogTabProps> = ({
                     <div className={styles.statHeader}>
                         <span className={styles.statTitle}>Cluster Saluran</span>
                         <div className={styles.statIconBox}>
-                            <Sparkles size={15} />
+                            <img src="/images/icons-3d/icon-3d-20.webp" alt="Cluster Saluran" className={styles.statIcon3d} />
                         </div>
                     </div>
                     <div className={styles.statValue}>
@@ -384,38 +385,17 @@ export const ChannelCatalogTab: React.FC<ChannelCatalogTabProps> = ({
                 </div>
 
                 {filteredCatalog.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        <div className={styles.emptyIconBox}>
-                            <Globe size={22} />
-                        </div>
-                        <div>
-                            <h4 className={styles.emptyTitle}>Tidak ada saluran ditemukan</h4>
-                            <p className={styles.emptyDesc}>
-                                Tidak ada saluran OTA yang cocok dengan kata kunci &quot;{searchQuery}&quot; atau filter yang dipilih.
-                            </p>
-                        </div>
-                        <div className={styles.emptyActions}>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setSearchQuery("");
-                                    setCategoryFilter("all");
-                                }}
-                                className={styles.btnConnect}
-                            >
-                                Reset Filter
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleGoToTravelAgents}
-                                className={styles.categoryPillActive}
-                                style={{ padding: "6px 14px", borderRadius: "6px", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", border: "none" }}
-                            >
-                                <Users size={12} />
-                                <span>Buka Travel Agent Offline / B2B</span>
-                            </button>
-                        </div>
-                    </div>
+                    <EmptyStateExecutive
+                        illustrationSrc="/images/illustrations-3d/3d-biz-08.webp"
+                        illustrationAlt="Saluran OTA Tidak Ditemukan"
+                        title="Saluran OTA Tidak Ditemukan"
+                        description={searchQuery ? `Tidak ada saluran distribusi atau OTA yang cocok dengan kata kunci "${searchQuery}".` : "Tidak ada saluran distribusi yang sesuai dengan kategori filter yang dipilih."}
+                        actionLabel="Reset Parameter Pencarian"
+                        onAction={() => {
+                            setSearchQuery("");
+                            setCategoryFilter("all");
+                        }}
+                    />
                 ) : viewMode === "table" ? (
                     <div className={styles.tableWrapper}>
                         <table className={styles.table}>

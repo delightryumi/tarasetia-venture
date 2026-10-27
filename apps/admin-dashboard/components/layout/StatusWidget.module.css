@@ -212,6 +212,36 @@
   text-overflow: ellipsis;
 }
 
+.livePulseDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  position: relative;
+  flex-shrink: 0;
+  margin-right: 3px;
+}
+
+.livePulseDot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background-color: rgba(16, 185, 129, 0.45);
+  animation: pulseBreathe 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseBreathe {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
 :global(.dark) .hotelPillStatic {
   background-color: #141a24;
   border-color: rgba(255, 255, 255, 0.09);

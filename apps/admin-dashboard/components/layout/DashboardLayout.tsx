@@ -44,9 +44,9 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     const { poweredByText, poweredByLink } = useFooter();
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Auto-collapse sidebar on Rate & Inventory for full-screen view
+    // Auto-collapse sidebar on Rate & Inventory and Channel Manager for full-screen view
     React.useEffect(() => {
-        if (pathname && pathname.startsWith("/rate-inventory")) {
+        if (pathname && (pathname.startsWith("/rate-inventory") || pathname.startsWith("/channel-manager"))) {
             setIsCollapsed(true);
         }
     }, [pathname]);

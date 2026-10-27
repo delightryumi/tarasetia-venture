@@ -15,6 +15,7 @@ import {
     Globe
 } from "lucide-react";
 import { ChannelActionLogsViewProps } from "./ChannelActionLogsDesktopView";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import styles from "./ChannelActionLogsMobileView.module.css";
 import desktopStyles from "./ChannelActionLogsDesktopView.module.css";
 
@@ -133,10 +134,19 @@ export const ChannelActionLogsMobileView: React.FC<ChannelActionLogsViewProps> =
             {/* 4. Log Cards List Mobile */}
             <div className={styles.logListMobile}>
                 {paginatedLogs.length === 0 ? (
-                    <div className={styles.logCardMobile}>
-                        <span className={desktopStyles.tableEmptyCell}>
-                            {loading ? "Memuat riwayat log event..." : "Tidak ada log event."}
-                        </span>
+                    <div className={styles.logCardMobile} style={{ padding: 0, overflow: "hidden" }}>
+                        <EmptyStateExecutive
+                            illustrationSrc="/images/illustrations-3d/3d-biz-05.webp"
+                            illustrationAlt="Semua Saluran Normal"
+                            title="Semua Jalur Distribusi Normal"
+                            description={loading ? "Sedang memverifikasi riwayat aktivitas distribusi..." : "Belum ada rekaman transmisi atau webhook bermasalah pada filter saat ini."}
+                            compact
+                            actionLabel={resultFilter !== "all" ? "Reset Filter" : undefined}
+                            onAction={resultFilter !== "all" ? () => {
+                                setResultFilter("all");
+                                setPage(1);
+                            } : undefined}
+                        />
                     </div>
                 ) : (
                     paginatedLogs.map(item => {

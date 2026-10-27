@@ -15,6 +15,7 @@ import { useBookings } from "./useBookings";
 import { BookingCard } from "./components/BookingCard";
 import { BookingTable } from "./components/BookingTable";
 import { BookingDetailModal } from "./components/BookingDetailModal";
+import { BookingStats } from "./components/BookingStats";
 import { BookingStatusFilter, ViewMode, BookingRecord } from "./types";
 import s from "./BookingsSection.module.css";
 
@@ -112,6 +113,9 @@ export function BookingsSection() {
                     </p>
                 </div>
             </div>
+
+            {/* Tactile 3D Clay Stat Cards */}
+            <BookingStats stats={stats} />
 
             {/* Claymorphic Filter Panel */}
             <div className={s.filterPanel}>
@@ -270,8 +274,12 @@ export function BookingsSection() {
                 </div>
             ) : bookings.length === 0 ? (
                 <div className={s.emptyState}>
-                    <div className={s.emptyIcon}>
-                        <CalendarCheck size={32} weight="bold" />
+                    <div className={s.emptyIllustrationBox}>
+                        <img 
+                            src="/images/illustrations-3d/3d-biz-45.webp" 
+                            alt="No bookings found" 
+                            className={s.empty3dIllustration} 
+                        />
                     </div>
                     <div className={s.emptyTitle}>No bookings found</div>
                     <div className={s.emptyDesc}>

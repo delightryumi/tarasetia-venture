@@ -1248,21 +1248,27 @@ export function OverviewSection() {
 
                     <section className={styles.statGrid}>
                         <StatCard 
-                            accent="#059669" icon={<LogIn size={18} />} 
+                            accent="#059669" 
+                            icon={<LogIn size={18} />} 
+                            icon3d="/images/icons-3d/icon-3d-28.webp"
                             label={isTodayActive ? "Check In Today" : (isTomorrowActive ? "Check In Tomorrow" : `Check In (${startDate} to ${endDate})`)} 
                             count={dash || checkInCount} items={todayCheckIns}
                             onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
                             onStatusUpdate={handleStatusUpdate}
                         />
                         <StatCard 
-                            accent="#d97706" icon={<Calendar size={18} />} 
+                            accent="#d97706" 
+                            icon={<Calendar size={18} />} 
+                            icon3d="/images/icons-3d/icon-3d-30.webp"
                             label={isTodayActive ? "Check Out Today" : (isTomorrowActive ? "Check Out Tomorrow" : `Check Out (${startDate} to ${endDate})`)} 
                             count={dash || checkOutCount} items={todayCheckOuts}
                             onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}
                             onStatusUpdate={handleStatusUpdate}
                         />
                         <StatCard 
-                            accent="#dc2626" icon={<XCircle size={18} />} 
+                            accent="#dc2626" 
+                            icon={<XCircle size={18} />} 
+                            icon3d="/images/icons-3d/icon-3d-46.webp"
                             label={isTodayActive ? "Cancellations Today" : (isTomorrowActive ? "Cancellations Tomorrow" : `Cancellations (${startDate} to ${endDate})`)} 
                             count={dash || cancelCount} items={todayCanceled}
                             onItemClick={(b: any) => { setSelectedGuest(b); setIsEditing(false); }}

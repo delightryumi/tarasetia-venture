@@ -117,7 +117,11 @@ export const ChannelSandboxDesktopView: React.FC<ChannelSandboxViewProps> = ({
             <div className={styles.readinessBar}>
                 <div className={styles.readinessLeft}>
                     <div className={styles.readinessTitleRow}>
-                        <ShieldCheck size={16} color="#059669" />
+                        <img 
+                            src="/images/icons-3d/icon-3d-16.webp" 
+                            alt="Security Gateway" 
+                            style={{ width: 24, height: 24, objectFit: 'contain' }} 
+                        />
                         <h2 className={styles.readinessTitle}>Channex PMS Certification Suite</h2>
                         <span
                             className={`${styles.envBadge} ${

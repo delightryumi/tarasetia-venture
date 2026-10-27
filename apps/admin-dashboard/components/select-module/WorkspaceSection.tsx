@@ -65,7 +65,12 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({
             <ModuleBentoGrid menus={filteredMenus} />
           ) : (
             <div className={styles.emptyState}>
-              Modul tidak ditemukan untuk kata kunci "{searchQuery}"
+              <img
+                src="/images/illustrations-3d/3d-biz-24.webp"
+                alt="Modul tidak ditemukan"
+                className={styles.emptyStateImage}
+              />
+              <span>Modul tidak ditemukan untuk kata kunci "{searchQuery}"</span>
             </div>
           )}
         </div>

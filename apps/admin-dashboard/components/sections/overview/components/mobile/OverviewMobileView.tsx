@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import s from "./OverviewMobileView.module.css";
 import { resolveBookingIdentifiers } from "@/lib/channelHelper";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 
 interface OverviewMobileViewProps {
     hotelName?: string;
@@ -240,10 +241,14 @@ export function OverviewMobileView({
             {/* ── 4. 3D Guest / Transaction Cards List ── */}
             <div className={s.guestCardsList}>
                 {displayedBookings.length === 0 ? (
-                    <div className={s.emptyStateCard}>
-                        <BedDouble size={32} style={{ color: "#94a3b8" }} />
-                        <h4 className={s.emptyTitle}>No reservations found</h4>
-                        <p className={s.emptySub}>There are no guest movements for this filter.</p>
+                    <div className={s.emptyStateCard} style={{ padding: 0, overflow: "hidden" }}>
+                        <EmptyStateExecutive
+                            illustrationSrc="/images/illustrations-3d/3d-biz-04.webp"
+                            illustrationAlt="Data Reservasi Belum Ditemukan"
+                            title="Data Reservasi Belum Ditemukan"
+                            description="Belum ada pergerakan tamu yang tercatat untuk parameter filter saat ini."
+                            compact
+                        />
                     </div>
                 ) : (
                     displayedBookings.map((b, idx) => {
@@ -258,7 +263,7 @@ export function OverviewMobileView({
 
                         return (
                             <div 
-                                key={b.id || b.bookingId || idx}
+                                key={`${b.id || b.bookingId || "res"}-${b.roomNumber || ""}-${idx}`}
                                 onClick={() => onSelectBooking(b)}
                                 className={s.guestCard3D}
                             >

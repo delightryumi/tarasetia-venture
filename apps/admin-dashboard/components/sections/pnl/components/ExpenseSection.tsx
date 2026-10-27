@@ -996,7 +996,11 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                   <tr>
                     <td colSpan={9} className={s.emptyStateWrapper}>
                       <div className={s.emptyStateContent}>
-                        <AlertCircle size={24} style={{ color: "#94a3b8" }} />
+                        <img 
+                          src="/images/icons-3d/icon-3d-02.webp" 
+                          alt="No expense ledger records" 
+                          className={s.emptyStateIllustration} 
+                        />
                         <span style={{ fontWeight: 600, color: "var(--oe-text-muted)" }}>
                           No expense ledger records found
                         </span>

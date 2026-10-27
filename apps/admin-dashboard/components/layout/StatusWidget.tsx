@@ -118,6 +118,7 @@ export const StatusWidget = ({
                             className={`${styles.hotelPillBtn} ${isHotelDropdownOpen ? styles.hotelPillBtnActive : ''}`}
                             title="Ganti Properti / Hotel Aktif"
                         >
+                            <span className={styles.livePulseDot} />
                             <span className={styles.hotelPillText}>
                                 {activeHotelCode === '0' || !activeHotelCode
                                     ? 'Superadmin (Tanpa Preview)'
@@ -179,6 +180,7 @@ export const StatusWidget = ({
                 ) : (
                     activeHotelCode && (
                         <div className={styles.hotelPillStatic}>
+                            <span className={styles.livePulseDot} />
                             <span className={styles.hotelPillText}>
                                 [{activeHotelCode || "0"}] {activeHotelName || 'Memuat...'}
                             </span>

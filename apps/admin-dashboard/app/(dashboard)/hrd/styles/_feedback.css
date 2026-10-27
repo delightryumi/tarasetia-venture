@@ -7,7 +7,27 @@
 }
 
 .emptyStateIcon { font-size: 36px; margin-bottom: 12px; }
-.emptyStateText { font-size: 14px; }
+.emptyStateText { 
+  font-size: 13.5px; 
+  color: var(--s-muted);
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.emptyStateIllustrationWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.emptyStateIllustration {
+  width: 105px;
+  height: 105px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.08));
+}
 
 /* Loading */
 .loading {

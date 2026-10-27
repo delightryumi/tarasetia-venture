@@ -972,7 +972,7 @@ export const useRateInventory = () => {
 
             await batch.commit();
             setStagedUpdates({});
-            toast.success(`Successfully saved ${unsavedCount} change(s) to database. Syncing delta to Channex...`);
+            toast.success(`Berhasil menyimpan ${unsavedCount} perubahan ke database.`);
 
             // Record audit trail log to Firestore for any user making changes
             try {
@@ -1564,7 +1564,7 @@ export const useRateInventory = () => {
 
             setBulkModalOpen(false);
             if (deltaRates.length > 0 || deltaAvail.length > 0) {
-                toast.success(`Batched update applied to ${affectedDateList.length} date(s). Executing 1 batched API call to Channex...`);
+                toast.success(`Pembaruan massal diterapkan untuk ${affectedDateList.length} tanggal. Menyinkronkan ke saluran penjualan...`);
                 await syncDeltaToChannex({ rates: deltaRates, availability: deltaAvail });
             } else {
                 toast.success(`Bulk Update applied to ${affectedDateList.length} date(s).`);
@@ -1662,13 +1662,17 @@ export const useRateInventory = () => {
                 const taskMsg = data.taskIds && data.taskIds.length > 0
                     ? ` (Task ID: ${data.taskIds.join(", ")})`
                     : "";
-                toast.success(`Delta sync to Channex successful!${taskMsg}`);
+                if (data.skipped) {
+                    toast.info(data.message || "Pembaruan tersimpan di sistem.");
+                } else {
+                    toast.success(`Sinkronisasi saluran penjualan berhasil!${taskMsg}`);
+                }
             } else {
-                toast.error(data.message || "Delta sync to Channex failed.");
+                toast.error(data.message || data.error || "Gagal menyinkronkan pembaruan ke saluran penjualan.");
             }
         } catch (err: any) {
-            console.error("Channex delta sync error:", err);
-            toast.error("Failed to connect to Channex API for delta sync.");
+            console.error("Delta sync error:", err);
+            toast.error("Gagal terhubung ke gateway saluran penjualan.");
         } finally {
             setSyncingAri(false);
         }
@@ -1705,13 +1709,17 @@ export const useRateInventory = () => {
                 const taskMsg = data.taskIds && data.taskIds.length > 0
                     ? ` (Task IDs: ${data.taskIds.join(", ")})`
                     : "";
-                toast.success(roomTypeId ? `Room inventory successfully synced to OTAs.${taskMsg}` : `Full 500-day ARI successfully synced to Channex!${taskMsg}`);
+                if (data.skipped) {
+                    toast.info(data.message || "Pembaruan tersimpan di sistem.");
+                } else {
+                    toast.success(roomTypeId ? `Ketersediaan kamar berhasil disinkronkan ke seluruh OTA.${taskMsg}` : `Sinkronisasi penuh ARI berhasil dikirim ke saluran penjualan!${taskMsg}`);
+                }
             } else {
-                toast.error(data.message || "Failed to sync to Channex.");
+                toast.error(data.message || data.error || "Gagal menyinkronkan ke saluran penjualan.");
             }
         } catch (err: any) {
-            console.error("Channex sync error:", err);
-            toast.error("Failed to connect to Channex API.");
+            console.error("Channel Manager sync error:", err);
+            toast.error("Gagal terhubung ke gateway saluran penjualan.");
         } finally {
             setSyncingAri(false);
             setSyncingRoomTypeId(null);

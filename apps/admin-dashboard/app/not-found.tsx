@@ -106,12 +106,26 @@ export default function NotFound() {
           </div>
         </div>
 
+        {/* 3D Mascot Character holding 404 tablet */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
+          className="relative -my-4 flex items-center justify-center"
+        >
+          <img
+            src="/images/illustrations-3d/3d-biz-35.webp"
+            alt="404 Illustration"
+            className="w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.15)]"
+          />
+        </motion.div>
+
         {/* Back to Home Button - Fully inline-styled to prevent any global css color inheritance */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.4 }}
-          className="w-full flex justify-center pt-4"
+          className="w-full flex justify-center pt-2"
         >
           <Link
             href="/select-module"

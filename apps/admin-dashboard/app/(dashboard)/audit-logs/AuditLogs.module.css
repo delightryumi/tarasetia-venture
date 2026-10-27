@@ -723,6 +723,14 @@
   color: #cbd5e1;
 }
 
+.stateIllustration3d {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.08));
+}
+
 :global(.dark) .stateIcon {
   color: #404040;
 }

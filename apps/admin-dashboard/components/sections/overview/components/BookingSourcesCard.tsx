@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { resolveChannelName, getChannelLogo } from "@/lib/channelHelper";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import styles from "./BookingSourcesCard.module.css";
 
 interface BookingEntry {
@@ -220,7 +221,13 @@ export function BookingSourcesCard({
         <div className={styles.sourcesList}>
           {channelStats.length === 0 ? (
             <div className={styles.emptyState}>
-              No booking records in selected period.
+              <EmptyStateExecutive
+                illustrationSrc="/images/illustrations-3d/3d-biz-12.webp"
+                illustrationAlt="Belum Ada Data Saluran"
+                title="Belum Ada Data Saluran"
+                description="Belum ada transaksi reservasi yang tercatat pada periode ini."
+                compact
+              />
             </div>
           ) : (
             channelStats.map((item, idx) => {

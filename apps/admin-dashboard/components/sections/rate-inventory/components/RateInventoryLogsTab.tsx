@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import styles from "./RateInventoryLogsTab.module.css";
 
 export interface RateInventoryTaskLog {
@@ -177,9 +178,9 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                     ...data.task,
                     is_live_synced: true
                 }) : null);
-                toast.success("Live task data synced from Channex API");
+                toast.success("Data status tugas berhasil disinkronkan dari Channel Manager");
             } else {
-                toast.error(data.error || "Could not retrieve live task from Channex");
+                toast.error(data.error || "Gagal mengambil status tugas dari Channel Manager");
             }
         } catch (err: any) {
             toast.error(`Sync error: ${err.message}`);
@@ -582,7 +583,19 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                         {paginatedLogs.length === 0 && (
                             <tr>
                                 <td colSpan={7} className={styles.emptyCell}>
-                                    {loading ? "Memuat riwayat perubahan inventori..." : "Tidak ada log perubahan yang cocok dengan filter."}
+                                    <EmptyStateExecutive
+                                        illustrationSrc="/images/illustrations-3d/3d-biz-10.webp"
+                                        illustrationAlt="Inventori dan Tarif Terkelola Rapi"
+                                        title="Inventori dan Tarif Terkelola Rapi"
+                                        description={loading ? "Sedang memuat data sinkronisasi inventori..." : "Belum ada catatan pembaruan inventori atau perubahan tarif kamar pada parameter filter saat ini."}
+                                        actionLabel={searchQuery || actionFilter !== "all" || resultFilter !== "all" ? "Reset Parameter Filter" : undefined}
+                                        onAction={searchQuery || actionFilter !== "all" || resultFilter !== "all" ? () => {
+                                            setSearchQuery("");
+                                            setActionFilter("all");
+                                            setResultFilter("all");
+                                            setPage(1);
+                                        } : undefined}
+                                    />
                                 </td>
                             </tr>
                         )}
@@ -659,7 +672,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                     onClick={() => handleFetchLiveTask(selectedEvent.task_id || selectedEvent.id)}
                                     disabled={fetchingLiveTask}
                                     className={styles.liveSyncBtn}
-                                    title="Sinkronisasi status live dari server Channex"
+                                    title="Sinkronisasi status live dari server Channel Manager"
                                 >
                                     <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
                                     <span>{fetchingLiveTask ? "Syncing..." : "Sync Live Status"}</span>
@@ -690,7 +703,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                         </span>
                                         {selectedEvent.is_live_synced && (
                                             <span className={styles.badgeLivePill}>
-                                                ✓ Channex API Live
+                                                ✓ Channel Manager Live
                                             </span>
                                         )}
                                     </span>
@@ -783,7 +796,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                     className={`${styles.detailTabBtn} ${activeDetailTab === "response" ? styles.detailTabBtnActive : ""}`}
                                 >
                                     <Layers size={13} />
-                                    <span>Channex Response</span>
+                                    <span>Gateway Response</span>
                                 </button>
                             </div>
 
@@ -855,7 +868,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                         <div className={styles.emptyOtaNotice}>
                                             <p className={styles.emptyOtaTitle}>Tidak Ada Respons OTA Langsung</p>
                                             <p className={styles.emptyOtaSubtext}>
-                                                Tugas ini disimpan langsung di pangkalan data internal CRS dan/atau disinkronkan langsung via delta ARI Channex.
+                                                Tugas ini disimpan langsung di pangkalan data internal CRS dan/atau disinkronkan langsung via delta ARI Channel Manager.
                                             </p>
                                             {!selectedEvent.is_live_synced && (selectedEvent.task_id || selectedEvent.id) && (
                                                 <button
@@ -865,7 +878,7 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                                     className={`${styles.liveSyncBtn} ${styles.liveSyncBtnSpaced}`}
                                                 >
                                                     <RefreshCw size={12} className={fetchingLiveTask ? "animate-spin" : ""} />
-                                                    <span>Tarik Respons Live OTA dari Channex</span>
+                                                    <span>Tarik Respons Live OTA dari Channel Manager</span>
                                                 </button>
                                             )}
                                         </div>
@@ -873,21 +886,21 @@ export function RateInventoryLogsTab({ hotelCode }: Props) {
                                 </div>
                             )}
 
-                            {/* Tab 4: Channex API Response */}
+                            {/* Tab 4: Gateway API Response */}
                             {activeDetailTab === "response" && (
                                 <div>
                                     <div className={styles.codeBoxHeader}>
-                                        <span>Channex API Response (JSON)</span>
+                                        <span>Gateway API Response (JSON)</span>
                                         <button
                                             type="button"
                                             onClick={() => handleCopy(
                                                 JSON.stringify(selectedEvent.response || selectedEvent.details || { status: selectedEvent.status, result: selectedEvent.result }, null, 2),
-                                                "Channex Response"
+                                                "Gateway Response"
                                             )}
                                             className={styles.copyCodeBtn}
                                         >
-                                            {copiedField === "Channex Response" ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
-                                            <span>{copiedField === "Channex Response" ? "Tersalin" : "Copy Response"}</span>
+                                            {copiedField === "Gateway Response" ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                                            <span>{copiedField === "Gateway Response" ? "Tersalin" : "Copy Response"}</span>
                                         </button>
                                     </div>
                                     <pre className={styles.jsonPre}>

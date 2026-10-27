@@ -13,6 +13,7 @@ import {
     RotateCcw
 } from "lucide-react";
 import { resolveBookingIdentifiers, resolveChannelName, getChannelLogo } from "@/lib/channelHelper";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import styles from "./AuditLedger.module.css";
 import { toast } from "sonner";
 
@@ -369,7 +370,18 @@ export function AuditLedger({
                         {filteredBookings.length === 0 ? (
                             <tr>
                                 <td colSpan={9} className={styles.emptyState}>
-                                    No transaction records found matching the active filter criteria.
+                                    <EmptyStateExecutive
+                                        illustrationSrc="/images/illustrations-3d/3d-biz-04.webp"
+                                        illustrationAlt="Data Transaksi Reservasi"
+                                        title="Data Transaksi Belum Ditemukan"
+                                        description={searchQuery || statusFilter !== "all" || channelFilter !== "all" ? "Tidak ada rekaman transaksi tamu yang cocok dengan parameter filter saat ini." : "Belum ada transaksi reservasi yang tercatat untuk periode ini."}
+                                        actionLabel={searchQuery || statusFilter !== "all" || channelFilter !== "all" ? "Reset Parameter Filter" : undefined}
+                                        onAction={searchQuery || statusFilter !== "all" || channelFilter !== "all" ? () => {
+                                            setSearchQuery("");
+                                            setStatusFilter("all");
+                                            setChannelFilter("all");
+                                        } : undefined}
+                                    />
                                 </td>
                             </tr>
                         ) : (
@@ -395,7 +407,7 @@ export function AuditLedger({
 
                                 return (
                                     <tr 
-                                        key={idx}
+                                        key={`${booking.id || booking.bookingId || "res"}-${idx}`}
                                         className={`${styles.tableRow} ${isCancelled ? styles.tableRowCancelled : ""}`}
                                     >
                                         <td className={`${styles.tableCell} ${styles.colStatus}`}>

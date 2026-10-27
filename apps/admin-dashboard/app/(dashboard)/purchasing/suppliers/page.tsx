@@ -111,7 +111,11 @@ export default function SuppliersPage() {
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={5}>
                   <div className={s.empty}>
-                    <Users size={40} className={s.emptyIcon} />
+                    <img 
+                      src="/images/icons-3d/icon-3d-27.webp" 
+                      alt="Supplier tidak ditemukan" 
+                      className={s.emptyIllustration3d} 
+                    />
                     <p className={s.emptyTitle}>Supplier tidak ditemukan</p>
                     <p className={s.emptyBody}>Tambah supplier pertama Anda ke direktori vendor.</p>
                   </div>

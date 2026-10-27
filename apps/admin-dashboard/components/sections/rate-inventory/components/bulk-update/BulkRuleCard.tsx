@@ -28,12 +28,12 @@ interface BulkRuleCardProps {
 
 const ALL_METRICS: Array<{ id: BulkUpdateMetricType; label: string; short: string }> = [
     { id: "rate", label: "Harga (Rate)", short: "Rate" },
-    { id: "stopsell", label: "Stop Sell (stop_sell)", short: "Stop Sell" },
-    { id: "cta", label: "COA (closed_to_arrival)", short: "COA" },
-    { id: "ctd", label: "COD (closed_to_departure)", short: "COD" },
+    { id: "stopsell", label: "Stop Sell", short: "Stop Sell" },
+    { id: "cta", label: "Closed to Arrival (CTA)", short: "CTA" },
+    { id: "ctd", label: "Closed to Departure (CTD)", short: "CTD" },
     { id: "minstay_through", label: "Min Stay Through", short: "Min Stay Thru" },
     { id: "minstay_arrival", label: "Min Stay Arrival", short: "Min Stay Arr" },
-    { id: "maxstay", label: "Max Stay (max_stay)", short: "Max Stay" },
+    { id: "maxstay", label: "Max Stay", short: "Max Stay" },
     { id: "inventory", label: "Inventory (Allotment)", short: "Inventory" }
 ];
 

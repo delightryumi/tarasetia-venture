@@ -1,0 +1,174 @@
+.emptyContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  min-height: 260px;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  background-color: transparent;
+  user-select: none;
+}
+
+.emptyContainerCompact {
+  padding: 24px 16px;
+  min-height: 180px;
+}
+
+/* ── Executive Ambient Pedestal Aura (No Wireframe Lines) ── */
+.pedestalAura {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.09) 0%, rgba(241, 245, 249, 0.5) 45%, transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(14px);
+  transform: translateY(-4px);
+}
+
+:global(.dark) .pedestalAura {
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.16) 0%, rgba(30, 41, 59, 0.5) 45%, transparent 72%);
+}
+
+.pedestalShadow {
+  position: absolute;
+  bottom: 2px;
+  width: 84px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.09) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+:global(.dark) .pedestalShadow {
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.35) 0%, transparent 70%);
+}
+
+/* ── Content Wrapper ── */
+.contentWrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 440px;
+}
+
+.illustrationWrap {
+  position: relative;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.illustrationImg {
+  position: relative;
+  z-index: 1;
+  width: 124px;
+  height: 124px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 22px rgba(15, 23, 42, 0.08));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.emptyContainer:hover .illustrationImg {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.illustrationImgCompact {
+  width: 88px;
+  height: 88px;
+}
+
+.emptyTitle {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px 0;
+}
+
+:global(.dark) .emptyTitle {
+  color: #f8fafc;
+}
+
+.emptyDescription {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 380px;
+}
+
+:global(.dark) .emptyDescription {
+  color: #94a3b8;
+}
+
+.actionButton {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.actionButton:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+:global(.dark) .actionButton {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+:global(.dark) .actionButton:hover {
+  background-color: #334155;
+  border-color: #475569;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .emptyContainer {
+    padding: 30px 16px;
+    min-height: 220px;
+  }
+
+  .illustrationImg {
+    width: 100px;
+    height: 100px;
+  }
+
+  .emptyTitle {
+    font-size: 14px;
+  }
+
+  .emptyDescription {
+    font-size: 12px;
+  }
+}

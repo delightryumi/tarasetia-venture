@@ -1058,6 +1058,14 @@
   color: var(--oe-text-subtle);
 }
 
+.emptyStateIllustration {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.08));
+}
+
 .loadingSpinner {
   width: 14px;
   height: 14px;

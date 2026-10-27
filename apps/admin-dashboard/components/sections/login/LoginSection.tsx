@@ -19,7 +19,8 @@ import {
     Check,
     Copy,
     Download,
-    Key
+    Key,
+    AlertCircle
 } from "lucide-react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -85,6 +86,7 @@ export const LoginSection = () => {
     };
 
     const [showPassword, setShowPassword] = useState(false);
+    const [isCapsLockOn, setIsCapsLockOn] = useState(false);
     const [mode, setMode] = useState<'login' | 'reset-password'>('login');
     const [resetEmail, setResetEmail] = useState("");
     const [resetError, setResetError] = useState("");
@@ -504,6 +506,9 @@ export const LoginSection = () => {
                     ) : mode === 'login' ? (
                         <>
                             <div className={styles.cardHeader}>
+                                <div className={styles.logoWrapper}>
+                                    <img src="/channels/1.png" alt="Tara" className={styles.cardHeaderLogo} />
+                                </div>
                                 <h1 className={styles.cardTitle}>
                                     {language === 'EN' ? "Sign In" : "Masuk"}
                                 </h1>
@@ -600,6 +605,9 @@ export const LoginSection = () => {
                                             placeholder={language === 'EN' ? "Enter your password" : "Masukkan password"}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
+                                            onKeyDown={(e) => setIsCapsLockOn(e.getModifierState("CapsLock"))}
+                                            onKeyUp={(e) => setIsCapsLockOn(e.getModifierState("CapsLock"))}
+                                            onBlur={() => setIsCapsLockOn(false)}
                                             required
                                             disabled={loading}
                                             autoComplete="current-password"
@@ -614,10 +622,16 @@ export const LoginSection = () => {
                                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
                                     </div>
+                                    {isCapsLockOn && (
+                                        <div className={styles.capsLockWarning}>
+                                            <AlertCircle size={12} />
+                                            <span>{language === 'EN' ? "Caps Lock is on" : "Caps Lock aktif"}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Cloudflare Turnstile Security Verification */}
-                                <div className="w-full flex flex-col items-center justify-center my-1.5">
+                                <div className="w-full flex flex-col items-center justify-center my-1">
                                     <CloudflareTurnstile 
                                         onVerify={handleTurnstileVerify}
                                         onExpire={handleTurnstileExpire}
@@ -667,6 +681,9 @@ export const LoginSection = () => {
                         /* Reset Password Flow */
                         <>
                             <div className={styles.cardHeader}>
+                                <div className={styles.logoWrapper}>
+                                    <img src="/channels/1.png" alt="Tara" className={styles.cardHeaderLogo} />
+                                </div>
                                 <h1 className={styles.cardTitle}>
                                     {language === 'EN' ? "Reset Password" : "Atur Ulang Sandi"}
                                 </h1>
@@ -744,6 +761,26 @@ export const LoginSection = () => {
                     <img src="/channels/1.png" alt="Tara" className={styles.footerLogo} />
                 </footer>
             </main>
+
+            {/* ========================================================
+               CINEMATIC DUAL-HORIZON SUNRISE GLOW (CAHAYA FAJAR TEMANGGUNG)
+               Warm golden-orange dawn ambiance wrapping both left & right horizons
+               ======================================================== */}
+            <div className={styles.sunriseContainer} aria-hidden="true">
+                <div className={`${styles.sunriseAura} ${styles.sunriseAuraLeft}`} />
+                <div className={`${styles.sunriseAura} ${styles.sunriseAuraRight}`} />
+                <div className={styles.sunbeamRays} />
+            </div>
+
+            {/* ========================================================
+               CINEMATIC HIGHLAND MIST DRIFT (KABUT PEGUNUNGAN TEMANGGUNG)
+               Gentle, organic ethereal mist flowing across the ridges & mid-sky
+               ======================================================== */}
+            <div className={styles.mistContainer} aria-hidden="true">
+                <div className={`${styles.mistLayer} ${styles.mistLayerBack}`} />
+                <div className={`${styles.mistLayer} ${styles.mistLayerMid}`} />
+                <div className={`${styles.mistLayer} ${styles.mistLayerFront}`} />
+            </div>
 
             {/* ========================================================
                NATURE MOUNTAIN ESCAPE SILHOUETTE ACCENT (SVG)
@@ -827,6 +864,13 @@ export const LoginSection = () => {
                             </button>
                         </div>
                         <div className={styles.modalBody}>
+                            <div className={styles.modalHeroIllustration}>
+                                <img 
+                                    src="/images/illustrations-3d/3d-biz-06.webp" 
+                                    alt="Tara Support Specialist" 
+                                    className={styles.supportIllustration} 
+                                />
+                            </div>
                             <p className={styles.modalDesc}>
                                 {language === 'EN' 
                                     ? "Need assistance with your accommodation credentials or front desk setup?" 

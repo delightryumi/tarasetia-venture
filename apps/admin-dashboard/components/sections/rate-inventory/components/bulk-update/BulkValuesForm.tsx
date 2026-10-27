@@ -3,7 +3,7 @@
 import React from "react";
 import {
     Check,
-    X,
+    Ban,
     AlertCircle
 } from "lucide-react";
 import { BulkRuleState } from "./types";
@@ -121,14 +121,14 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                 </div>
             )}
 
-            {/* 3. Stop Sell (Channex Standard: stop_sell = true | false) */}
+            {/* 3. Stop Sell (Stop Sell / Open) */}
             {metrics.includes("stopsell") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
                         <StopSell3DIcon size={38} />
                         <div>
-                            <span className={styles.metricName}>Stop Sell (stop_sell)</span>
-                            <span className={styles.metricSub}>Standar Channex: true (Tutup) / false (Buka)</span>
+                            <span className={styles.metricName}>Stop Sell</span>
+                            <span className={styles.metricSub}>Status: Stop Sell (Tutup) / Open (Buka)</span>
                         </div>
                     </div>
                     <div className={styles.rowInputsCol}>
@@ -145,10 +145,10 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 className={`${styles.toggleBtn} ${
                                     (rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true") ? styles.toggleBtnClose : ""
                                 }`}
-                                title="Set stop_sell: true (Tutup Penjualan)"
+                                title="Aktifkan Stop Sell (Tutup Penjualan)"
                             >
-                                <X size={12} />
-                                <span>true</span>
+                                <Ban size={12} />
+                                <span>Stop Sell</span>
                             </button>
                             <button
                                 type="button"
@@ -162,10 +162,10 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 className={`${styles.toggleBtn} ${
                                     (rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false") ? styles.toggleBtnOpen : ""
                                 }`}
-                                title="Set stop_sell: false (Buka Penjualan)"
+                                title="Buka Penjualan (Open)"
                             >
                                 <Check size={12} />
-                                <span>false</span>
+                                <span>Open</span>
                             </button>
                         </div>
                         <span className={`${styles.channexCodePill} ${
@@ -175,7 +175,7 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 ? styles.channexCodePillFalse
                                 : ""
                         }`}>
-                            stop_sell: {rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true" ? "true" : (rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false" ? "false" : "none")}
+                            Status: {rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true" ? "Stop Sell" : (rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false" ? "Open" : "Tidak Diubah")}
                         </span>
                     </div>
                 </div>
@@ -319,14 +319,14 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                 </div>
             )}
 
-            {/* 7. COA (closed_to_arrival) */}
+            {/* 7. CTA (Closed to Arrival) */}
             {metrics.includes("cta") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
                         <Cta3DIcon size={38} />
                         <div>
-                            <span className={styles.metricName}>Closed to Arrival (closed_to_arrival / COA)</span>
-                            <span className={styles.metricSub}>Standar Channex: true (kunci check-in) / false (buka check-in)</span>
+                            <span className={styles.metricName}>Closed to Arrival (CTA)</span>
+                            <span className={styles.metricSub}>Status: Closed (Kunci Check-in) / Open (Buka Check-in)</span>
                         </div>
                     </div>
                     <div className={styles.rowInputsCol}>
@@ -343,10 +343,10 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 className={`${styles.toggleBtn} ${
                                     (rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true") ? styles.toggleBtnClose : ""
                                 }`}
-                                title="Set closed_to_arrival: true"
+                                title="Kunci Check-in (Closed to Arrival)"
                             >
-                                <X size={12} />
-                                <span>true</span>
+                                <Ban size={12} />
+                                <span>Closed</span>
                             </button>
                             <button
                                 type="button"
@@ -360,10 +360,10 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 className={`${styles.toggleBtn} ${
                                     (rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false") ? styles.toggleBtnOpen : ""
                                 }`}
-                                title="Set closed_to_arrival: false"
+                                title="Buka Check-in (Open to Arrival)"
                             >
                                 <Check size={12} />
-                                <span>false</span>
+                                <span>Open</span>
                             </button>
                         </div>
                         <span className={`${styles.channexCodePill} ${
@@ -373,20 +373,20 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 ? styles.channexCodePillFalse
                                 : ""
                         }`}>
-                            closed_to_arrival: {rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true" ? "true" : (rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false" ? "false" : "none")}
+                            Status: {rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true" ? "Closed" : (rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false" ? "Open" : "Tidak Diubah")}
                         </span>
                     </div>
                 </div>
             )}
 
-            {/* 8. COD (closed_to_departure) */}
+            {/* 8. CTD (Closed to Departure) */}
             {metrics.includes("ctd") && (
                 <div className={styles.rowItem}>
                     <div className={styles.rowLabelCol}>
                         <Ctd3DIcon size={38} />
                         <div>
-                            <span className={styles.metricName}>Closed to Departure (closed_to_departure / COD)</span>
-                            <span className={styles.metricSub}>Standar Channex: true (kunci check-out) / false (buka check-out)</span>
+                            <span className={styles.metricName}>Closed to Departure (CTD)</span>
+                            <span className={styles.metricSub}>Status: Closed (Kunci Check-out) / Open (Buka Check-out)</span>
                         </div>
                     </div>
                     <div className={styles.rowInputsCol}>
@@ -403,10 +403,10 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 className={`${styles.toggleBtn} ${
                                     (rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true") ? styles.toggleBtnClose : ""
                                 }`}
-                                title="Set closed_to_departure: true"
+                                title="Kunci Check-out (Closed to Departure)"
                             >
-                                <X size={12} />
-                                <span>true</span>
+                                <Ban size={12} />
+                                <span>Closed</span>
                             </button>
                             <button
                                 type="button"
@@ -420,10 +420,10 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 className={`${styles.toggleBtn} ${
                                     (rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false") ? styles.toggleBtnOpen : ""
                                 }`}
-                                title="Set closed_to_departure: false"
+                                title="Buka Check-out (Open to Departure)"
                             >
                                 <Check size={12} />
-                                <span>false</span>
+                                <span>Open</span>
                             </button>
                         </div>
                         <span className={`${styles.channexCodePill} ${
@@ -433,7 +433,7 @@ export function BulkValuesForm({ rule, onChange }: BulkValuesFormProps) {
                                 ? styles.channexCodePillFalse
                                 : ""
                         }`}>
-                            closed_to_departure: {rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true" ? "true" : (rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false" ? "false" : "none")}
+                            Status: {rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true" ? "Closed" : (rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false" ? "Open" : "Tidak Diubah")}
                         </span>
                     </div>
                 </div>

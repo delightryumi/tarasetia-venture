@@ -601,7 +601,7 @@ export function RateInventoryBulkUpdateView({
                             className={styles.btnApply}
                         >
                             <Send size={13} />
-                            <span>{saving ? "Mengirim ke Channex..." : "Terapkan & Kirim ke Channex (1 Call)"}</span>
+                            <span>{saving ? "Menerapkan Pembaruan..." : "Terapkan Pembaruan Massal"}</span>
                         </button>
                     )}
                 </div>

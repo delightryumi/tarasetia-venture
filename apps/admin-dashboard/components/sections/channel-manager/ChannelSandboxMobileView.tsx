@@ -60,7 +60,14 @@ export const ChannelSandboxMobileView: React.FC<ChannelSandboxViewProps> = ({
             {/* Mobile Readiness Bar */}
             <div className={styles.readinessBarMobile}>
                 <div className={styles.readinessHeader}>
-                    <h2 className={styles.readinessTitle}>Certification Suite</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <img 
+                            src="/images/icons-3d/icon-3d-16.webp" 
+                            alt="Certification" 
+                            style={{ width: 20, height: 20, objectFit: 'contain' }} 
+                        />
+                        <h2 className={styles.readinessTitle}>Certification Suite</h2>
+                    </div>
                     <span className={styles.envBadge}>{channexEnv.toUpperCase()}</span>
                 </div>
                 <div className={styles.progressBarTrack}>

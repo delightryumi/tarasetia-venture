@@ -24,7 +24,7 @@ export function BookingStats({ stats }: BookingStatsProps) {
         <div className={s.statsGrid}>
             <div className={s.clayStatCard}>
                 <div className={`${s.iconWrapper} ${s.iconBlue}`}>
-                    <CalendarCheck size={24} weight="bold" />
+                    <img src="/images/icons-3d/icon-3d-10.webp" alt="Total Bookings" className={s.icon3d} />
                 </div>
                 <div className={s.statContent}>
                     <span className={s.statLabel}>Total Bookings</span>
@@ -35,7 +35,7 @@ export function BookingStats({ stats }: BookingStatsProps) {
 
             <div className={s.clayStatCard}>
                 <div className={`${s.iconWrapper} ${s.iconGreen}`}>
-                    <CheckCircle size={24} weight="bold" />
+                    <img src="/images/icons-3d/icon-3d-14.webp" alt="Confirmed" className={s.icon3d} />
                 </div>
                 <div className={s.statContent}>
                     <span className={s.statLabel}>Confirmed</span>
@@ -46,7 +46,7 @@ export function BookingStats({ stats }: BookingStatsProps) {
 
             <div className={s.clayStatCard}>
                 <div className={`${s.iconWrapper} ${s.iconPurple}`}>
-                    <Door size={24} weight="bold" />
+                    <img src="/images/icons-3d/icon-3d-28.webp" alt="In-House" className={s.icon3d} />
                 </div>
                 <div className={s.statContent}>
                     <span className={s.statLabel}>In-House</span>
@@ -57,7 +57,7 @@ export function BookingStats({ stats }: BookingStatsProps) {
 
             <div className={s.clayStatCard}>
                 <div className={`${s.iconWrapper} ${s.iconSlate}`}>
-                    <SignOut size={24} weight="bold" />
+                    <img src="/images/icons-3d/icon-3d-30.webp" alt="Checked-Out" className={s.icon3d} />
                 </div>
                 <div className={s.statContent}>
                     <span className={s.statLabel}>Checked-Out</span>
@@ -68,7 +68,7 @@ export function BookingStats({ stats }: BookingStatsProps) {
 
             <div className={s.clayStatCard}>
                 <div className={`${s.iconWrapper} ${s.iconRed}`}>
-                    <XCircle size={24} weight="bold" />
+                    <img src="/images/icons-3d/icon-3d-46.webp" alt="Cancelled" className={s.icon3d} />
                 </div>
                 <div className={s.statContent}>
                     <span className={s.statLabel}>Cancelled</span>
@@ -79,11 +79,11 @@ export function BookingStats({ stats }: BookingStatsProps) {
 
             <div className={s.clayStatCard}>
                 <div className={`${s.iconWrapper} ${s.iconAmber}`}>
-                    <CurrencyCircleDollar size={24} weight="bold" />
+                    <img src="/images/icons-3d/icon-3d-11.webp" alt="Gross Revenue" className={s.icon3d} />
                 </div>
                 <div className={s.statContent}>
                     <span className={s.statLabel}>Gross Revenue</span>
-                    <span className={s.statValue} style={{ fontSize: "16px" }}>
+                    <span className={s.statRevenueValue}>
                         {formatCurrency(stats.totalGrossRevenue)}
                     </span>
                     <span className={s.statSubtext}>Nilai Transaksi</span>

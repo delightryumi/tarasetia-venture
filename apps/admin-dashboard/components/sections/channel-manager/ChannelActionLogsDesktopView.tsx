@@ -22,6 +22,7 @@ import {
     Terminal
 } from "lucide-react";
 import { ChannelTaskLog } from "./ChannelActionLogsTab";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import styles from "./ChannelActionLogsDesktopView.module.css";
 
 export interface ChannelActionLogsViewProps {
@@ -429,8 +430,19 @@ export const ChannelActionLogsDesktopView: React.FC<ChannelActionLogsViewProps> 
                         <tbody>
                             {paginatedLogs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className={`${styles.td} ${styles.tableEmptyCell}`}>
-                                        {loading ? "Memuat riwayat log event..." : "Tidak ada event audit log yang sesuai dengan filter."}
+                                    <td colSpan={7} className={styles.tableEmptyCellWrapper}>
+                                        <EmptyStateExecutive
+                                            illustrationSrc="/images/illustrations-3d/3d-biz-05.webp"
+                                            illustrationAlt="Semua Jalur Distribusi Normal"
+                                            title="Semua Jalur Distribusi Normal"
+                                            description={loading ? "Sedang memverifikasi riwayat aktivitas distribusi..." : "Belum ada rekaman transmisi atau webhook bermasalah pada parameter filter saat ini."}
+                                            actionLabel={resultFilter !== "all" || channelFilter !== "all" ? "Reset Parameter Filter" : undefined}
+                                            onAction={resultFilter !== "all" || channelFilter !== "all" ? () => {
+                                                setResultFilter("all");
+                                                setChannelFilter("all");
+                                                setPage(1);
+                                            } : undefined}
+                                        />
                                     </td>
                                 </tr>
                             ) : (

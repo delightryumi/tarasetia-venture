@@ -149,7 +149,13 @@ export function StaffTable({ hotelCode, shifts }: Props) {
 
         {filtered.length === 0 ? (
           <div className={styles.emptyState}>
-            <div className={styles.emptyStateIcon}>👥</div>
+            <div className={styles.emptyStateIllustrationWrapper}>
+              <img 
+                src="/images/illustrations-3d/3d-biz-21.webp" 
+                alt="Belum ada karyawan" 
+                className={styles.emptyStateIllustration} 
+              />
+            </div>
             <p className={styles.emptyStateText}>Belum ada karyawan terdaftar. Klik "+ Tambah Staf" untuk mendaftarkan karyawan baru.</p>
           </div>
         ) : (

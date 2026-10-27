@@ -543,10 +543,9 @@
 
 .emptyState {
   text-align: center;
-  padding: 48px 16px;
+  padding: 0;
   color: #94a3b8;
-  font-size: 13px;
-  font-weight: 500;
+  border-bottom: none !important;
 }
 
 /* ── Responsive Toolbar & Panel Rules ── */

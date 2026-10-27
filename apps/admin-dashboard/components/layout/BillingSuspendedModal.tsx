@@ -41,10 +41,13 @@ export function BillingSuspendedModal({
         {/* Modal Content - Guaranteed 36px padding via style for clean layout */}
         <div className="flex flex-col" style={{ padding: '36px', gap: '32px' }}>
           
-          {/* Header & Icon */}
           <div className="flex flex-col items-center text-center" style={{ gap: '16px' }}>
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40">
-              <AlertTriangle className="w-5 h-5 text-[#aa2d00]" strokeWidth={2.5} />
+            <div className="relative flex items-center justify-center">
+              <img 
+                src="/images/icons-3d/icon-3d-16.webp" 
+                alt="Security Lock Alert" 
+                className="w-20 h-20 object-contain drop-shadow-md select-none pointer-events-none" 
+              />
             </div>
             
             <div className="space-y-2">

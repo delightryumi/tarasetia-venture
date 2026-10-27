@@ -58,24 +58,24 @@ export function BulkSummaryStep({
         const isStopSellActive = rule.stopSell === true || rule.stopSellAction === "close" || rule.stopSellAction === "true";
         const isStopSellInactive = rule.stopSell === false || rule.stopSellAction === "open" || rule.stopSellAction === "false";
         if (rule.selectedMetrics.includes("stopsell")) {
-            if (isStopSellActive) parts.push("stop_sell: true");
-            else if (isStopSellInactive) parts.push("stop_sell: false");
+            if (isStopSellActive) parts.push("Stop Sell");
+            else if (isStopSellInactive) parts.push("Open");
         }
 
-        // Closed to Arrival (COA)
+        // Closed to Arrival (CTA)
         const isCtaActive = rule.closedToArrival === true || rule.ctaAction === "close" || rule.ctaAction === "true";
         const isCtaInactive = rule.closedToArrival === false || rule.ctaAction === "open" || rule.ctaAction === "false";
         if (rule.selectedMetrics.includes("cta")) {
-            if (isCtaActive) parts.push("closed_to_arrival: true");
-            else if (isCtaInactive) parts.push("closed_to_arrival: false");
+            if (isCtaActive) parts.push("CTA: Closed");
+            else if (isCtaInactive) parts.push("CTA: Open");
         }
 
-        // Closed to Departure (COD)
+        // Closed to Departure (CTD)
         const isCtdActive = rule.closedToDeparture === true || rule.ctdAction === "close" || rule.ctdAction === "true";
         const isCtdInactive = rule.closedToDeparture === false || rule.ctdAction === "open" || rule.ctdAction === "false";
         if (rule.selectedMetrics.includes("ctd")) {
-            if (isCtdActive) parts.push("closed_to_departure: true");
-            else if (isCtdInactive) parts.push("closed_to_departure: false");
+            if (isCtdActive) parts.push("CTD: Closed");
+            else if (isCtdInactive) parts.push("CTD: Open");
         }
 
         // Max Stay
@@ -176,11 +176,11 @@ export function BulkSummaryStep({
                 </table>
             </div>
 
-            {/* Standard Channex 1 API Call Notice */}
+            {/* Standard 1 API Call Distribution Notice */}
             <div className={styles.oneCallAlert}>
                 <AlertCircle size={16} style={{ color: "#0284c7", flexShrink: 0 }} />
                 <span>
-                    <strong>Standar Channex:</strong> Pembaruan ini akan dikirim dalam <strong>1 batched API call</strong> ke endpoint Channex <code>/restrictions</code>.
+                    <strong>Distribusi Saluran:</strong> Pembaruan ini disimpan ke sistem dan otomatis didistribusikan ke seluruh saluran penjualan aktif dalam <strong>1 batched transmission</strong>.
                 </span>
             </div>
         </div>

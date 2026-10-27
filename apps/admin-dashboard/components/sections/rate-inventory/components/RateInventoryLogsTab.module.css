@@ -453,8 +453,9 @@
 
 .emptyCell {
     text-align: center;
-    padding: 40px 20px;
+    padding: 0;
     color: #94a3b8;
+    border-bottom: none !important;
 }
 
 /* Status Rings */

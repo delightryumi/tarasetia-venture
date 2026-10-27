@@ -71,15 +71,15 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
     const [flyoutTop, setFlyoutTop] = useState<number>(100);
     const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Collapsible group state for expanded mode
+    // Collapsible group state for expanded mode — default closed as requested
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-        "Distribusi Saluran": true,
-        "Yield & Revenue": true,
-        "Komunikasi & Tamu": true,
-        "Finansial & Booking": true,
-        "Master Data Properti": true,
-        "Log & Audit Sistem": true,
-        "Sertifikasi & Gateway": true,
+        "Distribusi Saluran": false,
+        "Yield & Revenue": false,
+        "Komunikasi & Tamu": false,
+        "Finansial & Booking": false,
+        "Master Data Properti": false,
+        "Log & Audit Sistem": false,
+        "Sertifikasi & Gateway": false,
     });
 
     const toggleGroup = (title: string) => {
@@ -191,15 +191,6 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
             ]
         }
     ];
-
-    // Ensure the group containing the active tab is expanded in expanded mode
-    useEffect(() => {
-        if (!currentTab) return;
-        const group = MENU_GROUPS.find(g => g.items.some(i => i.id === currentTab));
-        if (group && !expandedGroups[group.title]) {
-            setExpandedGroups(prev => ({ ...prev, [group.title]: true }));
-        }
-    }, [currentTab]);
 
     const handleSelectTab = (tabId: string) => {
         setCurrentTab(tabId);
@@ -356,7 +347,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                                         onClick={() => toggleGroup(group.title)}
                                         onMouseEnter={e => handleGroupMouseEnter(group, e, true)}
                                         onMouseLeave={handleGroupMouseLeave}
-                                        className={styles.groupHeaderBtn}
+                                        className={`${styles.groupHeaderBtn} ${isGroupActive ? styles.groupHeaderBtnActive : ""}`}
                                         aria-label={group.title}
                                     >
                                         <div className={styles.groupHeaderLeft}>

@@ -173,6 +173,14 @@
   margin-bottom: var(--p-space-xs);
 }
 
+.emptyIllustration3d {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: var(--p-space-xs);
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.08));
+}
+
 .emptyTitle {
   font-size: var(--p-font-size-sm);
   font-weight: 500;

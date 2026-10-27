@@ -136,6 +136,7 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({
                 success: true,
+                skipped: result.skipped || false,
                 message: result.message,
                 taskId: primaryDeltaTaskId,
                 taskIds: result.taskIds,
@@ -178,6 +179,7 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({
                 success: true,
+                skipped: (result as any).skipped || false,
                 message: result.message,
                 taskId: primaryFullTaskId,
                 taskIds: result.taskIds,
@@ -271,10 +273,11 @@ export async function POST(req: NextRequest) {
             result
         });
     } catch (error: any) {
-        console.error("[Channex Sync-ARI Error]:", error);
+        console.error("[Sync-ARI Error]:", error);
         return NextResponse.json({
             success: false,
-            error: error.message || "Failed to push ARI to Channex"
+            message: error.message || "Gagal menyinkronkan data ARI ke saluran penjualan",
+            error: error.message || "Gagal menyinkronkan data ARI ke saluran penjualan"
         }, { status: 500 });
     }
 }

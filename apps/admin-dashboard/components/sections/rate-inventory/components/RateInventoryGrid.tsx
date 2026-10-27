@@ -109,8 +109,12 @@ export function RateInventoryGrid({
                         <tr>
                             <td colSpan={dateList.length + 2} className={styles.emptyStateCell}>
                                 <div className={styles.emptyStateContent}>
-                                    <div className={styles.emptyIconWrapper}>
-                                        <Bed size={24} />
+                                    <div className={styles.emptyIllustrationWrapper}>
+                                        <img 
+                                            src="/images/illustrations-3d/3d-biz-19.webp" 
+                                            alt="No Room Types Configured" 
+                                            className={styles.emptyIllustration3d} 
+                                        />
                                     </div>
                                     <div className={styles.emptyTitle}>
                                         No Room Types Configured

@@ -40,7 +40,7 @@ export function ForecastHeader({
                     <div className={styles.headerMeta}>
                         <span className={styles.headerSubtitle}>Front Office Operations & POS Analytics</span>
                         <h1 className={styles.headerTitle}>
-                            Front Office <span style={{ color: '#8d7a52' }}>& Forecast</span>
+                            Front Office & Forecast
                         </h1>
                     </div>
                 </div>

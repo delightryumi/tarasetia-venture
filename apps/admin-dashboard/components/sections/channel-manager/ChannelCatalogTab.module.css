@@ -67,6 +67,18 @@
     flex-shrink: 0;
 }
 
+.statIcon3d {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.statCard:hover .statIcon3d {
+    transform: scale(1.15) rotate(3deg);
+}
+
 .statIconBoxSuccess {
     width: 32px;
     height: 32px;

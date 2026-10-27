@@ -54,21 +54,17 @@ export default function GlobalError({
           textAlign: "center",
         }}
       >
-        <div
-          style={{
-            width: "56px",
-            height: "56px",
-            background: "#fee2e2",
-            color: "#dc2626",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "24px",
-            margin: "0 auto 16px auto",
-          }}
-        >
-          ⚠️
+        <div style={{ margin: "0 auto 16px auto", display: "flex", justifyContent: "center" }}>
+          <img
+            src="/images/icons-3d/icon-3d-16.webp"
+            alt="System Alert"
+            style={{
+              width: "88px",
+              height: "88px",
+              objectFit: "contain",
+              filter: "drop-shadow(0 10px 18px rgba(220, 38, 38, 0.15))"
+            }}
+          />
         </div>
 
         <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", marginBottom: "8px" }}>

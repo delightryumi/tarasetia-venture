@@ -10,52 +10,61 @@
 
 .loginContainer {
     width: 100%;
-    height: 100vh;
-    height: 100dvh;
-    max-height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    background-color: #f1f3f6;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, #f2f5f9 0%, #eaeff5 100%);
+    background-color: #eef2f6;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #181d26;
-    overflow: hidden; /* Strict no scrollbar */
+    color: #0f172a;
+    overflow-x: hidden;
+    overflow-y: auto;
     position: relative;
+    padding: clamp(16px, 3vh, 32px) 16px;
+    box-sizing: border-box;
 }
 
 /* ========================================================
-   1. TOP UTILITY BAR (DISCREET)
+   1. TOP UTILITY BAR (DISCREET & ABSOLUTE)
    ======================================================== */
 .topbar {
+    position: absolute;
+    top: clamp(10px, 1.8vh, 20px);
+    right: clamp(14px, 2vw, 32px);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: clamp(10px, 2vh, 20px) clamp(16px, 2.5vw, 36px);
-    z-index: 20;
+    gap: 10px;
+    z-index: 30;
 }
 
 .topbarBtn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    color: #475569;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    color: #334155;
     font-size: clamp(11.5px, 1.35vh, 12.5px);
     font-weight: 600;
     cursor: pointer;
-    padding: clamp(4px, 0.7vh, 6px) 10px;
-    border-radius: 6px;
+    padding: clamp(4px, 0.7vh, 6px) 11px;
+    border-radius: 7px;
     transition: all 0.15s ease;
     font-family: inherit;
-    backdrop-filter: blur(4px);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
 .topbarBtn:hover {
     background: #ffffff;
-    color: #1e293b;
-    border-color: rgba(0, 0, 0, 0.15);
+    color: #0f172a;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
 .langWrapper {
@@ -107,47 +116,67 @@
    2. CENTER STAGE: CLEAN WHITE CARD
    ======================================================== */
 .centerStage {
-    flex: 1;
+    width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 10;
-    padding: clamp(10px, 2vh, 24px) 16px;
-    margin-top: -20px;
+    margin: auto 0;
+    padding: 12px 16px;
 }
 
 .cleanCard {
     background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 18px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
     box-shadow: 
-        0 20px 45px -10px rgba(0, 0, 0, 0.07),
-        0 4px 14px rgba(0, 0, 0, 0.02);
-    padding: clamp(22px, 3.4vh, 36px) clamp(24px, 3vw, 40px);
+        0 20px 45px -10px rgba(15, 23, 42, 0.08),
+        0 4px 16px -2px rgba(15, 23, 42, 0.03);
+    padding: clamp(26px, 3.6vh, 36px) clamp(22px, 2.6vw, 32px);
     width: 100%;
-    max-width: 410px;
+    max-width: 370px;
     position: relative;
     z-index: 15;
 }
 
 .cardHeader {
     text-align: center;
-    margin-bottom: clamp(14px, 2.2vh, 22px);
+    margin-bottom: clamp(16px, 2.2vh, 22px);
+}
+
+.logoWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: clamp(8px, 1.2vh, 14px);
+}
+
+.cardHeaderLogo {
+    height: clamp(34px, 4.2vh, 42px);
+    width: auto;
+    object-fit: contain;
+    display: block;
+    user-select: none;
+    transition: transform 0.2s ease;
+}
+
+.cardHeaderLogo:hover {
+    transform: scale(1.04);
 }
 
 .cardTitle {
-    font-size: clamp(22px, 3vh, 27px);
+    font-size: clamp(21px, 2.6vh, 25px);
     font-weight: 800;
-    color: #1e2530;
-    letter-spacing: -0.4px;
+    color: #09090b;
+    letter-spacing: -0.02em;
     margin-bottom: 4px;
     line-height: 1.2;
 }
 
 .cardSubtitle {
-    font-size: clamp(12.5px, 1.5vh, 13.5px);
-    color: #64748b;
+    font-size: clamp(11.5px, 1.3vh, 12.5px);
+    color: #71717a;
     line-height: 1.4;
 }
 
@@ -183,16 +212,16 @@
 }
 
 .fieldGroup {
-    margin-bottom: clamp(10px, 1.6vh, 16px);
+    margin-bottom: clamp(10px, 1.4vh, 14px);
     display: flex;
     flex-direction: column;
 }
 
 .fieldLabel {
-    font-size: clamp(12px, 1.35vh, 13px);
+    font-size: clamp(11.5px, 1.2vh, 12px);
     font-weight: 600;
-    color: #334155;
-    margin-bottom: 5px;
+    color: #27272a;
+    margin-bottom: 4px;
     display: block;
     text-align: left;
 }
@@ -200,24 +229,24 @@
 .inputContainer {
     display: flex;
     align-items: center;
-    height: clamp(40px, 4.8vh, 44px);
+    height: clamp(38px, 4.4vh, 42px);
     background: #ffffff !important;
     background-color: #ffffff !important;
-    border: 1.5px solid #dcdfe4;
+    border: 1.5px solid #e2e8f0;
     border-radius: 8px;
     padding: 0 13px;
-    gap: 10px;
+    gap: 9px;
     transition: all 0.15s ease;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .inputContainer:hover {
-    border-color: #b8bec8;
+    border-color: #cbd5e1;
 }
 
 .inputContainer:focus-within {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
     background: #ffffff !important;
     background-color: #ffffff !important;
 }
@@ -232,7 +261,7 @@
 }
 
 .inputContainer:focus-within .inputIcon {
-    color: #2563eb;
+    color: #0f172a;
 }
 
 .textInput {
@@ -293,15 +322,31 @@
     color: #1e293b;
 }
 
+.capsLockWarning {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #b45309;
+    background-color: #fef3c7;
+    border: 1px solid #fde68a;
+    padding: 3px 8px;
+    border-radius: 5px;
+    animation: fadeIn 0.15s ease-out;
+    align-self: flex-start;
+}
+
 /* Primary Sign In Button (Clean Solid Slate Professional) */
 .primaryLoginBtn {
     width: 100%;
-    height: clamp(40px, 4.8vh, 46px);
-    background-color: #475569;
+    height: clamp(40px, 4.6vh, 44px);
+    background-color: #09090b;
     color: #ffffff;
-    border: none;
+    border: 1px solid #09090b;
     border-radius: 8px;
-    font-size: clamp(13px, 1.5vh, 14px);
+    font-size: clamp(12.5px, 1.4vh, 13.5px);
     font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -313,12 +358,13 @@
     transition: all 0.15s ease;
     font-family: inherit;
     margin-top: 6px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .primaryLoginBtn:hover:not(:disabled) {
-    background-color: #334155;
-    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.15);
+    background-color: #27272a;
+    border-color: #27272a;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .primaryLoginBtn:active:not(:disabled) {
@@ -334,7 +380,7 @@
 .forgotPassRow {
     display: flex;
     justify-content: flex-end;
-    margin-top: clamp(10px, 1.5vh, 14px);
+    margin-top: clamp(8px, 1.2vh, 12px);
 }
 
 .forgotPassLink {
@@ -343,7 +389,7 @@
     padding: 0;
     color: #334155;
     font-weight: 500;
-    font-size: clamp(12px, 1.35vh, 13px);
+    font-size: clamp(11.5px, 1.25vh, 12.5px);
     cursor: pointer;
     font-family: inherit;
     transition: color 0.15s ease;
@@ -364,20 +410,27 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin-top: clamp(14px, 2.2vh, 22px);
+    margin-top: clamp(14px, 2vh, 20px);
     z-index: 15;
     user-select: none;
+    padding: 5px 16px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
 .poweredText {
-    font-size: clamp(12px, 1.4vh, 13px);
-    font-weight: 300;
+    font-size: clamp(11px, 1.3vh, 12px);
+    font-weight: 500;
     color: #64748b;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.3px;
 }
 
 .footerLogo {
-    height: clamp(20px, 2.6vh, 26px);
+    height: clamp(17px, 2.2vh, 22px);
     width: auto;
     object-fit: contain;
     opacity: 0.95;
@@ -385,17 +438,253 @@
 }
 
 /* ========================================================
-   4. HOSPITALITY ARCHITECTURAL SILHOUETTE ACCENT (SVG)
+   4. CINEMATIC DUAL-HORIZON SUNRISE GLOW (CAHAYA FAJAR TEMANGGUNG)
+   Warm golden-orange dawn ambiance wrapping both left & right horizons
+   ======================================================== */
+.sunriseContainer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1; /* Sits behind mountains (z-index 2), mist (z-index 3), and card (z-index 10) */
+}
+
+.sunriseAura {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: opacity, transform;
+}
+
+/* Left Horizon: Rich warm golden dawn light over western ridges */
+.sunriseAuraLeft {
+    top: -15%;
+    left: clamp(-16%, -4vw, 2%);
+    width: clamp(420px, 55vw, 840px);
+    height: clamp(420px, 55vw, 840px);
+    background: radial-gradient(
+        circle at 45% 45%, 
+        rgba(251, 146, 60, 0.28) 0%, 
+        rgba(249, 115, 22, 0.16) 30%, 
+        rgba(254, 215, 170, 0.08) 55%, 
+        transparent 75%
+    );
+    filter: blur(60px);
+    opacity: 0.92;
+    animation: cinematicGlowLeft 22s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+/* Right Horizon: Soft morning champagne & peach rim glow over eastern peaks */
+.sunriseAuraRight {
+    top: -12%;
+    right: clamp(-14%, -3vw, 4%);
+    width: clamp(390px, 50vw, 780px);
+    height: clamp(390px, 50vw, 780px);
+    background: radial-gradient(
+        circle at 55% 45%, 
+        rgba(254, 215, 170, 0.25) 0%, 
+        rgba(251, 146, 60, 0.15) 32%, 
+        rgba(253, 186, 116, 0.07) 58%, 
+        transparent 75%
+    );
+    filter: blur(55px);
+    opacity: 0.88;
+    animation: cinematicGlowRight 26s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+/* Panoramic Light Sweep: Connecting both left and right sides seamlessly */
+.sunbeamRays {
+    position: absolute;
+    top: -30%;
+    left: -20%;
+    width: 150%;
+    height: 140%;
+    background: 
+        linear-gradient(125deg, rgba(251, 146, 60, 0.14) 0%, rgba(254, 215, 170, 0.07) 24%, transparent 48%),
+        linear-gradient(55deg, transparent 52%, rgba(253, 186, 116, 0.07) 78%, rgba(251, 146, 60, 0.12) 100%);
+    filter: blur(48px);
+    opacity: 0.82;
+    animation: cinematicBeamSweep 30s ease-in-out infinite alternate;
+    will-change: opacity, transform;
+}
+
+@keyframes cinematicGlowLeft {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 0.75;
+    }
+    35% {
+        transform: translate3d(32px, 20px, 0) scale(1.09);
+        opacity: 1;
+    }
+    70% {
+        transform: translate3d(16px, 36px, 0) scale(1.03);
+        opacity: 0.85;
+    }
+    100% {
+        transform: translate3d(-18px, 14px, 0) scale(0.96);
+        opacity: 0.78;
+    }
+}
+
+@keyframes cinematicGlowRight {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 0.78;
+    }
+    40% {
+        transform: translate3d(-28px, 22px, 0) scale(1.10);
+        opacity: 0.98;
+    }
+    75% {
+        transform: translate3d(-12px, -18px, 0) scale(1.02);
+        opacity: 0.84;
+    }
+    100% {
+        transform: translate3d(20px, 10px, 0) scale(0.95);
+        opacity: 0.72;
+    }
+}
+
+@keyframes cinematicBeamSweep {
+    0% {
+        transform: rotate(0deg) translate3d(0, 0, 0) scale(1);
+        opacity: 0.68;
+    }
+    50% {
+        transform: rotate(2.5deg) translate3d(28px, 16px, 0) scale(1.05);
+        opacity: 0.96;
+    }
+    100% {
+        transform: rotate(-2deg) translate3d(-20px, -10px, 0) scale(0.97);
+        opacity: 0.74;
+    }
+}
+
+/* ========================================================
+   5. CINEMATIC HIGHLAND MIST DRIFT (KABUT PEGUNUNGAN TEMANGGUNG)
+   Serene, organic multi-layer mist flowing across ridges
+   ======================================================== */
+.mistContainer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: clamp(200px, 42vh, 460px);
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 3; /* Sits gently above mountain silhouette (z-index 2) and below card (z-index 10) */
+}
+
+.mistLayer {
+    position: absolute;
+    width: 300%;
+    height: 100%;
+    top: 0;
+    left: -100%;
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* Back Layer: High elevation, expansive gentle morning fog embracing left and right */
+.mistLayerBack {
+    background: 
+        radial-gradient(ellipse 60% 32% at 18% 35%, rgba(255, 255, 255, 0.50) 0%, rgba(241, 245, 249, 0.22) 50%, transparent 80%),
+        radial-gradient(ellipse 55% 38% at 48% 40%, rgba(255, 255, 255, 0.44) 0%, rgba(226, 232, 240, 0.18) 55%, transparent 80%),
+        radial-gradient(ellipse 65% 35% at 82% 38%, rgba(255, 255, 255, 0.48) 0%, rgba(254, 215, 170, 0.16) 55%, transparent 80%);
+    filter: blur(28px);
+    opacity: 0.62;
+    animation: driftMistBack 54s ease-in-out infinite alternate;
+}
+
+/* Mid Layer: Rolling mountain vapor hugging ridges */
+.mistLayerMid {
+    background: 
+        radial-gradient(ellipse 55% 30% at 22% 55%, rgba(255, 255, 255, 0.54) 0%, rgba(241, 245, 249, 0.25) 50%, transparent 75%),
+        radial-gradient(ellipse 60% 34% at 52% 52%, rgba(255, 255, 255, 0.48) 0%, rgba(226, 232, 240, 0.2) 55%, transparent 80%),
+        radial-gradient(ellipse 58% 32% at 84% 58%, rgba(255, 255, 255, 0.52) 0%, rgba(253, 186, 116, 0.17) 55%, transparent 75%);
+    filter: blur(20px);
+    opacity: 0.52;
+    animation: driftMistMid 40s ease-in-out infinite alternate;
+}
+
+/* Front Layer: Low-altitude wisps near the foothill pines */
+.mistLayerFront {
+    background: 
+        radial-gradient(ellipse 52% 24% at 15% 75%, rgba(255, 255, 255, 0.56) 0%, rgba(241, 245, 249, 0.22) 50%, transparent 75%),
+        radial-gradient(ellipse 65% 26% at 85% 78%, rgba(255, 255, 255, 0.54) 0%, rgba(226, 232, 240, 0.18) 55%, transparent 80%);
+    filter: blur(15px);
+    opacity: 0.42;
+    animation: driftMistFront 46s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
+}
+
+@keyframes driftMistBack {
+    0% {
+        transform: translate3d(-8%, 0, 0) scaleY(1);
+    }
+    33% {
+        transform: translate3d(5%, -16px, 0) scaleY(1.07);
+    }
+    66% {
+        transform: translate3d(18%, -6px, 0) scaleY(0.98);
+    }
+    100% {
+        transform: translate3d(28%, -12px, 0) scaleY(1.04);
+    }
+}
+
+@keyframes driftMistMid {
+    0% {
+        transform: translate3d(16%, 0, 0) scaleY(1.04);
+    }
+    35% {
+        transform: translate3d(-6%, 14px, 0) scaleY(0.96);
+    }
+    70% {
+        transform: translate3d(-20%, -4px, 0) scaleY(1.03);
+    }
+    100% {
+        transform: translate3d(-32%, 8px, 0) scaleY(0.98);
+    }
+}
+
+@keyframes driftMistFront {
+    0% {
+        transform: translate3d(-6%, 3px, 0) scaleX(1);
+    }
+    50% {
+        transform: translate3d(14%, -8px, 0) scaleX(1.05);
+    }
+    100% {
+        transform: translate3d(25%, 2px, 0) scaleX(0.97);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sunriseAuraLeft,
+    .sunriseAuraRight,
+    .sunbeamRays,
+    .mistLayerBack,
+    .mistLayerMid,
+    .mistLayerFront {
+        animation: none !important;
+    }
+}
+
+/* ========================================================
+   6. MOUNTAIN SILHOUETTE ACCENT (SVG)
+   Serene rolling ridges & highland pines at bottom edge
    ======================================================== */
 .skylineBackdrop {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: clamp(140px, 28vh, 260px);
+    height: clamp(150px, 25vh, 270px);
     pointer-events: none;
-    z-index: 1;
+    z-index: 2;
     overflow: hidden;
+    display: block;
 }
 
 .skylineSvg {
@@ -472,11 +761,25 @@
     color: #181d26;
 }
 
+.modalHeroIllustration {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.supportIllustration {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.08));
+}
+
 .modalDesc {
     font-size: 13px;
     color: #475569;
     line-height: 1.5;
     margin-bottom: 16px;
+    text-align: center;
 }
 
 .contactItem {
@@ -542,73 +845,259 @@
 }
 
 /* ========================================================
-   6. RESPONSIVE MOBILE VIEWPORT (STRICT 1-SCREEN NO SCROLL)
+   6. ANTISLOP-LAYOUTMOBILE: RESPONSIVE SYSTEM
+   - Mobile is a distinct layout state, not squeezed desktop (R-03)
+   - Defined states across widths: Phone (<=640px) & Tablet (641px-1024px)
+   - Touch targets >= 44x44px for thumbs
+   - 16px input font-size on mobile to prevent iOS Safari auto-zoom
+   - Zero horizontal overflow, zero hidden clipping
+   - Respects safe-area insets (iOS home bar & notch)
    ======================================================== */
-@media (max-width: 900px) {
-    .loginContainer {
-        height: 100vh;
-        height: 100dvh;
-        max-height: 100dvh;
-        overflow: hidden;
-    }
 
-    .centerStage {
-        padding: 8px 14px;
-        margin-top: -10px;
+/* TABLET & INTERMEDIATE VIEWPORT (641px to 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .loginContainer {
+        padding: 24px 20px;
+        min-height: 100dvh;
     }
 
     .cleanCard {
-        padding: 18px 16px 14px 16px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-        max-width: 360px;
-    }
-
-    .cardHeader {
-        margin-bottom: 12px;
-    }
-
-    .cardTitle {
-        font-size: 21px;
-        margin-bottom: 3px;
-    }
-
-    .cardSubtitle {
-        font-size: 12.5px;
-    }
-
-    .fieldGroup {
-        margin-bottom: 10px;
-    }
-
-    .fieldLabel {
-        font-size: 12px;
-        margin-bottom: 3px;
+        max-width: 380px;
+        padding: 30px 28px;
     }
 
     .inputContainer {
-        height: 38px;
-        padding: 0 10px;
-    }
-
-    .textInput {
-        font-size: 14px;
+        height: 44px;
     }
 
     .primaryLoginBtn {
-        height: 42px;
-        font-size: 14px;
+        height: 46px;
     }
 
+    .topbarBtn {
+        min-height: 42px;
+        padding: 6px 13px;
+    }
+}
+
+/* SMARTPHONE & NARROW MOBILE VIEWPORT (<=640px) */
+@media (max-width: 640px) {
+    .loginContainer {
+        min-height: 100dvh;
+        height: auto;
+        overflow-x: hidden;
+        overflow-y: auto; /* Natural scrolling on mobile, zero content clipping */
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(24px, env(safe-area-inset-bottom));
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+        justify-content: flex-start; /* Stack naturally when mobile virtual keyboard opens */
+    }
+
+    /* Topbar reflows into a natural top navigation row */
+    .topbar {
+        position: static;
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 0 16px 0;
+        margin: 0 auto;
+        gap: 8px;
+    }
+
+    .topbarBtn {
+        min-height: 44px; /* 44px thumb target */
+        padding: 8px 14px;
+        font-size: 12.5px;
+        border-radius: 8px;
+        touch-action: manipulation;
+    }
+
+    .centerStage {
+        width: 100%;
+        max-width: 400px;
+        margin: auto 0;
+        padding: 0;
+    }
+
+    /* Card adapts to mobile form factor with comfortable margins */
+    .cleanCard {
+        width: 100%;
+        max-width: 100%;
+        padding: 24px 20px 26px 20px;
+        border-radius: 16px;
+        box-shadow: 
+            0 10px 25px -5px rgba(15, 23, 42, 0.06),
+            0 2px 8px rgba(15, 23, 42, 0.02);
+    }
+
+    .cardHeader {
+        margin-bottom: 18px;
+    }
+
+    .logoWrapper {
+        margin-bottom: 10px;
+    }
+
+    .cardHeaderLogo {
+        height: 38px;
+    }
+
+    .cardTitle {
+        font-size: 22px;
+        line-height: 1.25;
+        margin-bottom: 4px;
+    }
+
+    .cardSubtitle {
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    /* Touch-friendly inputs with iOS Safari zoom prevention */
+    .fieldGroup {
+        margin-bottom: 13px;
+    }
+
+    .fieldLabel {
+        font-size: 12.5px;
+        margin-bottom: 5px;
+    }
+
+    .inputContainer {
+        height: 46px; /* 44px+ touch target */
+        border-radius: 9px;
+        padding: 0 13px;
+    }
+
+    .textInput {
+        font-size: 16px !important; /* STRICT: 16px prevents iOS Safari auto-zoom */
+    }
+
+    .passVisibilityToggle {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: -4px;
+        touch-action: manipulation;
+    }
+
+    .capsLockWarning {
+        margin-top: 6px;
+        font-size: 11.5px;
+        padding: 4px 9px;
+        border-radius: 5px;
+    }
+
+    /* Prominent thumb-friendly login CTA */
+    .primaryLoginBtn {
+        height: 48px;
+        min-height: 48px;
+        border-radius: 9px;
+        font-size: 14px;
+        font-weight: 700;
+        margin-top: 8px;
+        touch-action: manipulation;
+    }
+
+    .primaryLoginBtn:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+
+    /* Effortlessly tappable forgot password row */
     .forgotPassRow {
         margin-top: 10px;
+        justify-content: center;
     }
 
-    .securitySealRow {
-        margin-top: 12px;
+    .forgotPassLink {
+        padding: 10px 14px;
+        font-size: 13px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
     }
 
+    /* Footer capsule */
+    .footerRow {
+        margin-top: 18px;
+        padding: 6px 16px;
+        border-radius: 20px;
+    }
+
+    .poweredText {
+        font-size: 11.5px;
+    }
+
+    .footerLogo {
+        height: 18px;
+    }
+
+    /* Sunrise glow mobile scale */
+    .sunriseAuraLeft {
+        width: 290px;
+        height: 290px;
+        filter: blur(40px);
+        opacity: 0.7;
+    }
+
+    .sunriseAuraRight {
+        width: 260px;
+        height: 260px;
+        filter: blur(38px);
+        opacity: 0.65;
+    }
+
+    .sunbeamRays {
+        opacity: 0.45;
+    }
+
+    /* Highland mist mobile scale */
+    .mistContainer {
+        height: clamp(140px, 28vh, 220px);
+        opacity: 0.5;
+    }
+
+    /* Mountain vector silhouette mobile scale */
     .skylineBackdrop {
-        height: 120px;
-        opacity: 0.6;
+        height: clamp(90px, 16vh, 140px);
+        opacity: 0.8;
+    }
+
+    /* Mobile modal adjustments */
+    .modalBackdrop {
+        padding: 14px;
+        align-items: center;
+    }
+
+    .modalDialog {
+        max-width: 100%;
+        border-radius: 16px;
+        padding: 20px 18px;
+        max-height: 88dvh;
+        overflow-y: auto;
+    }
+
+    .modalClose {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0;
+    }
+
+    .modalBtn {
+        min-height: 44px;
+        padding: 10px 20px;
+        font-size: 14px;
+        border-radius: 8px;
     }
 }

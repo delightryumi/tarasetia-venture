@@ -212,7 +212,7 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                                     title="Toggle Stop Sell for all rate plans in this room category"
                                 >
                                     {allStop ? <Ban size={12} /> : <Check size={12} />}
-                                    <span>{allStop ? "CLOSED" : "OPEN"}</span>
+                                    <span>{allStop ? "STOP SELL" : "OPEN"}</span>
                                 </button>
                             </td>
                         );

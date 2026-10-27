@@ -7,7 +7,7 @@ import { RoomStatusBadge, GuestStatusBadge } from "./StatusPickers";
 import { resolveBookingIdentifiers, getChannelLogo } from "@/lib/channelHelper";
 import styles from "./StatCard.module.css";
 
-export function StatCard({ icon, label, count, accent, items = [], onItemClick, onStatusUpdate }: any) {
+export function StatCard({ icon, icon3d, label, count, accent, items = [], onItemClick, onStatusUpdate }: any) {
     const [searchQuery, setSearchQuery] = useState("");
 
     const filteredItems = useMemo(() => {
@@ -37,7 +37,11 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
             <div className={styles.cardHeader}>
                 <div className={styles.cardHeaderLeft}>
                     <div className={styles.cardIconBox} style={{ color: accent }}>
-                        {icon}
+                        {icon3d ? (
+                            <img src={icon3d} alt={label} className={styles.icon3dImg} />
+                        ) : (
+                            icon
+                        )}
                     </div>
                     <p className={styles.cardLabel}>{label}</p>
                 </div>
@@ -59,7 +63,7 @@ export function StatCard({ icon, label, count, accent, items = [], onItemClick, 
                 </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <div className={styles.cardValueRow}>
                 <p className={styles.cardValue}>{count}</p>
             </div>
 

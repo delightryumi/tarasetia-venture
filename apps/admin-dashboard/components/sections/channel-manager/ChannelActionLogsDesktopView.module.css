@@ -817,6 +817,13 @@
   color: #71717a;
 }
 
+.tableEmptyCellWrapper {
+  padding: 0;
+  text-align: center;
+  background-color: transparent;
+  border-bottom: none !important;
+}
+
 .thActionRight {
   text-align: right;
 }

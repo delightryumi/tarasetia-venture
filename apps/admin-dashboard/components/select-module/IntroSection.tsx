@@ -39,15 +39,30 @@ export const IntroSection: React.FC<IntroSectionProps> = ({ onOpenClick }) => {
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="relative flex flex-col items-center justify-center min-h-[60vh] w-full px-4 text-center select-none z-10"
     >
-      {/* Background Soft Ambient Light (Luxury Glow) */}
-      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none z-0" />
-
-
-
-
+      {/* 3D Welcome Host Mascot (Ala Bale BTN) */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.85, y: -15 }}
+        animate={{ 
+          opacity: 1, 
+          scale: 1, 
+          y: [0, -10, 0] 
+        }}
+        transition={{
+          opacity: { duration: 0.6 },
+          scale: { duration: 0.6 },
+          y: { duration: 3.5, repeat: Infinity, ease: 'easeInOut' }
+        }}
+        className="relative z-10 mb-4 flex items-center justify-center pointer-events-none"
+      >
+        <img
+          src="/images/illustrations-3d/3d-biz-01.webp"
+          alt="Tara Welcome Mascot"
+          className="w-40 h-40 md:w-52 md:h-52 object-contain drop-shadow-[0_20px_35px_rgba(36,121,255,0.20)]"
+        />
+      </motion.div>
 
       {/* Typewriter Effect Text Section */}
-      <div className="w-full max-w-3xl z-10" style={{ minHeight: '140px', marginBottom: '24px' }}>
+      <div className="w-full max-w-3xl z-10" style={{ minHeight: '120px', marginBottom: '20px' }}>
         <TypewriterEffect words={words} />
       </div>
 

@@ -285,7 +285,7 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
                             title={isStopSell ? "Stop Sell Aktif (Penjualan Ditutup)" : "Terbuka untuk Penjualan"}
                         >
                             {isStopSell ? <Ban size={12} /> : <Check size={12} />}
-                            <span>{isStopSell ? "CLOSED" : "OPEN"}</span>
+                            <span>{isStopSell ? "STOP SELL" : "OPEN"}</span>
                         </button>
                     </td>
                 );

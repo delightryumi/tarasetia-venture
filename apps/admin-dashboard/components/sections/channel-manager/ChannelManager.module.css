@@ -18,6 +18,8 @@
 
 /* ── 1. Top Enterprise Masthead Bar ── */
 .topBar {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -30,7 +32,11 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
+
+
 .topBarLeft {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -153,6 +159,8 @@
 }
 
 .topBarActions {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 8px;

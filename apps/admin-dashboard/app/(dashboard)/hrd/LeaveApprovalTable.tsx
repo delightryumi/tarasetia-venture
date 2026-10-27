@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import type { LeaveRequest } from "./types";
 import styles from "./hrd.module.css";
 
@@ -84,12 +85,12 @@ export function LeaveApprovalTable({ hotelCode }: Props) {
         </div>
 
         {requests.length === 0 ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyStateIcon}>📋</div>
-            <p className={styles.emptyStateText}>
-              {filter === "pending" ? "Tidak ada pengajuan pending saat ini." : `Tidak ada pengajuan ${filter}.`}
-            </p>
-          </div>
+          <EmptyStateExecutive
+            illustrationSrc="/images/illustrations-3d/3d-biz-15.webp"
+            illustrationAlt="Antrean Pengajuan Bersih"
+            title="Antrean Pengajuan Bersih"
+            description={filter === "pending" ? "Tidak ada pengajuan cuti atau izin staf yang menunggu persetujuan saat ini." : `Tidak ada riwayat pengajuan cuti atau izin berstatus ${filter}.`}
+          />
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>

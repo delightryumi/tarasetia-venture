@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import type { AttendanceLog } from "./types";
 import styles from "./hrd.module.css";
 
@@ -70,10 +71,12 @@ export function OvertimeApprovalTable({ hotelCode }: Props) {
       </div>
 
       {logs.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyStateIcon}>⏱</div>
-          <p className={styles.emptyStateText}>Tidak ada lembur yang perlu disetujui bulan ini.</p>
-        </div>
+        <EmptyStateExecutive
+          illustrationSrc="/images/illustrations-3d/3d-biz-20.webp"
+          illustrationAlt="Semua Jam Kerja Terverifikasi"
+          title="Semua Jam Kerja Terverifikasi"
+          description="Tidak ada pengajuan lembur staf yang perlu disetujui untuk periode bulan ini."
+        />
       ) : (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>

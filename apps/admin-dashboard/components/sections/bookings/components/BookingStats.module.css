@@ -1,26 +1,25 @@
 .statsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-bottom: 20px;
 }
 
 .clayStatCard {
     background: #ffffff;
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 12px 16px;
     display: flex;
     align-items: center;
     gap: 12px;
     position: relative;
-    overflow: hidden;
     cursor: default;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
     
     /* Claymorphism signature shadow */
     box-shadow: 
-        6px 6px 14px rgba(166, 180, 200, 0.2),
-        -4px -4px 10px rgba(255, 255, 255, 0.95),
+        5px 5px 12px rgba(166, 180, 200, 0.2),
+        -3px -3px 8px rgba(255, 255, 255, 0.95),
         inset 1px 1px 2px rgba(255, 255, 255, 0.9),
         inset -1px -1px 2px rgba(0, 0, 0, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.85);
@@ -35,9 +34,9 @@
 }
 
 .iconWrapper {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -48,6 +47,18 @@
         inset 1.5px 1.5px 4px rgba(0, 0, 0, 0.08),
         inset -1.5px -1.5px 4px rgba(255, 255, 255, 0.9),
         1.5px 1.5px 4px rgba(0, 0, 0, 0.04);
+}
+
+.icon3d {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.clayStatCard:hover .icon3d {
+    transform: scale(1.15) rotate(3deg);
 }
 
 .iconBlue {
@@ -84,17 +95,17 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    flex: 1;
 }
 
 .statLabel {
     font-size: 11px;
     font-weight: 600;
     color: #64748b;
-    letter-spacing: 0.01em;
-    margin-bottom: 1px;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    margin-bottom: 2px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .statValue {
@@ -103,6 +114,20 @@
     color: #0f172a;
     line-height: 1.2;
     letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    white-space: nowrap;
+}
+
+.statRevenueValue {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    white-space: nowrap;
 }
 
 .statSubtext {
@@ -110,6 +135,28 @@
     font-weight: 500;
     color: #94a3b8;
     margin-top: 1px;
+    white-space: nowrap;
+}
+
+:global(.dark) .clayStatCard {
+    background: #18181b;
+    border-color: #27272a;
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+:global(.dark) .statLabel {
+    color: #a1a1aa;
+}
+
+:global(.dark) .statValue,
+:global(.dark) .statRevenueValue {
+    color: #f4f4f5;
+}
+
+:global(.dark) .statSubtext {
+    color: #71717a;
 }
 
 @media (max-width: 768px) {
@@ -119,18 +166,35 @@
     }
     
     .clayStatCard {
-        padding: 10px 12px;
-        gap: 10px;
-        border-radius: 14px;
+        padding: 9px 10px;
+        gap: 8px;
+        border-radius: 12px;
     }
     
     .iconWrapper {
         width: 32px;
         height: 32px;
-        border-radius: 10px;
+        border-radius: 9px;
     }
-    
+
+    .icon3d {
+        width: 22px;
+        height: 22px;
+    }
+
+    .statLabel {
+        font-size: 10px;
+    }
+
     .statValue {
         font-size: 15px;
+    }
+
+    .statRevenueValue {
+        font-size: 13.5px;
+    }
+
+    .statSubtext {
+        font-size: 9px;
     }
 }

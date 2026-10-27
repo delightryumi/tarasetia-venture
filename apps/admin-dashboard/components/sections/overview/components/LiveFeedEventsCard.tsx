@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { resolveBookingIdentifiers, resolveChannelName, getChannelLogo } from "@/lib/channelHelper";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import styles from "./LiveFeedEventsCard.module.css";
 
 interface BookingEntry {
@@ -156,7 +157,13 @@ export function LiveFeedEventsCard({ bookings = [], onSelectBooking }: LiveFeedE
       <div className={styles.feedContainer}>
         {filteredEvents.length === 0 ? (
           <div className={styles.emptyFeed}>
-            No live events match the active filter criteria.
+            <EmptyStateExecutive
+              illustrationSrc="/images/illustrations-3d/3d-biz-06.webp"
+              illustrationAlt="Belum Ada Aktivitas Tamu"
+              title="Belum Ada Aktivitas Tamu"
+              description="Belum ada rekaman pergerakan tamu atau transaksi baru pada filter ini."
+              compact
+            />
           </div>
         ) : (
           filteredEvents.slice(0, 40).map((event, idx) => {
@@ -191,7 +198,7 @@ export function LiveFeedEventsCard({ bookings = [], onSelectBooking }: LiveFeedE
 
             return (
               <div
-                key={idx}
+                key={`${event.id || event.bookingId || "event"}-${idx}`}
                 className={styles.feedItem}
                 onClick={() => onSelectBooking(event)}
                 role="button"

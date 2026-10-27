@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AuditLogEntry, AuditCategory } from "@/lib/auditLogger";
+import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import styles from "./AuditLogs.module.css";
 
 const CATEGORIES: { label: string; value: string }[] = [
@@ -387,13 +388,18 @@ export default function AuditLogsPage() {
             </button>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className={styles.stateContainer}>
-            <ShieldCheck className={styles.stateIcon} />
-            <h3 className={styles.stateTitle}>Belum Ada Catatan Audit Log</h3>
-            <p className={styles.stateText}>
-              Tidak ditemukan catatan aktivitas yang cocok dengan parameter filter saat ini.
-            </p>
-          </div>
+          <EmptyStateExecutive
+            illustrationSrc="/images/illustrations-3d/3d-biz-01.webp"
+            illustrationAlt="Sistem Keamanan dan Audit Terverifikasi"
+            title="Sistem Keamanan dan Audit Terverifikasi"
+            description="Seluruh catatan operasional hotel tercatat secara aman. Tidak ditemukan rekaman anomali pada parameter filter saat ini."
+            actionLabel={searchTerm || selectedCategory !== "ALL" || userFilter !== "ALL" ? "Reset Parameter Filter" : undefined}
+            onAction={searchTerm || selectedCategory !== "ALL" || userFilter !== "ALL" ? () => {
+              setSearchTerm("");
+              setSelectedCategory("ALL");
+              setUserFilter("ALL");
+            } : undefined}
+          />
         ) : (
           <div className={styles.tableContainer}>
             <table className={styles.dataTable}>

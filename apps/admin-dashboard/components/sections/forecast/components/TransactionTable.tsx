@@ -67,7 +67,7 @@ export function TransactionTable({
                         <div className={styles.headerMeta}>
                             <span className={styles.headerSubtitle}>Forecast Analytics</span>
                             <h2 className={styles.headerTitle} style={{ fontSize: "13px" }}>
-                                Detail <span style={{ color: '#8d7a52' }}>Transaksi</span>
+                                Detail Transaksi
                             </h2>
                             {activeFilter && (
                                 <button 
