@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb, adminStorage } from "@/lib/firebaseAdmin";
+import { adminDb, adminStorage } from "@/lib/firebaseAdmin";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
+
+const MAX_SELFIE_BASE64_BYTES = 4 * 1024 * 1024; // 4MB
+const VALID_IMAGE_HEADER_REGEX = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
 
 // Helper: hitung jarak antara 2 koordinat GPS (Haversine formula) dalam meter
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -12,14 +16,84 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// POST: Clock In / Clock Out
+// POST: Verify Staff Login / Change Staff PIN / Clock In / Clock Out
 export async function POST(request: Request) {
   try {
-    const { type, staffId, hotelCode, gps, selfieBase64, date, lateReason } = await request.json();
+    const body = await request.json();
+    const { action, type, staffId, hotelCode, gps, selfieBase64, date, lateReason } = body;
+
+    if (action === "verify_staff_login") {
+      const { nik, pin } = body;
+      if (!hotelCode || !nik || !pin) {
+        return NextResponse.json({ error: "Kode partner, NIK, dan PIN wajib diisi." }, { status: 400 });
+      }
+      const staffSnap = await adminDb
+        .collection(`hotels/${hotelCode}/staff`)
+        .where("nik", "==", String(nik).trim())
+        .limit(1)
+        .get();
+
+      if (staffSnap.empty) {
+        return NextResponse.json({ error: "NIK atau PIN salah." }, { status: 401 });
+      }
+
+      const staffDoc = staffSnap.docs[0];
+      const staffData = staffDoc.data() || {};
+      const storedPin = staffData.pin ? String(staffData.pin).trim() : "";
+
+      if (storedPin !== String(pin).trim()) {
+        return NextResponse.json({ error: "NIK atau PIN salah." }, { status: 401 });
+      }
+
+      if (staffData.isActive === false) {
+        return NextResponse.json({ error: "Akun Anda dinonaktifkan." }, { status: 403 });
+      }
+
+      const { pin: _omittedPin, payrollConfig: _omittedPayroll, ...safeProfile } = staffData;
+      return NextResponse.json({
+        success: true,
+        staff: {
+          id: staffDoc.id,
+          ...safeProfile,
+        },
+      });
+    }
+
+    if (action === "change_staff_pin") {
+      const { oldPin, newPin } = body;
+      if (!hotelCode || !staffId || !oldPin || !newPin) {
+        return NextResponse.json({ error: "Data perubahan PIN tidak lengkap." }, { status: 400 });
+      }
+      if (String(newPin).length !== 6 || isNaN(Number(newPin))) {
+        return NextResponse.json({ error: "PIN baru harus 6 digit angka." }, { status: 400 });
+      }
+      const staffRef = adminDb.doc(`hotels/${hotelCode}/staff/${staffId}`);
+      const staffSnap = await staffRef.get();
+      if (!staffSnap.exists || staffSnap.data()?.isActive === false) {
+        return NextResponse.json({ error: "Akun karyawan tidak ditemukan atau tidak aktif." }, { status: 403 });
+      }
+      const storedPin = staffSnap.data()?.pin ? String(staffSnap.data()?.pin).trim() : "";
+      if (storedPin !== String(oldPin).trim()) {
+        return NextResponse.json({ error: "PIN Lama salah." }, { status: 401 });
+      }
+      await staffRef.update({ pin: String(newPin).trim(), updatedAt: new Date().toISOString() });
+      return NextResponse.json({ success: true });
+    }
+
     // type: "clock_in" | "clock_out"
 
     if (!type || !staffId || !hotelCode || !gps || !selfieBase64 || !date) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
+    }
+
+    if (typeof selfieBase64 !== "string" || !VALID_IMAGE_HEADER_REGEX.test(selfieBase64)) {
+      return NextResponse.json({ error: "Format foto selfie tidak valid." }, { status: 400 });
+    }
+
+    const rawBase64Length = selfieBase64.replace(VALID_IMAGE_HEADER_REGEX, "").length;
+    const approximateBytes = Math.ceil((rawBase64Length * 3) / 4);
+    if (approximateBytes > MAX_SELFIE_BASE64_BYTES) {
+      return NextResponse.json({ error: "Ukuran foto selfie melebihi batas maksimal 4MB." }, { status: 400 });
     }
 
     // 0. Validasi status aktif & keberadaan karyawan
@@ -226,6 +300,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "hotelCode dan month wajib diisi" }, { status: 400 });
     }
 
+    const authCheck = await requireHotelAccess(request, hotelCode);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const colRef = adminDb.collection(`hotels/${hotelCode}/attendance/${yyyyMM}/logs`);
     let query: FirebaseFirestore.Query = colRef;
     if (staffId) query = query.where("staffId", "==", staffId);
@@ -239,6 +316,20 @@ export async function GET(request: Request) {
   }
 }
 
+const ALLOWED_OVERRIDE_FIELDS = new Set([
+  "clockIn",
+  "clockOut",
+  "status",
+  "notes",
+  "workDurationMinutes",
+  "durationMinutes",
+  "lateMinutes",
+  "overtimeMinutes",
+  "overtimeApproved",
+  "shiftName",
+  "shiftId",
+]);
+
 // PATCH: Koreksi manual oleh HRD
 export async function PATCH(request: Request) {
   try {
@@ -247,10 +338,22 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
+    const authCheck = await requireHotelAccess(request, hotelCode);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
+    const sanitizedOverrides: Record<string, any> = {};
+    if (overrides && typeof overrides === "object") {
+      for (const [key, val] of Object.entries(overrides)) {
+        if (ALLOWED_OVERRIDE_FIELDS.has(key)) {
+          sanitizedOverrides[key] = val;
+        }
+      }
+    }
+
     const logRef = adminDb.doc(`hotels/${hotelCode}/attendance/${yyyyMM}/logs/${logId}`);
     await logRef.update({
-      ...overrides,
-      correctedBy,
+      ...sanitizedOverrides,
+      correctedBy: authCheck.user.email || correctedBy,
       correctionNote,
       correctedAt: new Date().toISOString(),
     });

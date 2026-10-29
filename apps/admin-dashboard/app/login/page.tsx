@@ -10,7 +10,11 @@ function LoginContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/select-module?intro=true';
+  const rawRedirect = searchParams.get('redirect') || '/select-module?intro=true';
+  const redirectTo =
+    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes('://')
+      ? rawRedirect
+      : '/select-module?intro=true';
 
   useEffect(() => {
     if (!loading && user) {

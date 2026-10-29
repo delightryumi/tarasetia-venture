@@ -3,6 +3,7 @@ import { channexSyncService } from "@/lib/channex/syncService";
 import { channexClient } from "@/lib/channex/channexClient";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { ChannexWebhookPayload } from "@/lib/channex/types";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 /**
  * Comprehensive Endpoint for Sandbox Testing & OTA Certification Simulation Suite
@@ -37,6 +38,9 @@ export async function POST(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
         // 1. Fetch Hotel Doc to get property ID and channel manager config
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();

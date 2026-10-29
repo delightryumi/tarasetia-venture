@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut as fbSignOut, signInWithEmailAndPassword } from "firebase/auth";
+import { onAuthStateChanged, onIdTokenChanged, signOut as fbSignOut, signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, onSnapshot, getDocs } from "firebase/firestore";
 import { detectClientCity } from "@/lib/clientGeo";
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Load activeHotelCode from localStorage or user details
     useEffect(() => {
-        const isSuper = user?.role === "superadmin" || user?.email === "superadmin@setara.co.id" || user?.email === "nexura.management@gmail.com";
+        const isSuper = user?.role === "superadmin" || user?.email === "superadmin@setara.co.id";
         const storedCode = localStorage.getItem("active_hotel_code");
         
         // If regular partner user has a specific assigned hotel, ensure activeHotelCode aligns with their hotel
@@ -383,180 +383,167 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { exists: false, name: "" };
     };
 
-    // Sync session on load
+    // Keep __session cookie synchronized with Firebase ID token for server API routes
     useEffect(() => {
-        const checkSession = async () => {
-            if (typeof window !== "undefined") {
-                if (window.location.pathname === "/login") {
-                    sessionStorage.removeItem("tara_2fa_pending");
-                }
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get("logout") === "true") {
-                    localStorage.removeItem("auth_user");
-                    localStorage.removeItem("active_hotel_code");
-                    sessionStorage.removeItem("tara_2fa_pending");
-                    setUser(null);
-                    setActiveHotelCodeState("");
-                    await fbSignOut(auth);
-                    window.location.href = "/login";
-                    return;
-                }
-            }
-
-            const storedUser = localStorage.getItem("auth_user");
-            if (storedUser) {
+        if (typeof window === "undefined") return;
+        const unsubToken = onIdTokenChanged(auth, async (fbUser) => {
+            if (fbUser) {
                 try {
-                    const parsed = JSON.parse(storedUser);
-                    if (parsed.role === "superadmin") {
-                        if (!parsed.hotelCode) {
-                            parsed.hotelCode = "0";
-                        }
-                        const savedActiveCode = localStorage.getItem("active_hotel_code");
-                        if (!savedActiveCode) {
-                            localStorage.setItem("active_hotel_code", parsed.hotelCode);
-                            setActiveHotelCodeState(parsed.hotelCode);
-                        } else {
-                            setActiveHotelCodeState(savedActiveCode);
-                            parsed.hotelCode = savedActiveCode; // Sync user object with active code
-                        }
-                        localStorage.setItem("auth_user", JSON.stringify(parsed));
-                    } else {
-                        const savedActiveCode = localStorage.getItem("active_hotel_code");
-                        if (savedActiveCode) {
-                            setActiveHotelCodeState(savedActiveCode);
-                        }
-                    }
-
-                    setUser(parsed);
-                    setLoading(false);
-
-                    // Background sync real name, permissions, and assigned outlets from users_master
-                    const activeCode = localStorage.getItem("active_hotel_code") || parsed.hotelCode;
-                    fetchUserName(parsed.email, activeCode).then(info => {
-                        const isSuper = parsed.role?.toLowerCase() === "superadmin" || 
-                                        parsed.email?.toLowerCase() === "superadmin@setara.co.id" || 
-                                        parsed.email?.toLowerCase() === "admin@setara.co.id";
-                        if (!info.exists && !isSuper) {
-                            toast.error("Akun Anda telah dihapus dari sistem.");
-                            signOutUser();
-                            return;
-                        }
-                        if (info.status === "inactive" && !isSuper) {
-                            toast.error("Akun Anda telah dinonaktifkan oleh Administrator.");
-                            signOutUser();
-                            return;
-                        }
-                        if (info.name || info.permissions || info.allowedOutlets) {
-                            const updated: CustomUser = {
-                                ...parsed,
-                                displayName: info.name || parsed.displayName,
-                                name: info.name || parsed.name,
-                                role: info.role || parsed.role,
-                                status: info.status,
-                                allowedOutlets: info.allowedOutlets && info.allowedOutlets.length > 0 ? info.allowedOutlets : parsed.allowedOutlets || [],
-                                permissions: info.permissions || parsed.permissions || {}
-                            };
-                            localStorage.setItem("auth_user", JSON.stringify(updated));
-                            setUser(updated);
-                        }
-                    }).catch(() => {});
-
-                    // Background heartbeat of device session with exact city
-                    detectClientCity().then(clientLoc => {
-                        fetch("/api/users/devices", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                userId: parsed.uid,
-                                userEmail: parsed.email,
-                                userName: parsed.displayName || parsed.name,
-                                hotelCode: activeCode || "0",
-                                location: clientLoc
-                            })
-                        }).catch(() => {});
-                    });
-
-                    return;
-                } catch (e) {
-                    localStorage.removeItem("auth_user");
+                    const idToken = await fbUser.getIdToken();
+                    document.cookie = `__session=${encodeURIComponent(idToken)}; path=/; max-age=3600; SameSite=Lax`;
+                } catch {
+                    // ignore token fetch error
                 }
+            } else {
+                document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+            }
+        });
+        return () => unsubToken();
+    }, []);
+
+    // Sync session on load — ALWAYS verify against Firebase Auth (no early return on localStorage alone)
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("logout") === "true") {
+                localStorage.removeItem("auth_user");
+                localStorage.removeItem("active_hotel_code");
+                localStorage.removeItem("tara_2fa_pending");
+                sessionStorage.removeItem("tara_2fa_pending");
+                document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+                setUser(null);
+                setActiveHotelCodeState("");
+                fbSignOut(auth).finally(() => {
+                    window.location.href = "/login";
+                });
+                return;
+            }
+        }
+
+        const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+            if (
+                typeof window !== "undefined" &&
+                (sessionStorage.getItem("tara_2fa_pending") === "true" ||
+                    localStorage.getItem("tara_2fa_pending") === "true")
+            ) {
+                // 2FA verification is currently pending; do not promote user session
+                setUser(null);
+                setLoading(false);
+                return;
             }
 
-            // Fallback to Firebase Auth
-            const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-                if (typeof window !== "undefined" && sessionStorage.getItem("tara_2fa_pending") === "true") {
-                    // 2FA verification is currently in progress, do not set user until 2FA completes
+            if (fbUser) {
+                try {
+                    const idToken = await fbUser.getIdToken();
+                    if (typeof document !== "undefined") {
+                        document.cookie = `__session=${encodeURIComponent(idToken)}; path=/; max-age=3600; SameSite=Lax`;
+                    }
+                } catch {}
+
+                const email = fbUser.email || "";
+                const tokenResult = await fbUser.getIdTokenResult();
+                const claims = tokenResult.claims;
+
+                let role = (claims.role as string) || "";
+                let hotelCode = (claims.hotelCode as string) || "";
+                let allowedOutlets = (claims.allowedOutlets as string[]) || [];
+
+                const isSuperadminEmail =
+                    email.toLowerCase() === "admin@setara.co.id" ||
+                    email.toLowerCase() === "superadmin@setara.co.id";
+                if (isSuperadminEmail) {
+                    role = "superadmin";
+                    hotelCode = "0";
+                }
+
+                // Determine stored active hotel preference (only superadmin or multi-outlet user can switch)
+                let storedActiveCode = "";
+                try {
+                    storedActiveCode = localStorage.getItem("active_hotel_code") || "";
+                } catch {}
+
+                const lookupCode = storedActiveCode || hotelCode;
+                const userInfo = await fetchUserName(email, lookupCode);
+
+                if (!userInfo.exists && !isSuperadminEmail && role !== "superadmin") {
+                    toast.error("Akun Anda telah dihapus dari sistem.");
+                    await signOutUser();
                     return;
                 }
-                if (fbUser) {
-                    const email = fbUser.email || "";
-                    const tokenResult = await fbUser.getIdTokenResult();
-                    const claims = tokenResult.claims;
-                    
-                    let role = claims.role as string || "";
-                    let hotelCode = claims.hotelCode as string || "";
-                    let allowedOutlets = claims.allowedOutlets as string[] || [];
-                    
-                    const isSuperadminEmail = email.toLowerCase() === "admin@setara.co.id" || email.toLowerCase() === "superadmin@setara.co.id";
-                    if (isSuperadminEmail) {
-                        role = "superadmin";
-                        hotelCode = "0";
-                    }
-
-                    const code = localStorage.getItem("active_hotel_code") || hotelCode;
-                    const userInfo = await fetchUserName(email, code);
-
-                    if (!userInfo.exists && !isSuperadminEmail && role !== "superadmin") {
-                        toast.error("Akun Anda telah dihapus dari sistem.");
-                        await signOutUser();
-                        return;
-                    }
-                    if (userInfo.status === "inactive" && !isSuperadminEmail && role !== "superadmin") {
-                        toast.error("Akun Anda telah dinonaktifkan oleh Administrator.");
-                        await signOutUser();
-                        return;
-                    }
-
-                    if (!role && userInfo.role) {
-                        role = userInfo.role;
-                    }
-                    if (!hotelCode && userInfo.hotelCode) {
-                        hotelCode = userInfo.hotelCode;
-                    }
-
-                    if (allowedOutlets.length === 0 && userInfo.allowedOutlets && userInfo.allowedOutlets.length > 0) {
-                        allowedOutlets = userInfo.allowedOutlets;
-                    }
-
-                    if (!allowedOutlets.includes(hotelCode) && hotelCode && hotelCode !== "0") {
-                        allowedOutlets = [...allowedOutlets, hotelCode];
-                    }
-
-                    const resolvedDisplayName = userInfo.name || fbUser.displayName || email.split("@")[0];
-
-                    const customUser: CustomUser = {
-                        uid: fbUser.uid,
-                        email: email,
-                        displayName: resolvedDisplayName,
-                        name: resolvedDisplayName,
-                        role,
-                        hotelCode,
-                        allowedOutlets,
-                        permissions: userInfo.permissions || {},
-                    };
-                    
-                    localStorage.setItem("auth_user", JSON.stringify(customUser));
-                    setUser(customUser);
-                } else {
-                    setUser(null);
+                if (userInfo.status === "inactive" && !isSuperadminEmail && role !== "superadmin") {
+                    toast.error("Akun Anda telah dinonaktifkan oleh Administrator.");
+                    await signOutUser();
+                    return;
                 }
-                setLoading(false);
-            });
 
-            return unsubscribe;
-        };
+                // Always trust server claims & Firestore userInfo over localStorage
+                if (!isSuperadminEmail && userInfo.role) {
+                    role = userInfo.role;
+                }
+                if (!hotelCode && userInfo.hotelCode) {
+                    hotelCode = userInfo.hotelCode;
+                }
 
-        checkSession();
+                if (allowedOutlets.length === 0 && userInfo.allowedOutlets && userInfo.allowedOutlets.length > 0) {
+                    allowedOutlets = userInfo.allowedOutlets;
+                }
+
+                if (!allowedOutlets.includes(hotelCode) && hotelCode && hotelCode !== "0") {
+                    allowedOutlets = [...allowedOutlets, hotelCode];
+                }
+
+                const isVerifiedSuper = isSuperadminEmail || role.toLowerCase() === "superadmin";
+                let resolvedActiveHotel = hotelCode;
+                if (isVerifiedSuper) {
+                    resolvedActiveHotel = storedActiveCode || "0";
+                } else if (storedActiveCode && allowedOutlets.includes(storedActiveCode)) {
+                    resolvedActiveHotel = storedActiveCode;
+                }
+
+                if (resolvedActiveHotel) {
+                    setActiveHotelCodeState(resolvedActiveHotel);
+                    localStorage.setItem("active_hotel_code", resolvedActiveHotel);
+                }
+
+                const resolvedDisplayName = userInfo.name || fbUser.displayName || email.split("@")[0];
+
+                const customUser: CustomUser = {
+                    uid: fbUser.uid,
+                    email: email,
+                    displayName: resolvedDisplayName,
+                    name: resolvedDisplayName,
+                    role: isVerifiedSuper ? "superadmin" : role,
+                    hotelCode: isVerifiedSuper ? resolvedActiveHotel || "0" : hotelCode,
+                    allowedOutlets,
+                    permissions: userInfo.permissions || {},
+                };
+
+                localStorage.setItem("auth_user", JSON.stringify(customUser));
+                setUser(customUser);
+
+                // Background heartbeat of device session with exact city
+                detectClientCity().then((clientLoc) => {
+                    fetch("/api/users/devices", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            userId: customUser.uid,
+                            userEmail: customUser.email,
+                            userName: customUser.displayName || customUser.name,
+                            hotelCode: resolvedActiveHotel || "0",
+                            location: clientLoc,
+                        }),
+                    }).catch(() => {});
+                });
+            } else {
+                // No active Firebase Auth session -> clear any spoofed localStorage state
+                localStorage.removeItem("auth_user");
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const loginWithFirestore = async (email: string, password: string, hotelCodeInput?: string, twoFactorCode?: string): Promise<LoginResult> => {
@@ -584,17 +571,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             }
 
-            // Mark 2FA pending so onAuthStateChanged doesn't prematurely promote user
+            // Mark 2FA pending across both sessionStorage and localStorage so new tabs/refreshes cannot bypass 2FA
             if (typeof window !== "undefined") {
                 sessionStorage.setItem("tara_2fa_pending", "true");
+                localStorage.setItem("tara_2fa_pending", "true");
             }
 
             // Call Firebase Auth signInWithEmailAndPassword
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const fbUser = userCredential.user;
 
-            // Retrieve token result to inspect claims
+            // Retrieve token result to inspect claims and set __session cookie for 2FA API calls
             const tokenResult = await fbUser.getIdTokenResult(true); // Force refresh to get latest claims
+            if (typeof document !== "undefined" && tokenResult.token) {
+                document.cookie = `__session=${encodeURIComponent(tokenResult.token)}; path=/; max-age=3600; SameSite=Lax`;
+            }
             const claims = tokenResult.claims;
 
             let role = claims.role as string || "";
@@ -728,11 +719,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             if (typeof window !== "undefined") {
                 sessionStorage.removeItem("tara_2fa_pending");
+                localStorage.removeItem("tara_2fa_pending");
             }
             return { success: true };
         } catch (e: any) {
             if (typeof window !== "undefined") {
                 sessionStorage.removeItem("tara_2fa_pending");
+                localStorage.removeItem("tara_2fa_pending");
             }
             return {
                 success: false,
@@ -770,6 +763,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem("auth_user");
         localStorage.removeItem("active_hotel_code");
         localStorage.removeItem("tara_last_activity_timestamp");
+        localStorage.removeItem("tara_2fa_pending");
+        sessionStorage.removeItem("tara_2fa_pending");
+        if (typeof document !== "undefined") {
+            document.cookie = "__session=; path=/; max-age=0; SameSite=Lax";
+        }
         setUser(null);
         setActiveHotelCodeState("");
         setActiveHotelName("");

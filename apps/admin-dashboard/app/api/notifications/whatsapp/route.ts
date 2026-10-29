@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { sendWhatsAppNotificationToOwner as sendMetaNotification } from "@/lib/notifications/whatsappMetaService";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
-const MASTER_ADMIN_PIN = process.env.ADMIN_MASTER_PIN || "tara2026";
+const MASTER_ADMIN_PIN = process.env.ADMIN_MASTER_PIN;
+
+function maskToken(token?: string): string {
+    if (!token || typeof token !== "string") return "";
+    if (token.length <= 8) return "********";
+    return `${token.slice(0, 4)}********${token.slice(-4)}`;
+}
 
 /**
  * GET /api/notifications/whatsapp?hotelCode=1
@@ -16,6 +23,9 @@ export async function GET(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
         if (!hotelDoc.exists) {
@@ -44,6 +54,8 @@ export async function GET(req: NextRequest) {
             hotelName: hotelData.name || "",
             config: {
                 ...waConfig,
+                accessToken: waConfig.accessToken ? maskToken(waConfig.accessToken) : "",
+                hasCustomAccessToken: Boolean(waConfig.accessToken),
                 gateway: "meta"
             },
             systemDefaults: {
@@ -68,22 +80,30 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { hotelCode, action = "save_config", config, testRecipient, pin } = body;
 
+        if (!hotelCode) {
+            return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
+        }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
         // Verify Admin PIN to unlock custom credentials
         if (action === "verify_admin_pin") {
-            if (pin === MASTER_ADMIN_PIN || pin === "admin" || pin === "admin123") {
+            if (MASTER_ADMIN_PIN && pin && String(pin) === String(MASTER_ADMIN_PIN)) {
                 return NextResponse.json({ success: true, authorized: true });
             }
             return NextResponse.json({ success: false, error: "Sandi Admin / PIN tidak valid." }, { status: 401 });
-        }
-
-        if (!hotelCode) {
-            return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
 
         // ==========================================
         // ACTION 1: SAVE CONFIG
         // ==========================================
         if (action === "save_config") {
+            const existingHotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
+            const existingToken = existingHotelDoc.data()?.whatsappNotification?.accessToken || "";
+            const incomingToken = config.accessToken || "";
+            const resolvedToken = incomingToken.includes("********") ? existingToken : incomingToken;
+
             const updateData = {
                 whatsappNotification: {
                     gateway: "meta",
@@ -93,7 +113,7 @@ export async function POST(req: NextRequest) {
                     notifyOnCancellation: config.notifyOnCancellation ?? true,
                     notifyOnModification: config.notifyOnModification ?? true,
                     phoneNumberId: config.phoneNumberId || "",
-                    accessToken: config.accessToken || "",
+                    accessToken: resolvedToken,
                     updatedAt: new Date().toISOString()
                 }
             };
@@ -103,7 +123,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
                 success: true,
                 message: `Pengaturan WhatsApp Official Meta untuk Hotel [${hotelCode}] berhasil disimpan.`,
-                config: updateData.whatsappNotification
+                config: {
+                    ...updateData.whatsappNotification,
+                    accessToken: resolvedToken ? maskToken(resolvedToken) : ""
+                }
             });
         }
 

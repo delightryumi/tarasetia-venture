@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { emailToDocId } from "@/lib/security/inputSanitizer";
+import { requireAuth } from "@/lib/security/serverAuth";
 
 export async function GET(req: NextRequest) {
   try {
+    const authCheck = await requireAuth(req);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const { searchParams } = new URL(req.url);
     const email = searchParams.get("email");
     const hotelCode = searchParams.get("hotelCode");
@@ -12,7 +16,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Email wajib disertakan." }, { status: 400 });
     }
 
-    const docId = emailToDocId(email);
+    const cleanEmail = email.trim().toLowerCase();
+    if (!authCheck.user.isSuperadmin && authCheck.user.email.toLowerCase() !== cleanEmail) {
+      return NextResponse.json(
+        { error: "Akses Ditolak: Anda hanya dapat melihat status 2FA akun Anda sendiri." },
+        { status: 403 }
+      );
+    }
+
+    const docId = emailToDocId(cleanEmail);
     let userRef = adminDb.doc(`users_master/${docId}`);
     let snap = await userRef.get();
 

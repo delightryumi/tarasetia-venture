@@ -1,4 +1,13 @@
 
+function escapeHtml(value: string): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 interface SendEmailParams {
   toEmail: string;
   hotelCode: string;
@@ -21,6 +30,10 @@ export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultP
   }
 
   const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3000";
+  const safeHotelName = escapeHtml(hotelName);
+  const safeHotelCode = escapeHtml(hotelCode);
+  const safeToEmail = escapeHtml(toEmail);
+  const safeDefaultPassword = escapeHtml(defaultPassword);
 
   const emailHtml = `
     <!DOCTYPE html>
@@ -135,7 +148,7 @@ export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultP
           <h1>Selamat Datang di Setara Venture</h1>
           <p>Halo,</p>
           <p>
-            Sistem Central Reservation System (CRS) untuk properti hotel Anda, <strong>${hotelName}</strong>, telah berhasil diregistrasikan di platform Setara Venture.
+            Sistem Central Reservation System (CRS) untuk properti hotel Anda, <strong>${safeHotelName}</strong>, telah berhasil diregistrasikan di platform Setara Venture.
           </p>
           <p>Berikut adalah rincian kredensial akun administrator Anda untuk masuk ke sistem:</p>
           
@@ -146,15 +159,15 @@ export async function sendWelcomeEmail({ toEmail, hotelCode, hotelName, defaultP
             </div>
             <div class="cred-item">
               <span class="cred-label">Kode Hotel (Hotel Code):</span>
-              <span class="cred-value">${hotelCode}</span>
+              <span class="cred-value">${safeHotelCode}</span>
             </div>
             <div class="cred-item">
               <span class="cred-label">Email Login:</span>
-              <span class="cred-value">${toEmail}</span>
+              <span class="cred-value">${safeToEmail}</span>
             </div>
             <div class="cred-item">
               <span class="cred-label">Password Sementara:</span>
-              <span class="cred-value" style="color: #b91c1c;">${defaultPassword}</span>
+              <span class="cred-value" style="color: #b91c1c;">${safeDefaultPassword}</span>
             </div>
           </div>
           
@@ -225,7 +238,8 @@ export async function sendOnboardingEmail({ toEmail, token, planName }: SendOnbo
   }
 
   const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "http://localhost:3000";
-  const onboardingLink = `${dashboardUrl}/onboarding/${token}`;
+  const onboardingLink = `${dashboardUrl}/onboarding/${encodeURIComponent(token)}`;
+  const safePlanName = escapeHtml(planName.toUpperCase());
 
   const emailHtml = `
     <!DOCTYPE html>
@@ -254,7 +268,7 @@ export async function sendOnboardingEmail({ toEmail, token, planName }: SendOnbo
         <div class="content">
           <h1>Selesaikan Pendaftaran Anda</h1>
           <p>Halo,</p>
-          <p>Terima kasih telah memilih <strong>Setara Venture CRS</strong> (Paket: <strong>${planName.toUpperCase()}</strong>).</p>
+          <p>Terima kasih telah memilih <strong>Setara Venture CRS</strong> (Paket: <strong>${safePlanName}</strong>).</p>
           <p>Silakan klik tautan khusus di bawah ini untuk melengkapi profil bisnis Anda (Nama Usaha, Alamat, dll.) dan mendapatkan akses kredensial ke Dashboard.</p>
           
           <div class="highlight-box">

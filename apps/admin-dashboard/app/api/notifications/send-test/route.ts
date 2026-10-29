@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendPushNotificationToHotel } from "@/lib/notifications/webPushServer";
+import { requireAuth, requireHotelAccess } from "@/lib/security/serverAuth";
 
 export async function POST(req: NextRequest) {
     try {
+        const authCheck = await requireAuth(req);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
         const body = await req.json();
         const {
             hotelCode,
@@ -16,6 +20,9 @@ export async function POST(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
+
+        const hotelAccessCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in hotelAccessCheck) return hotelAccessCheck.errorResponse;
 
         const isCancel = type === "booking_cancelled";
         const title = isCancel

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { emailToDocId } from "@/lib/security/inputSanitizer";
+import { requireAuth } from "@/lib/security/serverAuth";
 import { verifyTotpToken, generateRecoveryCodes } from "@/lib/totp";
 import { logAuditEvent } from "@/lib/auditLogger";
 
 export async function POST(req: NextRequest) {
   try {
+    const authCheck = await requireAuth(req);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const { email, hotelCode, code } = await req.json();
 
     if (!email || !code) {
@@ -15,7 +19,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const docId = emailToDocId(email);
+    const cleanEmail = String(email).trim().toLowerCase();
+    if (!authCheck.user.isSuperadmin && authCheck.user.email.toLowerCase() !== cleanEmail) {
+      return NextResponse.json(
+        { error: "Akses Ditolak: Anda hanya dapat mengaktifkan 2FA untuk akun Anda sendiri." },
+        { status: 403 }
+      );
+    }
+
+    const docId = emailToDocId(cleanEmail);
     let userRef = adminDb.doc(`users_master/${docId}`);
     let snap = await userRef.get();
     let resolvedHotelCode = hotelCode || "0";

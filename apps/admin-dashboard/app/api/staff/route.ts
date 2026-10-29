@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb, adminStorage } from "@/lib/firebaseAdmin";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 function generatePIN() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -14,6 +15,9 @@ export async function POST(request: Request) {
     if (!name || !phone || !nik || !position || !division || !hotelCode) {
       return NextResponse.json({ error: "Semua field wajib diisi" }, { status: 400 });
     }
+
+    const authCheck = await requireHotelAccess(request, hotelCode);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
     const staffRef = adminDb.collection(`hotels/${hotelCode}/staff`);
     
@@ -60,6 +64,9 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "id/uid dan hotelCode wajib diisi" }, { status: 400 });
     }
 
+    const authCheck = await requireHotelAccess(request, hotelCode);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const updateData: any = { updatedAt: new Date().toISOString() };
     if (name !== undefined) updateData.name = name.trim();
     if (phone !== undefined) updateData.phone = phone.trim();
@@ -103,6 +110,9 @@ export async function DELETE(request: Request) {
     if (!uid || !hotelCode) {
       return NextResponse.json({ error: "id/uid dan hotelCode wajib diisi" }, { status: 400 });
     }
+
+    const authCheck = await requireHotelAccess(request, hotelCode);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
     const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
     const bucket = bucketName ? adminStorage.bucket(bucketName) : null;

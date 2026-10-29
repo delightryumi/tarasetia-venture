@@ -23,14 +23,15 @@ export function middleware(request: NextRequest) {
       return NextResponse.rewrite(url);
     }
 
-    // 3. Blokir akses ke halaman admin dashboard agar staff tidak bisa nyasar
-    const isAdminRoute =
-      url.pathname.startsWith("/select-module") ||
-      url.pathname.startsWith("/login") ||
-      url.pathname.startsWith("/superadmin") ||
-      url.pathname.startsWith("/(dashboard)");
+    // 3. Izinkan hanya route absensi dan API absensi/cuti di domain staff.*
+    const isAllowedStaffPath =
+      url.pathname === "/attendance" ||
+      url.pathname.startsWith("/attendance/") ||
+      url.pathname.startsWith("/api/attendance") ||
+      url.pathname.startsWith("/api/leave") ||
+      url.pathname.startsWith("/api/manifest-attendance");
 
-    if (isAdminRoute) {
+    if (!isAllowedStaffPath) {
       url.pathname = "/attendance";
       return NextResponse.redirect(url);
     }
@@ -42,13 +43,8 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Jalankan middleware hanya pada route halaman, bukan aset static
+     * Jalankan middleware pada seluruh halaman aplikasi kecuali aset static Next.js & file gambar/publik
      */
-    "/",
-    "/manifest-attendance.json",
-    "/attendance/:path*",
-    "/select-module",
-    "/login",
-    "/superadmin/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|icons/|channels/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp3|wav)$).*)",
   ],
 };

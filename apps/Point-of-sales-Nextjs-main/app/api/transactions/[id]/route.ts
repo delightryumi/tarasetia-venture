@@ -3,6 +3,7 @@ import { db } from '@/lib/firebase';
 import { query, getDocs, doc, updateDoc, orderBy, limit, deleteDoc, where, getDoc } from 'firebase/firestore';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 import { logAuditEvent } from '@/lib/auditLogger';
+import { verifyPosApiRequest, unauthorizedResponse } from '@/lib/posServerAuth';
 
 // GET request handler to fetch onSaleProducts by transactionId from Firestore daily_revenue
 export async function GET(
@@ -117,11 +118,16 @@ export const PATCH = async (
 ) => {
   const { id } = await params;
   try {
-    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "0") {
-      return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
+    const body = await request.json().catch(() => ({}));
+    const authResult = await verifyPosApiRequest(request, {
+      body,
+      requiredPermissions: ['pos_cancel', 'module_pos', 'pos'],
+    });
+    if (!authResult.authorized) {
+      return unauthorizedResponse(authResult);
     }
-    const body = await request.json();
+
+    const hotelCode = authResult.hotelCode;
     const reason = body.reason || 'Voided from Records';
 
     let transactionDate: string | null = null;
@@ -264,10 +270,10 @@ export const PATCH = async (
     await logAuditEvent({
       hotelCode,
       actor: {
-        uid: targetOrderDoc?.cashierId || 'pos-operator',
-        name: targetOrderDoc?.cashierName || 'Kasir POS',
-        email: targetOrderDoc?.cashierEmail || 'pos@system',
-        role: 'cashier',
+        uid: authResult.uid || targetOrderDoc?.cashierId || 'pos-operator',
+        name: authResult.name || targetOrderDoc?.cashierName || 'Kasir POS',
+        email: authResult.email || targetOrderDoc?.cashierEmail || 'pos@system',
+        role: authResult.role || 'cashier',
       },
       category: 'POS',
       action: 'CANCEL_ORDER',
@@ -295,10 +301,22 @@ export const DELETE = async (
 ) => {
   const { id } = await params;
   try {
-    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "0") {
-      return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
+    let body: Record<string, any> = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
     }
+
+    const authResult = await verifyPosApiRequest(request, {
+      body,
+      requiredPermissions: ['pos_void', 'trans_void', 'module_pos', 'pos'],
+    });
+    if (!authResult.authorized) {
+      return unauthorizedResponse(authResult);
+    }
+
+    const hotelCode = authResult.hotelCode;
     let transactionDate: string | null = null;
     let shiftId: string | null = null;
     let resolvedTxId = id;
@@ -450,10 +468,10 @@ export const DELETE = async (
     await logAuditEvent({
       hotelCode,
       actor: {
-        uid: targetOrderDoc?.cashierId || 'pos-supervisor',
-        name: targetOrderDoc?.cashierName || 'Supervisor POS',
-        email: targetOrderDoc?.cashierEmail || 'supervisor@system',
-        role: 'supervisor',
+        uid: authResult.uid || targetOrderDoc?.cashierId || 'pos-supervisor',
+        name: authResult.name || targetOrderDoc?.cashierName || 'Supervisor POS',
+        email: authResult.email || targetOrderDoc?.cashierEmail || 'supervisor@system',
+        role: authResult.role || 'supervisor',
       },
       category: 'POS',
       action: 'VOID_ORDER',
@@ -480,12 +498,16 @@ export const PUT = async (
 ) => {
   const { id } = await params;
   try {
-    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "0") {
-      return NextResponse.json({ error: "Hotel Code is missing or invalid" }, { status: 400 });
+    const body = await request.json();
+    const authResult = await verifyPosApiRequest(request, {
+      body,
+      requiredPermissions: ['module_pos', 'pos'],
+    });
+    if (!authResult.authorized) {
+      return unauthorizedResponse(authResult);
     }
 
-    const body = await request.json();
+    const hotelCode = authResult.hotelCode;
     const rawPaymentMethod = (body.paymentMethod || '').toLowerCase().trim();
     const notes = body.notes || '';
 
@@ -722,10 +744,10 @@ export const PUT = async (
     await logAuditEvent({
       hotelCode,
       actor: {
-        uid: targetOrderDoc?.cashierId || 'pos-operator',
-        name: targetOrderDoc?.cashierName || 'Kasir POS',
-        email: targetOrderDoc?.cashierEmail || 'pos@system',
-        role: 'cashier',
+        uid: authResult.uid || targetOrderDoc?.cashierId || 'pos-operator',
+        name: authResult.name || targetOrderDoc?.cashierName || 'Kasir POS',
+        email: authResult.email || targetOrderDoc?.cashierEmail || 'pos@system',
+        role: authResult.role || 'cashier',
       },
       category: 'POS',
       action: 'UPDATE_PAYMENT_METHOD',
@@ -754,4 +776,3 @@ export const PUT = async (
     return NextResponse.json({ error: error.message || 'Gagal mengubah metode pembayaran' }, { status: 500 });
   }
 };
-

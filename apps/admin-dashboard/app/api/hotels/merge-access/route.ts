@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
+import { requireSuperadmin } from "@/lib/security/serverAuth";
 
 export async function POST(request: Request) {
   try {
+    const authCheck = await requireSuperadmin(request);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const { email, selectedOutlets } = await request.json();
 
     if (!email || !selectedOutlets || !Array.isArray(selectedOutlets)) {
@@ -86,6 +90,9 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const authCheck = await requireSuperadmin(request);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
 

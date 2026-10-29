@@ -2,109 +2,125 @@
 
 import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { auth } from '@/lib/firebase';
 
 export default function POSPage() {
   const { user, activeHotelCode } = useAuth();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      const protocol = window.location.protocol;
-      
-      // Determine target POS base url dynamically
-      const getPosUrl = () => {
-        if (hostname === 'live.mytara.id') {
-          return `${protocol}//point.mytara.id`;
-        }
-        if (process.env.NEXT_PUBLIC_POS_URL) {
-          return process.env.NEXT_PUBLIC_POS_URL;
-        }
-        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
-        if (isLocal) {
-          return `${protocol}//${hostname}:3001`;
-        }
-        if (hostname.includes('-3000.')) {
-          return `${protocol}//${hostname.replace('-3000.', '-3001.')}`;
-        }
-        if (hostname.startsWith('pms.')) {
-          return `${protocol}//${hostname.replace('pms.', 'pos.')}`;
-        }
-        if (hostname.startsWith('dashboard.')) {
-          return `${protocol}//${hostname.replace('dashboard.', 'pos.')}`;
-        }
-        if (hostname.startsWith('live.')) {
-          return `${protocol}//${hostname.replace('live.', 'point.')}`;
-        }
-        if (hostname.includes('--bumi-anyom')) {
-          const parts = hostname.split('--');
-          parts[0] = 'pos';
-          return `${protocol}//${parts.join('--')}`;
-        }
-        return `https://point.mytara.id`;
-      };
-      const basePosUrl = getPosUrl().replace(/\/+$/, '');
+      const redirectToPos = async () => {
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        
+        // Determine target POS base url dynamically
+        const getPosUrl = () => {
+          if (hostname === 'live.mytara.id') {
+            return `${protocol}//point.mytara.id`;
+          }
+          if (process.env.NEXT_PUBLIC_POS_URL) {
+            return process.env.NEXT_PUBLIC_POS_URL;
+          }
+          const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+          if (isLocal) {
+            return `${protocol}//${hostname}:3001`;
+          }
+          if (hostname.includes('-3000.')) {
+            return `${protocol}//${hostname.replace('-3000.', '-3001.')}`;
+          }
+          if (hostname.startsWith('pms.')) {
+            return `${protocol}//${hostname.replace('pms.', 'pos.')}`;
+          }
+          if (hostname.startsWith('dashboard.')) {
+            return `${protocol}//${hostname.replace('dashboard.', 'pos.')}`;
+          }
+          if (hostname.startsWith('live.')) {
+            return `${protocol}//${hostname.replace('live.', 'point.')}`;
+          }
+          if (hostname.includes('--bumi-anyom')) {
+            const parts = hostname.split('--');
+            parts[0] = 'pos';
+            return `${protocol}//${parts.join('--')}`;
+          }
+          return `https://point.mytara.id`;
+        };
+        const basePosUrl = getPosUrl().replace(/\/+$/, '');
 
-
-      // Collect session state to forward to the POS app
-      const params = new URLSearchParams();
-      
-      const storedUser = localStorage.getItem('auth_user');
-      if (storedUser) {
-        // Map auth_user fields to pos expected fields
-        try {
-          const authUserObj = JSON.parse(storedUser);
+        // Collect session state to forward to the POS app
+        const params = new URLSearchParams();
+        
+        const storedUser = localStorage.getItem('auth_user');
+        if (storedUser) {
+          // Map auth_user fields to pos expected fields
+          try {
+            const authUserObj = JSON.parse(storedUser);
+            const localHotelCode = localStorage.getItem('active_hotel_code');
+            const posUserObj = {
+              id: authUserObj.uid,
+              name: authUserObj.displayName,
+              username: authUserObj.email?.split('@')[0],
+              email: authUserObj.email,
+              role: authUserObj.role || 'WORKER',
+              restoId: 'default-resto',
+              hotelCode: activeHotelCode || localHotelCode || authUserObj.hotelCode || ''
+            };
+            params.set('user', JSON.stringify(posUserObj));
+          } catch (e) {
+            params.set('user', storedUser);
+          }
+        } else if (user) {
+          // Fallback user state structure
+          const email = user.email || '';
+          const name = user.displayName || email.split('@')[0];
           const localHotelCode = localStorage.getItem('active_hotel_code');
           const posUserObj = {
-            id: authUserObj.uid,
-            name: authUserObj.displayName,
-            username: authUserObj.email?.split('@')[0],
-            email: authUserObj.email,
-            role: authUserObj.role || 'WORKER',
+            id: user.uid,
+            name: name,
+            username: email.split('@')[0],
+            email: email,
+            role: user.role || 'WORKER',
             restoId: 'default-resto',
-            hotelCode: activeHotelCode || localHotelCode || authUserObj.hotelCode || ''
+            hotelCode: activeHotelCode || localHotelCode || user.hotelCode || ''
           };
           params.set('user', JSON.stringify(posUserObj));
-        } catch (e) {
-          params.set('user', storedUser);
         }
-      } else if (user) {
-        // Fallback user state structure
-        const email = user.email || '';
-        const name = user.displayName || email.split('@')[0];
-        const localHotelCode = localStorage.getItem('active_hotel_code');
-        const posUserObj = {
-          id: user.uid,
-          name: name,
-          username: email.split('@')[0],
-          email: email,
-          role: user.role || 'WORKER',
-          restoId: 'default-resto',
-          hotelCode: activeHotelCode || localHotelCode || user.hotelCode || ''
-        };
-        params.set('user', JSON.stringify(posUserObj));
-      }
 
-      const restoName = localStorage.getItem('restoName');
-      if (restoName) params.set('restoName', restoName);
+        const restoName = localStorage.getItem('restoName');
+        if (restoName) params.set('restoName', restoName);
 
-      // Set cross-subdomain cookie for seamless SSO between live.mytara.id and point.mytara.id
-      const rootDomain = hostname.endsWith('mytara.id') ? '; domain=.mytara.id' : '';
-      const effectiveHotel = activeHotelCode || localStorage.getItem('active_hotel_code') || '';
-      if (effectiveHotel) {
-        document.cookie = `hotelCode=${effectiveHotel}; path=/${rootDomain}; max-age=86400; SameSite=Lax`;
-      }
+        // Set cross-subdomain cookie for seamless SSO between live.mytara.id and point.mytara.id
+        const rootDomain = hostname.endsWith('mytara.id') ? '; domain=.mytara.id' : '';
+        const effectiveHotel = activeHotelCode || localStorage.getItem('active_hotel_code') || '';
+        if (effectiveHotel) {
+          document.cookie = `hotelCode=${effectiveHotel}; path=/${rootDomain}; max-age=86400; SameSite=Lax`;
+          params.set('hotelCode', effectiveHotel);
+        }
 
-      // Pass the dashboard's current URL for redirection back
-      params.set('dashboardUrl', window.location.origin + '/select-module');
+        // Obtain Firebase Auth ID token so POS can authenticate API requests
+        try {
+          const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : '';
+          if (idToken) {
+            params.set('token', idToken);
+            document.cookie = `__session=${encodeURIComponent(idToken)}; path=/${rootDomain}; max-age=86400; SameSite=Lax`;
+          }
+        } catch (err) {
+          console.warn('Failed to get Firebase ID token for POS redirect:', err);
+        }
 
-      // Perform a clean redirect to the POS Home screen using hash parameters for safety
-      try {
-        const url = new URL('/home', basePosUrl);
-        url.hash = params.toString();
-        window.location.href = url.toString();
-      } catch (e) {
-        window.location.href = `${basePosUrl}/home#${params.toString()}`;
-      }
+        // Pass the dashboard's current URL for redirection back
+        params.set('dashboardUrl', window.location.origin + '/select-module');
+
+        // Perform a clean redirect to the POS Home screen using hash parameters for safety
+        try {
+          const url = new URL('/home', basePosUrl);
+          url.hash = params.toString();
+          window.location.href = url.toString();
+        } catch (e) {
+          window.location.href = `${basePosUrl}/home#${params.toString()}`;
+        }
+      };
+
+      redirectToPos();
     }
   }, [user, activeHotelCode]);
 

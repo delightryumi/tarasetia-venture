@@ -31,6 +31,22 @@ import { useCurrency } from '@/hooks/useCurrency';
 
 export type PaymentMethodOption = 'cash' | 'qris' | 'card' | 'transfer' | 'compliment';
 
+function getPosAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const headers: Record<string, string> = {};
+  const token = localStorage.getItem('pos_auth_token') || '';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const hotelCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+  if (hotelCode) headers['x-hotel-code'] = hotelCode;
+  try {
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    if (u.email) headers['x-user-email'] = u.email;
+    if (u.id || u.uid) headers['x-user-id'] = String(u.id || u.uid);
+    if (!headers['x-hotel-code'] && u.hotelCode) headers['x-hotel-code'] = String(u.hotelCode);
+  } catch {}
+  return headers;
+}
+
 interface PaymentMethodMeta {
   id: PaymentMethodOption;
   label: string;
@@ -150,10 +166,17 @@ export function EditPaymentDialog({
 
     setLoading(true);
     try {
-      const response = await axios.put(`/api/transactions/${data.id}`, {
-        paymentMethod: selectedMethod,
-        notes: note.trim(),
-      });
+      const response = await axios.put(
+        `/api/transactions/${data.id}`,
+        {
+          paymentMethod: selectedMethod,
+          notes: note.trim(),
+        },
+        {
+          headers: getPosAuthHeaders(),
+          withCredentials: true,
+        }
+      );
 
       // Update local IndexedDB if transaction exists locally
       try {

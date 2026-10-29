@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Upload, X, CheckCircle2 } from "lucide-react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import "./upload.css";
 
 const compressImage = async (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = (event) => {
@@ -54,9 +54,9 @@ const compressImage = async (file: File): Promise<File> => {
                     }
                 }, file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.82);
             };
-            img.onerror = () => resolve(file); // fallback to original on error
+            img.onerror = () => resolve(file);
         };
-        reader.onerror = () => resolve(file); // fallback to original on error
+        reader.onerror = () => resolve(file);
     });
 };
 
@@ -83,7 +83,6 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
 
     const startUpload = useCallback(async (item: UploadQueueItem) => {
         try {
-            // Compress the image before uploading
             const compressedFile = await compressImage(item.file);
 
             const cleanBasePath = basePath.replace(/^\/+/, "");
@@ -119,28 +118,26 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
         }
     }, [basePath]);
 
-    // Notify parent when ALL uploads in the current queue are finished
     const notifiedRef = React.useRef(false);
 
     React.useEffect(() => {
         const uploadingItems = queue.filter(q => q.status === 'uploading');
         const completedItems = queue.filter(q => q.status === 'completed');
 
-        // If we have items, none are still uploading, and we haven't notified for this specific queue state
         if (queue.length > 0 && uploadingItems.length === 0 && !notifiedRef.current) {
             if (completedItems.length > 0) {
                 onUploadsComplete(completedItems.map(i => ({ url: i.url!, storagePath: i.path! })));
                 notifiedRef.current = true;
             }
         } else if (uploadingItems.length > 0) {
-            // Reset notification flag if new items start uploading
             notifiedRef.current = false;
         }
     }, [queue, onUploadsComplete]);
 
     const handleFiles = (files: FileList) => {
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
         const newItems: UploadQueueItem[] = Array.from(files)
-            .filter(file => file.type.startsWith("image/"))
+            .filter(file => allowedTypes.includes(file.type.toLowerCase()) && file.size <= 5 * 1024 * 1024)
             .map(file => ({
                 id: Math.random().toString(36).substring(7),
                 file,
@@ -193,7 +190,7 @@ export const MultiImageUpload: React.FC<MultiImageUploadProps> = ({
                 <input
                     type="file"
                     className="hidden"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
                     multiple
                     onChange={onFileChange}
                 />

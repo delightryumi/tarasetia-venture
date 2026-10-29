@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { requireAuth, requireHotelAccess } from "@/lib/security/serverAuth";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BLuwRrpBTaK6tmXC32qj_BZnSfnBYJmPcJMKxwDWoliqBjeQVidWv2L7s0pUUCRiu4t3WIgYLU1g5D6dQZvVHpk";
 
@@ -12,11 +13,21 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
+        const authCheck = await requireAuth(req);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+        const authUser = authCheck.user;
+
         const body = await req.json();
-        const { hotelCode, subscription, userAgent, userEmail, preferences } = body;
+        const { hotelCode, subscription, userAgent, preferences } = body;
+        const userEmail = authUser.email;
 
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
+        }
+
+        if (!authUser.isSuperadmin) {
+            const accessCheck = await requireHotelAccess(req, hotelCode);
+            if ("errorResponse" in accessCheck) return accessCheck.errorResponse;
         }
 
         // ── Case 1: Preferences-only update (no subscription) ──
@@ -37,17 +48,7 @@ export async function POST(req: NextRequest) {
         // Generate a deterministic ID based on the subscription endpoint hash to prevent duplicates
         const subId = Buffer.from(subscription.endpoint).toString("base64").slice(-32).replace(/[^a-zA-Z0-9]/g, "_");
 
-        const isSuperadminUser = Boolean(
-            body.isSuperadmin === true ||
-            (userEmail && (
-                userEmail.toLowerCase().includes("superadmin") ||
-                userEmail.toLowerCase().includes("admin@") ||
-                userEmail.toLowerCase() === "superadmin@setara.co.id" ||
-                userEmail.toLowerCase() === "admin@setara.co.id"
-            )) ||
-            hotelCode === "0" ||
-            hotelCode === "root"
-        );
+        const isSuperadminUser = Boolean(authUser.isSuperadmin);
 
         // 1. Save to hotel-specific subscription
         await adminDb.collection(`hotels/${hotelCode}/push_subscriptions`).doc(subId).set({
@@ -94,6 +95,9 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
     try {
+        const authCheck = await requireAuth(req);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
         const { searchParams } = new URL(req.url);
         const hotelCode = searchParams.get("hotelCode");
         const endpoint = searchParams.get("endpoint");
@@ -104,7 +108,9 @@ export async function DELETE(req: NextRequest) {
 
         const subId = Buffer.from(endpoint).toString("base64").slice(-32).replace(/[^a-zA-Z0-9]/g, "_");
         await adminDb.collection(`hotels/${hotelCode}/push_subscriptions`).doc(subId).delete().catch(() => {});
-        await adminDb.collection("superadmin_push_subscriptions").doc(subId).delete().catch(() => {});
+        if (authCheck.user.isSuperadmin) {
+            await adminDb.collection("superadmin_push_subscriptions").doc(subId).delete().catch(() => {});
+        }
 
         return NextResponse.json({
             success: true,

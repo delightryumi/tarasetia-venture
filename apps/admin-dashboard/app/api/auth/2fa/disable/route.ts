@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { emailToDocId } from "@/lib/security/inputSanitizer";
+import { requireAuth } from "@/lib/security/serverAuth";
 import { verifyTotpToken } from "@/lib/totp";
 import { logAuditEvent } from "@/lib/auditLogger";
 
+const disableAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 5 * 60 * 1000;
+
 export async function POST(req: NextRequest) {
   try {
+    const authCheck = await requireAuth(req);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const { email, hotelCode, code } = await req.json();
 
     if (!email || !code) {
@@ -15,7 +23,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const docId = emailToDocId(email);
+    const cleanEmail = String(email).trim().toLowerCase();
+    if (!authCheck.user.isSuperadmin && authCheck.user.email.toLowerCase() !== cleanEmail) {
+      return NextResponse.json(
+        { error: "Akses Ditolak: Anda hanya dapat menonaktifkan 2FA untuk akun Anda sendiri." },
+        { status: 403 }
+      );
+    }
+
+    const now = Date.now();
+    const attemptEntry = disableAttempts.get(cleanEmail);
+    if (attemptEntry && now < attemptEntry.resetAt && attemptEntry.count >= MAX_ATTEMPTS) {
+      return NextResponse.json(
+        { error: "Terlalu banyak percobaan gagal. Silakan coba lagi dalam 5 menit." },
+        { status: 429 }
+      );
+    }
+
+    const docId = emailToDocId(cleanEmail);
     let userRef = adminDb.doc(`users_master/${docId}`);
     let snap = await userRef.get();
     let resolvedHotelCode = hotelCode || "0";
@@ -58,11 +83,17 @@ export async function POST(req: NextRequest) {
     const isRecoveryMatch = recoveryCodes.includes(cleanCode);
 
     if (!isTotpValid && !isRecoveryMatch) {
+      const prev = disableAttempts.get(cleanEmail);
+      const count = prev && now < prev.resetAt ? prev.count + 1 : 1;
+      const resetAt = prev && now < prev.resetAt ? prev.resetAt : now + WINDOW_MS;
+      disableAttempts.set(cleanEmail, { count, resetAt });
       return NextResponse.json(
         { error: "Kode verifikasi 6 digit atau kode recovery tidak valid." },
         { status: 400 }
       );
     }
+
+    disableAttempts.delete(cleanEmail);
 
     await userRef.update({
       twoFactorEnabled: false,

@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { sendWelcomeEmail } from "@/lib/emailHelper";
 import { adminAuth } from "@/lib/firebaseAdmin";
-import { getAuthenticatedUser } from "@/lib/security/serverAuth";
+import { requireSuperadmin } from "@/lib/security/serverAuth";
 import { sanitizeIdentifier, isValidEmail } from "@/lib/security/inputSanitizer";
 import crypto from "crypto";
 
 export async function POST(request: Request) {
   try {
-    const authUser = await getAuthenticatedUser(request);
+    const authCheck = await requireSuperadmin(request);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const body = await request.json();
     const { email: rawEmail, hotelCode: rawHotelCode, hotelName } = body;
 
@@ -25,14 +27,6 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Format alamat email tidak valid." },
         { status: 400 }
-      );
-    }
-
-    // Role check: Only authenticated Superadmin can register hotel admins
-    if (!authUser || !authUser.isSuperadmin) {
-      return NextResponse.json(
-        { error: "Akses Ditolak: Hanya Superadmin yang berwenang mendaftarkan admin hotel." },
-        { status: 403 }
       );
     }
 

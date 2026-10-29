@@ -142,9 +142,15 @@ exports.centralBillingWorker = onSchedule({
   await processBilling();
 });
 
-// 2. HTTP Endpoint for Manual Testing
+// 2. HTTP Endpoint for Manual Testing (Protected by CRON_SECRET)
 exports.testBillingWorker = onRequest(async (req, res) => {
   try {
+    const cronSecret = process.env.CRON_SECRET;
+    const authHeader = req.headers.authorization || req.headers["x-cron-secret"] || "";
+    if (!cronSecret || (authHeader !== `Bearer ${cronSecret}` && authHeader !== cronSecret)) {
+      res.status(401).json({ success: false, error: "Unauthorized: Invalid or missing CRON_SECRET." });
+      return;
+    }
     const result = await processBilling();
     res.status(200).json({ success: true, message: "Worker executed successfully", result });
   } catch (error) {

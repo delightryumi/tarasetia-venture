@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
 import { channexClient } from "@/lib/channex/channexClient";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 /**
  * Mapping of internal TARA channel codes to Channex adapter codes (56+ Channex Adapters)
@@ -118,6 +119,9 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
 
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
         const { channexPropertyId, apiKey, env, cm } = await getHotelChannexContext(hotelCode, false);
 
         // Fetch live channels from Channex for this property if propertyId exists
@@ -157,6 +161,9 @@ export async function POST(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
         // ====================================================
         // ACTION 1: TEST CONNECTION WITH OTA VIA CHANNEX

@@ -15,6 +15,23 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { toast } from 'react-toastify';
+
+function getPosAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const headers: Record<string, string> = {};
+  const token = localStorage.getItem('pos_auth_token') || '';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const hotelCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+  if (hotelCode) headers['x-hotel-code'] = hotelCode;
+  try {
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    if (u.email) headers['x-user-email'] = u.email;
+    if (u.id || u.uid) headers['x-user-id'] = String(u.id || u.uid);
+    if (!headers['x-hotel-code'] && u.hotelCode) headers['x-hotel-code'] = String(u.hotelCode);
+  } catch {}
+  return headers;
+}
+
 type Data = {
   id: string;
   productstock: {
@@ -49,8 +66,12 @@ export function DeleteAlertDialog({
     }
 
     try {
-      const response = await axios.delete(
-        `/api/product/${data.productstock.id}`
+      await axios.delete(
+        `/api/product/${data.productstock.id}`,
+        {
+          headers: getPosAuthHeaders(),
+          withCredentials: true,
+        }
       );
       onClose();
       router.refresh();

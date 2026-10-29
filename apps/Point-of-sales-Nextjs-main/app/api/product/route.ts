@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { db as firestoreDb } from '@/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { invalidateCatalogCache } from '@/lib/catalogCache';
+import { verifyPosApiRequest, unauthorizedResponse } from '@/lib/posServerAuth';
 
 // Function to generate a unique ID for a new product using Firestore
 const generateUniqueId = async (hotelCode: string) => {
@@ -25,12 +26,17 @@ const generateUniqueId = async (hotelCode: string) => {
 // Handler function for POST request to create a new product in Firestore
 export const POST = async (request: NextRequest) => {
   try {
-    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "0") {
-      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
-    }
-    const customId = await generateUniqueId(hotelCode);
     const body = await request.json();
+    const authResult = await verifyPosApiRequest(request, {
+      body,
+      requiredPermissions: ['pos_product', 'module_pos', 'pos'],
+    });
+    if (!authResult.authorized) {
+      return unauthorizedResponse(authResult);
+    }
+
+    const hotelCode = authResult.hotelCode;
+    const customId = await generateUniqueId(hotelCode);
 
     const newProductData = {
       name: body.productName,

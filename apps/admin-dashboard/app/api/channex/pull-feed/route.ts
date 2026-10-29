@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { channexSyncService } from "@/lib/channex/syncService";
 import { channexClient } from "@/lib/channex/channexClient";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { getAuthenticatedUser } from "@/lib/security/serverAuth";
 
 /**
  * Channex Booking Revision Feed Pull + Acknowledge
@@ -34,7 +35,8 @@ export async function POST(req: NextRequest) {
 async function handlePullFeed(req: NextRequest) {
     const startTime = Date.now();
 
-    // Security: Verify Vercel Cron secret or internal API secret
+    // Security: Verify Vercel Cron secret, x-vercel-cron header, or authenticated user
+    const authHeader = req.headers.get("authorization") || "";
     let cronSecret = process.env.CRON_SECRET || process.env.CHANNEX_WEBHOOK_SECRET;
     if (!cronSecret) {
         try {
@@ -44,13 +46,14 @@ async function handlePullFeed(req: NextRequest) {
             }
         } catch {}
     }
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-        // Allow internal calls without auth (same-origin Next.js server)
-        const isInternalCall = req.headers.get("x-internal-call") === "1";
-        if (!isInternalCall) {
-            console.warn("[Channex Pull Feed] Unauthorized cron request rejected.");
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+
+    const isValidCronSecret = Boolean(cronSecret && (authHeader === `Bearer ${cronSecret}` || authHeader === cronSecret));
+    const isVercelCron = req.headers.get("x-vercel-cron") === "1";
+    const authUser = (!isValidCronSecret && !isVercelCron) ? await getAuthenticatedUser(req) : null;
+
+    if (!isValidCronSecret && !isVercelCron && !authUser) {
+        console.warn("[Channex Pull Feed] Unauthorized cron request rejected.");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     console.log(`[Channex Pull Feed] Starting booking revision feed pull at ${new Date().toISOString()}`);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { sendEmailNotificationToOwner } from "@/lib/notifications/emailBrevoService";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 /**
  * GET /api/notifications/email?hotelCode=xxx
@@ -14,6 +15,9 @@ export async function GET(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
         if (!hotelDoc.exists) {
@@ -62,6 +66,9 @@ export async function POST(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
         // ==========================================
         // ACTION 1: SAVE CONFIG

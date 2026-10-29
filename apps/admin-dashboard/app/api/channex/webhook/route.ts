@@ -27,10 +27,12 @@ export async function POST(req: NextRequest) {
         }
 
         // Verify Secret if configured in environment or Firestore
-        if (expectedSecret && authHeader !== expectedSecret && authHeader !== `Bearer ${expectedSecret}`) {
-            console.warn("[Channex Webhook] Unauthorized request received. Invalid secret.");
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        } else if (!expectedSecret) {
+        if (expectedSecret) {
+            if (!authHeader || (authHeader !== expectedSecret && authHeader !== `Bearer ${expectedSecret}`)) {
+                console.warn("[Channex Webhook] Unauthorized request received. Invalid secret.");
+                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            }
+        } else {
             console.warn("[Channex Webhook] ⚠️  CHANNEX_WEBHOOK_SECRET is not configured in env or database. Skipping strict auth verification for testing.");
         }
 
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
         const eventType = payload?.event || (payload as any)?.type;
         console.log(`[Channex Webhook] Received Event: ${eventType}, Property: ${payload?.property_id || (payload as any)?.payload?.property_id}`);
 
-        if (!payload || !eventType) {
+        if (!payload || typeof payload !== "object" || !eventType || typeof eventType !== "string") {
             return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
         }
 

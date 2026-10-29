@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { channexClient } from "@/lib/channex/channexClient";
 import { channexSyncService } from "@/lib/channex/syncService";
 import { formatRateForChannex } from "@/lib/currency-utils";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 /**
  * Route: POST /api/channex/sync-master
@@ -21,6 +22,9 @@ export async function POST(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
         if (!hotelDoc.exists) {

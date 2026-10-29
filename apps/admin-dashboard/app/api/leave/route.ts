@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 // POST: Karyawan ajukan Izin/Sakit/Cuti
 export async function POST(request: Request) {
@@ -41,6 +42,9 @@ export async function PUT(request: Request) {
     if (!requestId || !hotelCode || !status || !reviewedBy) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
+
+    const authCheck = await requireHotelAccess(request, hotelCode);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
     const leaveRef = adminDb.doc(`hotels/${hotelCode}/leave_requests/${requestId}`);
     const leaveSnap = await leaveRef.get();
@@ -103,6 +107,11 @@ export async function GET(request: Request) {
 
     if (!hotelCode) {
       return NextResponse.json({ error: "hotelCode wajib diisi" }, { status: 400 });
+    }
+
+    if (!staffId) {
+      const authCheck = await requireHotelAccess(request, hotelCode);
+      if ("errorResponse" in authCheck) return authCheck.errorResponse;
     }
 
     let query: FirebaseFirestore.Query = adminDb

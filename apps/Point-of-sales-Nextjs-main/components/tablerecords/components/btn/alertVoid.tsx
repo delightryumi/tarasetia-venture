@@ -23,6 +23,22 @@ type Data = {
   id: string;
 };
 
+function getPosAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const headers: Record<string, string> = {};
+  const token = localStorage.getItem('pos_auth_token') || '';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const hotelCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+  if (hotelCode) headers['x-hotel-code'] = hotelCode;
+  try {
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    if (u.email) headers['x-user-email'] = u.email;
+    if (u.id || u.uid) headers['x-user-id'] = String(u.id || u.uid);
+    if (!headers['x-hotel-code'] && u.hotelCode) headers['x-hotel-code'] = String(u.hotelCode);
+  } catch {}
+  return headers;
+}
+
 export function VoidAlertDialog({
   open,
   onClose,
@@ -54,9 +70,11 @@ export function VoidAlertDialog({
     }
     setLoading(true);
     try {
-      await axios.patch(`/api/transactions/${data.id}`, {
-        reason: reasonInput
-      });
+      await axios.patch(
+        `/api/transactions/${data.id}`,
+        { reason: reasonInput },
+        { headers: getPosAuthHeaders(), withCredentials: true }
+      );
       setReasonInput('');
       onClose();
       router.refresh();

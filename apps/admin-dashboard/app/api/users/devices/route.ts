@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { resolveLocationFromReq } from "@/lib/geoHelper";
+import { requireAuth, requireHotelAccess } from "@/lib/security/serverAuth";
 
 /**
  * Device Activity & Session Management API
@@ -37,9 +38,24 @@ function parseUserAgent(ua: string): { deviceType: "desktop" | "mobile" | "table
 
 export async function GET(req: NextRequest) {
     try {
+        const authCheck = await requireAuth(req);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+        const authUser = authCheck.user;
+
         const { searchParams } = new URL(req.url);
         const hotelCode = searchParams.get("hotelCode");
         const userEmail = searchParams.get("userEmail");
+
+        if (!authUser.isSuperadmin) {
+            if (userEmail && userEmail.toLowerCase().trim() === authUser.email) {
+                // Allowed to query own devices
+            } else if (hotelCode && hotelCode !== "0" && hotelCode !== "all") {
+                const accessCheck = await requireHotelAccess(req, hotelCode);
+                if ("errorResponse" in accessCheck) return accessCheck.errorResponse;
+            } else {
+                return NextResponse.json({ success: false, error: "Akses Ditolak.", devices: [] }, { status: 403 });
+            }
+        }
 
         let query: FirebaseFirestore.Query = adminDb.collection("device_sessions");
 
@@ -79,10 +95,15 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        const authCheck = await requireAuth(req);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+        const authUser = authCheck.user;
+
         const body = await req.json();
         const { userId, userEmail, userName, hotelCode, sessionId } = body;
 
-        if (!userEmail) {
+        const effectiveEmail = authUser.email || (userEmail || "").toLowerCase().trim();
+        if (!effectiveEmail) {
             return NextResponse.json({ error: "userEmail is required" }, { status: 400 });
         }
 
@@ -90,14 +111,14 @@ export async function POST(req: NextRequest) {
         const { ip: ipAddress, location } = await resolveLocationFromReq(req, body.timeZone, body.location);
 
         const { deviceType, os, browser } = parseUserAgent(rawUa);
-        const docId = sessionId || `${userEmail.replace(/[@.]/g, "_")}_${os.replace(/[\s\/\\]+/g, "")}_${browser.replace(/[\s\/\\]+/g, "")}`;
+        const docId = sessionId || `${effectiveEmail.replace(/[@.]/g, "_")}_${os.replace(/[\s\/\\]+/g, "")}_${browser.replace(/[\s\/\\]+/g, "")}`;
 
         const sessionData = {
             id: docId,
-            userId: userId || "",
-            userEmail: userEmail.toLowerCase().trim(),
-            userName: userName || userEmail.split("@")[0],
-            hotelCode: hotelCode || "0",
+            userId: authUser.uid || userId || "",
+            userEmail: effectiveEmail,
+            userName: userName || effectiveEmail.split("@")[0],
+            hotelCode: hotelCode || authUser.hotelCode || "0",
             deviceType,
             os,
             browser,
@@ -119,11 +140,27 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
     try {
+        const authCheck = await requireAuth(req);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+        const authUser = authCheck.user;
+
         const { searchParams } = new URL(req.url);
         const sessionId = searchParams.get("sessionId");
 
         if (!sessionId) {
             return NextResponse.json({ error: "sessionId is required" }, { status: 400 });
+        }
+
+        const sessionDoc = await adminDb.collection("device_sessions").doc(sessionId).get();
+        if (sessionDoc.exists && !authUser.isSuperadmin) {
+            const sData = sessionDoc.data();
+            const isOwnSession = sData?.userEmail === authUser.email;
+            if (!isOwnSession && sData?.hotelCode) {
+                const accessCheck = await requireHotelAccess(req, sData.hotelCode);
+                if ("errorResponse" in accessCheck) return accessCheck.errorResponse;
+            } else if (!isOwnSession) {
+                return NextResponse.json({ error: "Akses Ditolak." }, { status: 403 });
+            }
         }
 
         // Revoke session

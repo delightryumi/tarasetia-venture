@@ -1,17 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { emailToDocId } from "@/lib/security/inputSanitizer";
+import { requireAuth } from "@/lib/security/serverAuth";
 import { generateTotpSecret, generateTotpUri, generateQrCodeDataUrl } from "@/lib/totp";
 
 export async function POST(req: NextRequest) {
   try {
+    const authCheck = await requireAuth(req);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const { email, hotelCode } = await req.json();
 
     if (!email || typeof email !== "string") {
       return NextResponse.json({ error: "Email wajib disertakan." }, { status: 400 });
     }
 
-    const docId = emailToDocId(email);
+    const cleanEmail = email.trim().toLowerCase();
+    if (!authCheck.user.isSuperadmin && authCheck.user.email.toLowerCase() !== cleanEmail) {
+      return NextResponse.json(
+        { error: "Akses Ditolak: Anda hanya dapat mengatur 2FA untuk akun Anda sendiri." },
+        { status: 403 }
+      );
+    }
+
+    const docId = emailToDocId(cleanEmail);
     let userRef = adminDb.doc(`users_master/${docId}`);
     let snap = await userRef.get();
 
@@ -21,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!snap.exists) {
-      const groupSnap = await adminDb.collectionGroup("users_master").where("email", "==", email.toLowerCase().trim()).limit(1).get();
+      const groupSnap = await adminDb.collectionGroup("users_master").where("email", "==", cleanEmail).limit(1).get();
       if (!groupSnap.empty) {
         userRef = groupSnap.docs[0].ref;
         snap = groupSnap.docs[0];
@@ -30,6 +42,14 @@ export async function POST(req: NextRequest) {
 
     if (!snap.exists) {
       return NextResponse.json({ error: "Pengguna tidak ditemukan dalam sistem." }, { status: 404 });
+    }
+
+    const userData = snap.data() || {};
+    if (userData?.twoFactorEnabled === true) {
+      return NextResponse.json(
+        { error: "2FA sudah aktif. Nonaktifkan terlebih dahulu sebelum mengatur ulang." },
+        { status: 400 }
+      );
     }
 
     // Generate new TOTP Secret (Base32, RFC 6238)

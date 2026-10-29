@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { resolveLocationFromReq } from "@/lib/geoHelper";
-import { getAuthenticatedUser } from "@/lib/security/serverAuth";
+import { requireAuth, requireHotelAccess } from "@/lib/security/serverAuth";
 import { emailToDocId, sanitizeIdentifier, isValidEmail } from "@/lib/security/inputSanitizer";
 import { COMPREHENSIVE_PERMISSION_GROUPS } from "@/components/sections/users/permissionConfig";
 
@@ -131,7 +131,10 @@ async function logActivity(data: {
 // POST: Create User & Set Multi-Hotel Claims
 export async function POST(request: Request) {
   try {
-    const authUser = await getAuthenticatedUser(request);
+    const authCheck = await requireAuth(request);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+    const authUser = authCheck.user;
+
     const body = await request.json();
     const { 
         email, password, name, role, hotelCode: rawHotelCode, permissions, 
@@ -154,37 +157,14 @@ export async function POST(request: Request) {
     // ── ROLE HIERARCHY & SERVER-SIDE AUTH VERIFICATION ──
     const targetRoleLower = role.toLowerCase();
     
-    // Determine whether caller is verified superadmin
-    let isRequesterSuper = authUser?.isSuperadmin ?? false;
-    const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
+    // Strictly use cryptographically verified token identity (never trust body.requesterEmail)
+    const isRequesterSuper = authUser.isSuperadmin;
+    const callerEmail = authUser.email;
 
-    if (!isRequesterSuper && callerEmail) {
-        if (
-            callerEmail === "superadmin@setara.co.id" || 
-            callerEmail === "nexura.management@gmail.com"
-        ) {
-            isRequesterSuper = true;
-        } else {
-            try {
-                const reqDocId = emailToDocId(callerEmail);
-                const globalSnap = await adminDb.doc(`users_master/${reqDocId}`).get();
-                if (globalSnap.exists) {
-                    const gData = globalSnap.data();
-                    if ((gData?.role || "").toLowerCase() === "superadmin" || gData?.isSuperadmin === true) {
-                        isRequesterSuper = true;
-                    }
-                }
-            } catch (e) {
-                console.warn("Could not check global superadmin:", e);
-            }
-        }
-    }
-
-    // Verify non-superadmin rights
+    // Verify non-superadmin rights AND tenant ownership
     if (!isRequesterSuper) {
-        if (!callerEmail) {
-            return NextResponse.json({ error: "Akses Ditolak: Kredensial otentikasi tidak ditemukan." }, { status: 401 });
-        }
+        const tenantCheck = await requireHotelAccess(request, hotelCode);
+        if ("errorResponse" in tenantCheck) return tenantCheck.errorResponse;
 
         const reqDocId = emailToDocId(callerEmail);
 
@@ -373,7 +353,10 @@ export async function POST(request: Request) {
 // PUT: Update User & Multi-Hotel Claims
 export async function PUT(request: Request) {
   try {
-    const authUser = await getAuthenticatedUser(request);
+    const authCheck = await requireAuth(request);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+    const authUser = authCheck.user;
+
     const body = await request.json();
     const { 
         email, password, name, role, hotelCode: rawHotelCode, permissions, 
@@ -399,37 +382,14 @@ export async function PUT(request: Request) {
         if (globalUserSnap.exists) existingDoc = globalUserSnap.data();
     }
 
-    let isRequesterSuper = authUser?.isSuperadmin ?? false;
-    const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
+    // Strictly use cryptographically verified token identity (never trust body.requesterEmail)
+    const isRequesterSuper = authUser.isSuperadmin;
+    const callerEmail = authUser.email;
 
-    // Check if caller is superadmin via email or users_master fallback
-    if (!isRequesterSuper && callerEmail) {
-        if (
-            callerEmail === "superadmin@setara.co.id" || 
-            callerEmail === "nexura.management@gmail.com"
-        ) {
-            isRequesterSuper = true;
-        } else {
-            try {
-                const reqDocId = emailToDocId(callerEmail);
-                const globalSnap = await adminDb.doc(`users_master/${reqDocId}`).get();
-                if (globalSnap.exists) {
-                    const gData = globalSnap.data();
-                    if ((gData?.role || "").toLowerCase() === "superadmin" || gData?.isSuperadmin === true) {
-                        isRequesterSuper = true;
-                    }
-                }
-            } catch (e) {
-                console.warn("Could not check global superadmin:", e);
-            }
-        }
-    }
-
-    // Non-superadmin validation
+    // Non-superadmin validation & tenant isolation
     if (!isRequesterSuper) {
-        if (!callerEmail) {
-            return NextResponse.json({ error: "Akses Ditolak: Sesi otentikasi tidak valid." }, { status: 401 });
-        }
+        const tenantCheck = await requireHotelAccess(request, hotelCode);
+        if ("errorResponse" in tenantCheck) return tenantCheck.errorResponse;
 
         const reqDocId = emailToDocId(callerEmail);
 
@@ -669,7 +629,10 @@ export async function PUT(request: Request) {
 // DELETE: Remove User
 export async function DELETE(request: Request) {
   try {
-    const authUser = await getAuthenticatedUser(request);
+    const authCheck = await requireAuth(request);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+    const authUser = authCheck.user;
+
     const body = await request.json();
     const { email, hotelCode: rawHotelCode, timeZone } = body;
 
@@ -685,14 +648,13 @@ export async function DELETE(request: Request) {
     const snap = await userDocRef.get();
     const userData = snap.data();
 
-    let isRequesterSuper = authUser?.isSuperadmin ?? false;
+    const isRequesterSuper = authUser.isSuperadmin;
+    const callerEmail = authUser.email;
 
-    // Non-superadmin must have sec_user_manage permission
+    // Non-superadmin must belong to hotel and have sec_user_manage permission
     if (!isRequesterSuper) {
-        const callerEmail = authUser?.email || body.requesterEmail?.trim().toLowerCase();
-        if (!callerEmail) {
-            return NextResponse.json({ error: "Akses Ditolak: Sesi otentikasi tidak valid." }, { status: 401 });
-        }
+        const tenantCheck = await requireHotelAccess(request, hotelCode);
+        if ("errorResponse" in tenantCheck) return tenantCheck.errorResponse;
 
         try {
             const reqDocId = emailToDocId(callerEmail);

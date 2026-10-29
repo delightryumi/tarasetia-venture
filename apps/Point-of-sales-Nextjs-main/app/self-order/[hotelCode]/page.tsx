@@ -15,6 +15,10 @@ import CartCheckout from './components/CartCheckout';
 import SuccessScreen from './components/SuccessScreen';
 import ProductDetailModal from './components/ProductDetailModal';
 
+const MAX_QTY_PER_ITEM = 50;
+const MAX_TOTAL_CART_ITEMS = 100;
+const ORDER_COOLDOWN_MS = 30 * 1000;
+
 export default function GuestSelfOrderingPage({ params }: { params: Promise<{ hotelCode: string }> }) {
   const unwrappedParams = React.use(params);
   const hotelCode = unwrappedParams.hotelCode;
@@ -203,12 +207,18 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
   const handleAddToCart = (productId: string, qty: number, selectedAddons: any[], note: string) => {
     const prod = products.find(p => p.id === productId);
     if (prod && !prod.isAvailable) return;
+    const safeQty = Math.min(Math.max(1, qty), MAX_QTY_PER_ITEM);
+    const currentTotal = cart.reduce((sum, it) => sum + it.qty, 0);
+    if (currentTotal + safeQty > MAX_TOTAL_CART_ITEMS) {
+      alert(`Maksimal total pesanan dalam satu keranjang adalah ${MAX_TOTAL_CART_ITEMS} item.`);
+      return;
+    }
     const newItem: CartItem = {
       cartItemId: Math.random().toString(36).substring(7),
       productId,
-      qty,
+      qty: safeQty,
       selectedAddons,
-      note
+      note: (note || '').slice(0, 200)
     };
     setCart((prev) => [...prev, newItem]);
   };
@@ -219,10 +229,19 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
       handleProductClick(product);
       return;
     }
+    const currentTotal = cart.reduce((sum, it) => sum + it.qty, 0);
+    if (currentTotal + 1 > MAX_TOTAL_CART_ITEMS) {
+      alert(`Maksimal total pesanan dalam satu keranjang adalah ${MAX_TOTAL_CART_ITEMS} item.`);
+      return;
+    }
     const existing = cart.find(
       (item) => item.productId === product.id && item.selectedAddons.length === 0 && !item.note
     );
     if (existing) {
+      if (existing.qty + 1 > MAX_QTY_PER_ITEM) {
+        alert(`Maksimal pemesanan per item adalah ${MAX_QTY_PER_ITEM} porsi.`);
+        return;
+      }
       setCart((prev) =>
         prev.map((item) =>
           item.cartItemId === existing.cartItemId ? { ...item, qty: item.qty + 1 } : item
@@ -236,6 +255,18 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
   const handleQuickUpdateQty = (productId: string, delta: number) => {
     const targetItem = cart.find((item) => item.productId === productId);
     if (!targetItem) return;
+
+    const currentTotal = cart.reduce((sum, it) => sum + it.qty, 0);
+    if (delta > 0) {
+      if (targetItem.qty + delta > MAX_QTY_PER_ITEM) {
+        alert(`Maksimal pemesanan per item adalah ${MAX_QTY_PER_ITEM} porsi.`);
+        return;
+      }
+      if (currentTotal + delta > MAX_TOTAL_CART_ITEMS) {
+        alert(`Maksimal total pesanan dalam satu keranjang adalah ${MAX_TOTAL_CART_ITEMS} item.`);
+        return;
+      }
+    }
 
     setCart((prev) =>
       prev
@@ -255,7 +286,7 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
       prev
         .map((item) => {
           if (item.cartItemId === cartItemId) {
-            const newQty = item.qty + delta;
+            const newQty = Math.min(MAX_QTY_PER_ITEM, item.qty + delta);
             return newQty > 0 ? { ...item, qty: newQty } : null;
           }
           return item;
@@ -281,10 +312,10 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
           cartItemId: item.cartItemId,
           name: p?.name || 'Unknown',
           price: p?.price || 0,
-          qty: item.qty,
+          qty: Math.min(MAX_QTY_PER_ITEM, Math.max(1, item.qty)),
           categoryId: p?.categoryId || null,
           addons: item.selectedAddons || [],
-          note: item.note || ''
+          note: (item.note || '').slice(0, 200)
         };
       });
 
@@ -316,13 +347,13 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
 
       const orderData = {
         orderNumber: generatedOrderNum,
-        customerName: customerName.trim(),
-        tableNumber: tableNumber.trim(),
+        customerName: customerName.trim().slice(0, 80),
+        tableNumber: tableNumber.trim().slice(0, 20),
         orderType: 'Self-Order Tamu',
         source: 'Self-Order Tamu',
         cart: formattedCart,
         items: cartItems,
-        notes: orderNotes.trim(),
+        notes: orderNotes.trim().slice(0, 250),
         subtotal,
         service,
         serviceRate: serviceRatePercent,
@@ -340,6 +371,9 @@ export default function GuestSelfOrderingPage({ params }: { params: Promise<{ ho
       };
 
       await addDoc(collection(db, 'hotels', hotelCode, 'pos_held_orders'), orderData);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('last_self_order_ts', String(Date.now()));
+      }
 
       setLastOrderNumber(generatedOrderNum);
       setOrderCompleted(true);

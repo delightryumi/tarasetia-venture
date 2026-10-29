@@ -30,6 +30,22 @@ import { db } from '@/lib/firebase';
 
 import { getHotelCollection } from '@/lib/firestoreHelper';
 
+function getPosAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const headers: Record<string, string> = {};
+  const token = localStorage.getItem('pos_auth_token') || '';
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const hotelCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+  if (hotelCode) headers['x-hotel-code'] = hotelCode;
+  try {
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    if (u.email) headers['x-user-email'] = u.email;
+    if (u.id || u.uid) headers['x-user-id'] = String(u.id || u.uid);
+    if (!headers['x-hotel-code'] && u.hotelCode) headers['x-hotel-code'] = String(u.hotelCode);
+  } catch {}
+  return headers;
+}
+
 export function SheetAdd({
   open,
   onClose,
@@ -109,7 +125,8 @@ export function SheetAdd({
       formData.append('hotelCode', hotelCode);
 
       const response = await axios.post('/api/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { ...getPosAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+        withCredentials: true,
       });
       
       setImageProductUrl(response.data.url);
@@ -167,7 +184,10 @@ export function SheetAdd({
       });
 
       // Send validated data using axios
-      const response = await axios.post('/api/product', validatedData);
+      await axios.post('/api/product', validatedData, {
+        headers: getPosAuthHeaders(),
+        withCredentials: true,
+      });
 
       // If no errors, close the dialog and refresh the page
       onClose();

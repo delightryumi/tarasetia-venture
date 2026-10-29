@@ -4,6 +4,10 @@ import { emailToDocId } from "@/lib/security/inputSanitizer";
 import { verifyTotpToken } from "@/lib/totp";
 import { logAuditEvent } from "@/lib/auditLogger";
 
+const validateAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 5 * 60 * 1000;
+
 export async function POST(req: NextRequest) {
   try {
     const { email, hotelCode, code } = await req.json();
@@ -12,7 +16,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email wajib disertakan." }, { status: 400 });
     }
 
-    const docId = emailToDocId(email);
+    const cleanEmail = String(email).trim().toLowerCase();
+    const now = Date.now();
+    const attemptEntry = validateAttempts.get(cleanEmail);
+    if (attemptEntry && now < attemptEntry.resetAt && attemptEntry.count >= MAX_ATTEMPTS) {
+      return NextResponse.json(
+        { error: "Terlalu banyak percobaan verifikasi 2FA gagal. Silakan coba lagi dalam 5 menit.", required: true },
+        { status: 429 }
+      );
+    }
+
+    const docId = emailToDocId(cleanEmail);
     let userRef = adminDb.doc(`users_master/${docId}`);
     let snap = await userRef.get();
     let resolvedHotelCode = hotelCode || "0";
@@ -66,11 +80,17 @@ export async function POST(req: NextRequest) {
     const isRecoveryMatch = recoveryIndex !== -1;
 
     if (!isTotpValid && !isRecoveryMatch) {
+      const prev = validateAttempts.get(cleanEmail);
+      const count = prev && now < prev.resetAt ? prev.count + 1 : 1;
+      const resetAt = prev && now < prev.resetAt ? prev.resetAt : now + WINDOW_MS;
+      validateAttempts.set(cleanEmail, { count, resetAt });
       return NextResponse.json(
         { error: "Kode verifikasi 2FA tidak valid atau sudah kedaluwarsa.", required: true },
         { status: 401 }
       );
     }
+
+    validateAttempts.delete(cleanEmail);
 
     // If recovery code was used, remove it from list
     if (isRecoveryMatch) {

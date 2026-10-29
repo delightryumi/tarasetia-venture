@@ -27,7 +27,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { registerNetworkSync, syncProductsFromServer, syncUnsyncedTransactions } from '@/lib/dexie-sync';
 import { db } from '@/lib/firebase';
 import { localDb } from '@/lib/dexie';
-import { collection, onSnapshot, query, where, deleteDoc, doc, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, deleteDoc, doc, orderBy, limit, getDocs, getDoc } from 'firebase/firestore';
 import { useCurrency } from '@/hooks/useCurrency';
 import {
   Dialog,
@@ -37,6 +37,67 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+
+export const sanitizeDashboardUrl = (url: string | null): string => {
+  const defaultFallback = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3000';
+  if (!url) return defaultFallback;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return defaultFallback;
+    }
+    const host = parsed.hostname.toLowerCase();
+    const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+    const isAllowed =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === 'mytara.id' ||
+      host.endsWith('.mytara.id') ||
+      host === 'setaraventure.com' ||
+      host.endsWith('.setaraventure.com') ||
+      (currentHost !== '' && host === currentHost);
+    if (!isAllowed) {
+      return defaultFallback;
+    }
+    return parsed.toString();
+  } catch {
+    return defaultFallback;
+  }
+};
+
+const verifySuperadminInFirestore = async (parsedUser: any, hotelCode: string): Promise<boolean> => {
+  if (!parsedUser?.email) return false;
+  const claimedSuper =
+    parsedUser?.role?.toLowerCase() === 'superadmin' ||
+    parsedUser?.role?.toLowerCase() === 'super admin';
+  if (!claimedSuper) return false;
+
+  const emailDocId = String(parsedUser.email).toLowerCase().replace(/[@.]/g, '_');
+  try {
+    const rootSnap = await getDoc(doc(db, 'users_master', emailDocId));
+    if (rootSnap.exists()) {
+      const role = String(rootSnap.data()?.role || '').toLowerCase();
+      if (role === 'superadmin' || role === 'super admin') return true;
+    }
+    if (parsedUser.id) {
+      const uidSnap = await getDoc(doc(db, 'users_master', String(parsedUser.id)));
+      if (uidSnap.exists()) {
+        const role = String(uidSnap.data()?.role || '').toLowerCase();
+        if (role === 'superadmin' || role === 'super admin') return true;
+      }
+    }
+    if (hotelCode && hotelCode !== '0') {
+      const hotelUserSnap = await getDoc(doc(db, 'hotels', hotelCode, 'users_master', emailDocId));
+      if (hotelUserSnap.exists()) {
+        const role = String(hotelUserSnap.data()?.role || '').toLowerCase();
+        if (role === 'superadmin' || role === 'super admin') return true;
+      }
+    }
+  } catch (err) {
+    console.error('Failed to verify superadmin against users_master:', err);
+  }
+  return false;
+};
 
 const RootLayout = ({ children }: RootLayoutProps) => {
   const router = useRouter();
@@ -79,43 +140,98 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   };
 
   useEffect(() => {
-    try {
-      // Purge any leftover offline dummy products from Dexie IndexedDB
-      localDb.products.clear().catch(() => {});
-      const userJson = localStorage.getItem('user');
-      let effectiveHotelCode = '';
-      let isSuper = false;
-      if (userJson) {
-        try {
-          const parsedUser = JSON.parse(userJson);
-          setUser(parsedUser);
-          isSuper =
-            parsedUser?.role?.toLowerCase() === 'superadmin' ||
-            parsedUser?.role?.toLowerCase() === 'super admin' ||
-            parsedUser?.email?.toLowerCase() === 'nexura.management@gmail.com' ||
-            parsedUser?.email?.toLowerCase() === 'superadmin@setara.co.id';
-          setIsSuperadmin(isSuper);
-          effectiveHotelCode = parsedUser?.hotelCode || '';
-        } catch (e) {}
-      }
-      if (!effectiveHotelCode) {
-        effectiveHotelCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
-      }
+    let unsubscribeHotel: (() => void) | null = null;
+    let isCancelled = false;
 
-      if (effectiveHotelCode) {
-        document.cookie = `hotelCode=${effectiveHotelCode}; path=/; max-age=31536000; SameSite=Lax`;
-        localStorage.setItem('hotelCode', effectiveHotelCode);
-        localStorage.setItem('active_hotel_code', effectiveHotelCode);
-      }
+    const checkHotelActive = async () => {
+      try {
+        // Purge any leftover offline dummy products from Dexie IndexedDB
+        localDb.products.clear().catch(() => {});
+        const userJson = localStorage.getItem('user');
+        let effectiveHotelCode = '';
+        let parsedUser: any = null;
+        if (userJson) {
+          try {
+            parsedUser = JSON.parse(userJson);
+            setUser(parsedUser);
+            effectiveHotelCode = parsedUser?.hotelCode || '';
+          } catch (e) {}
+        }
+        if (!effectiveHotelCode) {
+          effectiveHotelCode = localStorage.getItem('active_hotel_code') || localStorage.getItem('hotelCode') || '';
+        }
 
-      const hotelCode = effectiveHotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || "";
+        if (effectiveHotelCode) {
+          document.cookie = `hotelCode=${effectiveHotelCode}; path=/; max-age=31536000; SameSite=Lax`;
+          localStorage.setItem('hotelCode', effectiveHotelCode);
+          localStorage.setItem('active_hotel_code', effectiveHotelCode);
+        }
 
-      // Superadmin tanpa preview hotel — skip query Firestore
-      if (!hotelCode || hotelCode === "0") {
-        setIsHotelActive(true);
-        if (isSuper) {
-          // Tetap load daftar hotel untuk dropdown (sekali fetch via getDocs, bukan real-time listener berkala)
-          getDocs(collection(db, "hotels")).then((snapshot) => {
+        const hotelCode = effectiveHotelCode || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE || '';
+
+        // Verify superadmin status against Firestore users_master (do NOT trust localStorage alone)
+        const verifiedSuper = await verifySuperadminInFirestore(parsedUser, hotelCode);
+        if (isCancelled) return;
+        setIsSuperadmin(verifiedSuper);
+
+        // Superadmin tanpa preview hotel — skip query Firestore
+        if (!hotelCode || hotelCode === '0') {
+          setIsHotelActive(verifiedSuper ? true : false);
+          if (verifiedSuper) {
+            getDocs(collection(db, 'hotels')).then((snapshot) => {
+              if (isCancelled) return;
+              const list: any[] = [];
+              snapshot.forEach((d) => {
+                const data = d.data();
+                list.push({ ...data, hotelCode: d.id });
+              });
+              list.sort((a, b) => String(a.hotelCode).localeCompare(String(b.hotelCode)));
+              setHotelsList(list);
+            }).catch(console.error);
+          }
+          return;
+        }
+
+        const docRef = doc(db, 'hotels', hotelCode);
+        unsubscribeHotel = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (verifiedSuper) {
+              setIsHotelActive(true);
+            } else {
+              setIsHotelActive(data.active !== false);
+            }
+            setNextDueDate(data.billing?.nextDueDate || '');
+            setHotelName(data.name || 'Hotel');
+            if (data.name) {
+              setStoreName(data.name);
+              localStorage.setItem('restoName', data.name);
+            }
+            if (data.posCatalogVersion) {
+              const lastSeenVersion = localStorage.getItem(`pos_catalog_version_${hotelCode}`);
+              if (String(data.posCatalogVersion) !== String(lastSeenVersion)) {
+                localStorage.setItem(`pos_catalog_version_${hotelCode}`, String(data.posCatalogVersion));
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('pos_catalog_updated', { detail: { version: data.posCatalogVersion } }));
+                }
+              }
+            }
+            if (data.posSoundUrl && data.posSoundUrl !== posSoundUrlRef.current) {
+              posSoundUrlRef.current = data.posSoundUrl;
+              // Force reset audio instance so it picks up the new sound
+              if (alarmAudioRef.current) {
+                alarmAudioRef.current.pause();
+                alarmAudioRef.current = null;
+              }
+            }
+          }
+        }, (err) => {
+          console.error('Error fetching hotel status in POS RootLayout:', err);
+        });
+
+        if (verifiedSuper) {
+          getDocs(collection(db, 'hotels')).then((snapshot) => {
+            if (isCancelled) return;
             const list: any[] = [];
             snapshot.forEach((d) => {
               const data = d.data();
@@ -125,64 +241,19 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             setHotelsList(list);
           }).catch(console.error);
         }
-        return;
+      } catch (e) {
+        console.error('Error in POS active check:', e);
       }
+    };
 
-      const docRef = doc(db, 'hotels', hotelCode);
-      const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (isSuper) {
-            setIsHotelActive(true);
-          } else {
-            setIsHotelActive(data.active !== false);
-          }
-          setNextDueDate(data.billing?.nextDueDate || '');
-          setHotelName(data.name || 'Hotel');
-          if (data.name) {
-            setStoreName(data.name);
-            localStorage.setItem('restoName', data.name);
-          }
-          if (data.posCatalogVersion) {
-            const lastSeenVersion = localStorage.getItem(`pos_catalog_version_${hotelCode}`);
-            if (String(data.posCatalogVersion) !== String(lastSeenVersion)) {
-              localStorage.setItem(`pos_catalog_version_${hotelCode}`, String(data.posCatalogVersion));
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('pos_catalog_updated', { detail: { version: data.posCatalogVersion } }));
-              }
-            }
-          }
-          if (data.posSoundUrl && data.posSoundUrl !== posSoundUrlRef.current) {
-            posSoundUrlRef.current = data.posSoundUrl;
-            // Force reset audio instance so it picks up the new sound
-            if (alarmAudioRef.current) {
-              alarmAudioRef.current.pause();
-              alarmAudioRef.current = null;
-            }
-          }
-        }
-      }, (err) => {
-        console.error('Error fetching hotel status in POS RootLayout:', err);
-      });
+    checkHotelActive();
 
-      if (isSuper) {
-        getDocs(collection(db, "hotels")).then((snapshot) => {
-          const list: any[] = [];
-          snapshot.forEach((d) => {
-            const data = d.data();
-            list.push({ ...data, hotelCode: d.id });
-          });
-          list.sort((a, b) => String(a.hotelCode).localeCompare(String(b.hotelCode)));
-          setHotelsList(list);
-        }).catch(console.error);
+    return () => {
+      isCancelled = true;
+      if (unsubscribeHotel) {
+        unsubscribeHotel();
       }
-
-      return () => {
-        unsubscribe();
-      };
-    } catch (e) {
-      console.error('Error in POS active check:', e);
-    }
+    };
   }, []);
 
   console.log('RBAC hook role:', role);
@@ -491,7 +562,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = `${getDashboardUrl()}?logout=true`;
+    document.cookie = '__session=; path=/; max-age=0; SameSite=Lax';
+    window.location.href = `${sanitizeDashboardUrl(getDashboardUrl())}?logout=true`;
   };
 
 
@@ -511,6 +583,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       const activeShiftParam = hashParams.get('activeShift') || searchParams.get('activeShift');
       const themeParam = hashParams.get('theme') || searchParams.get('theme');
       const dashboardUrlParam = hashParams.get('dashboardUrl') || searchParams.get('dashboardUrl');
+      const tokenParam = hashParams.get('token') || searchParams.get('token');
+      const hotelCodeParam = hashParams.get('hotelCode') || searchParams.get('hotelCode');
       
       let dataUpdated = false;
       if (userParam) {
@@ -521,6 +595,17 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             document.cookie = `hotelCode=${parsedU.hotelCode}; path=/; max-age=31536000; SameSite=Lax`;
           }
         } catch (e) {}
+        dataUpdated = true;
+      }
+      if (hotelCodeParam) {
+        localStorage.setItem('hotelCode', hotelCodeParam);
+        localStorage.setItem('active_hotel_code', hotelCodeParam);
+        document.cookie = `hotelCode=${hotelCodeParam}; path=/; max-age=31536000; SameSite=Lax`;
+        dataUpdated = true;
+      }
+      if (tokenParam) {
+        localStorage.setItem('pos_auth_token', tokenParam);
+        document.cookie = `__session=${encodeURIComponent(tokenParam)}; path=/; max-age=86400; SameSite=Lax`;
         dataUpdated = true;
       }
       if (restoNameParam) {
@@ -536,7 +621,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         dataUpdated = true;
       }
       if (dashboardUrlParam) {
-        localStorage.setItem('dashboard_url', dashboardUrlParam);
+        const safeUrl = sanitizeDashboardUrl(dashboardUrlParam);
+        localStorage.setItem('dashboard_url', safeUrl);
         dataUpdated = true;
       }
 
@@ -561,10 +647,14 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         throw new Error('Invalid user format');
       }
       
-      // ALWAS SYNC COOKIE FROM LOCAL STORAGE IF WE HAVE A VALID SESSION
+      // ALWAYS SYNC COOKIE FROM LOCAL STORAGE IF WE HAVE A VALID SESSION
       // This ensures server components (like /records) can read the correct hotelCode
       if (user.hotelCode) {
         document.cookie = `hotelCode=${user.hotelCode}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+      const savedToken = localStorage.getItem('pos_auth_token');
+      if (savedToken) {
+        document.cookie = `__session=${encodeURIComponent(savedToken)}; path=/; max-age=86400; SameSite=Lax`;
       }
     } catch (e) {
       console.error('Invalid user session JSON, clearing storage:', e);
@@ -573,9 +663,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       return;
     }
 
-
-        console.log('Parsed user object:', user);
-        const restoId = user.restoId;
+    console.log('Parsed user object:', user);
     const cachedRestoName = localStorage.getItem('restoName') || 'POS Resto';
     setStoreName(cachedRestoName);
     // Real-time online mode: offline Dexie sync disabled to conserve Firestore reads
@@ -622,15 +710,16 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       }
 
       const storedUrl = localStorage.getItem('dashboard_url');
-      if (storedUrl) return storedUrl;
+      if (storedUrl) return sanitizeDashboardUrl(storedUrl);
 
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
       if (isLocal) {
-        return process.env.NEXT_PUBLIC_DASHBOARD_URL ? `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/select-module` : 'http://localhost:3000/select-module';
+        const fallbackLocal = process.env.NEXT_PUBLIC_DASHBOARD_URL ? `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/select-module` : 'http://localhost:3000/select-module';
+        return sanitizeDashboardUrl(fallbackLocal);
       }
 
       if (hostname.includes('-3001.')) {
-        return `${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`;
+        return sanitizeDashboardUrl(`${protocol}//${hostname.replace('-3001.', '-3000.')}/select-module`);
       }
     }
 
@@ -656,7 +745,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       url = url.replace(/\/$/, '') + '/select-module';
     }
     
-    return url;
+    return sanitizeDashboardUrl(url);
   };
 
   const getLoginGatewayUrl = () => {
@@ -668,7 +757,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
       const storedUrl = localStorage.getItem('dashboard_url');
       if (storedUrl) {
-        return storedUrl.replace(/\/select-module$/, '') + '/login';
+        const safeStored = sanitizeDashboardUrl(storedUrl);
+        return safeStored.replace(/\/select-module$/, '') + '/login';
       }
 
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
@@ -698,7 +788,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         url = `https://live.mytara.id/login`;
       }
     }
-    return url;
+    return sanitizeDashboardUrl(url);
   };
 
   const [dashboardUrl, setDashboardUrl] = useState('https://live.mytara.id/select-module');
@@ -707,8 +797,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   useEffect(() => {
-    setDashboardUrl(getDashboardUrl());
-    setLoginGatewayUrl(getLoginGatewayUrl());
+    setDashboardUrl(sanitizeDashboardUrl(getDashboardUrl()));
+    setLoginGatewayUrl(sanitizeDashboardUrl(getLoginGatewayUrl()));
     setIsMounted(true);
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('pos_sidebar_collapsed');
@@ -778,7 +868,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
 
   if (!isAuthorized) {
     if (typeof window !== 'undefined') {
-      window.location.href = loginGatewayUrl;
+      window.location.href = sanitizeDashboardUrl(loginGatewayUrl);
     }
     return (
       <div className="bg-white text-neutral-900 h-full w-full overflow-hidden relative flex flex-col items-center justify-center">
@@ -798,7 +888,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           {/* Left Side: Logo & Hotel Badge */}
           <div className="flex items-center gap-4">
             <button
-              onClick={() => window.location.href = dashboardUrl}
+              onClick={() => window.location.href = sanitizeDashboardUrl(dashboardUrl)}
               className="border-none bg-transparent p-0 m-0 cursor-pointer flex items-center transition-opacity hover:opacity-80 active:scale-95"
               title="Kembali ke Dashboard Utama"
             >
@@ -932,14 +1022,14 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                       </div>
 
                       {(() => {
-                        const isSuper = user?.role?.toLowerCase() === 'superadmin' || user?.role?.toLowerCase() === 'super admin' || user?.email?.toLowerCase() === 'nexura.management@gmail.com';
-                        const hasAccessCPanel = canAccess('module_cpanel') || canAccess('cpanel') || isSuper;
+                        const hasAccessCPanel = canAccess('module_cpanel') || canAccess('cpanel') || isSuperadmin;
                         return hasAccessCPanel && (
                           <>
                             <button
                               onClick={() => {
                                 setIsMenuOpen(false);
-                                router.push(dashboardUrl.replace('/select-module', '') + '/logo?module=cpanel');
+                                const safeBase = sanitizeDashboardUrl(dashboardUrl).replace('/select-module', '');
+                                router.push(safeBase + '/logo?module=cpanel');
                               }}
                               className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
                             >
@@ -950,7 +1040,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                             <button
                               onClick={() => {
                                 setIsMenuOpen(false);
-                                router.push(dashboardUrl.replace('/select-module', '') + '/users?module=cpanel');
+                                const safeBase = sanitizeDashboardUrl(dashboardUrl).replace('/select-module', '');
+                                router.push(safeBase + '/users?module=cpanel');
                               }}
                               className="w-full text-left px-3.5 py-2.5 text-[13px] font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-[6px] border-none cursor-pointer flex items-center gap-3 transition-all duration-150 bg-transparent font-sans"
                             >

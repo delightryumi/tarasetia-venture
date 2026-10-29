@@ -63,15 +63,7 @@ export function SystemCredentialsNotes() {
               <div className={styles.fieldItem}>
                 <span className={styles.fieldLabel}>Sandi</span>
                 <div className={styles.fieldValueGroup}>
-                  <span className={styles.fieldValue}>Agnesia27</span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy("Agnesia27", "Sandi Superadmin")}
-                    className={styles.copyBtn}
-                    title="Salin Sandi"
-                  >
-                    {copiedKey === "Sandi Superadmin" ? <Check size={11} style={{ color: "#16a34a" }} /> : <Copy size={11} />}
-                  </button>
+                  <span className={styles.fieldValue} title="Tersimpan terenkripsi di Firebase Auth">•••••••••••• (Terenkripsi)</span>
                 </div>
               </div>
               <div className={styles.fieldItem}>
@@ -118,15 +110,7 @@ export function SystemCredentialsNotes() {
               <div className={styles.fieldItem}>
                 <span className={styles.fieldLabel}>Sandi</span>
                 <div className={styles.fieldValueGroup}>
-                  <span className={styles.fieldValue}>000000</span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy("000000", "Sandi Demo")}
-                    className={styles.copyBtn}
-                    title="Salin Sandi"
-                  >
-                    {copiedKey === "Sandi Demo" ? <Check size={11} style={{ color: "#16a34a" }} /> : <Copy size={11} />}
-                  </button>
+                  <span className={styles.fieldValue} title="Tersimpan terenkripsi di Firebase Auth">•••••••• (Terenkripsi)</span>
                 </div>
               </div>
               <div className={styles.fieldItem}>

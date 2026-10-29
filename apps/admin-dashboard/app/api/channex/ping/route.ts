@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { channexClient } from "@/lib/channex/channexClient";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 export async function POST(req: NextRequest) {
     const startTime = Date.now();
@@ -18,6 +19,9 @@ export async function POST(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ success: false, error: "hotelCode is required" }, { status: 400 });
         }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
         // Fetch hotel configuration
         const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();

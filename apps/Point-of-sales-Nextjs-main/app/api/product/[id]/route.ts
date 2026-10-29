@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db as firestoreDb } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { invalidateCatalogCache } from '@/lib/catalogCache';
+import { verifyPosApiRequest, unauthorizedResponse } from '@/lib/posServerAuth';
 
 export const PATCH = async (
   request: NextRequest,
@@ -9,11 +10,16 @@ export const PATCH = async (
 ) => {
   try {
     const { id } = await params;
-    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "0") {
-      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
-    }
     const body = await request.json();
+    const authResult = await verifyPosApiRequest(request, {
+      body,
+      requiredPermissions: ['pos_product', 'module_pos', 'pos'],
+    });
+    if (!authResult.authorized) {
+      return unauthorizedResponse(authResult);
+    }
+
+    const hotelCode = authResult.hotelCode;
 
     // Sync the updated product to Firebase Firestore under the hotel-specific subcollection
     await setDoc(doc(firestoreDb, 'hotels', hotelCode, 'pos_products', String(id)), {
@@ -60,10 +66,22 @@ export const DELETE = async (
 ) => {
   try {
     const { id } = await params;
-    const hotelCode = request.cookies.get('hotelCode')?.value || process.env.NEXT_PUBLIC_DEFAULT_HOTEL_CODE;
-    if (!hotelCode || hotelCode === "0") {
-      return NextResponse.json({ error: 'Hotel code is missing or invalid' }, { status: 400 });
+    let body: Record<string, any> = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
     }
+
+    const authResult = await verifyPosApiRequest(request, {
+      body,
+      requiredPermissions: ['pos_product', 'module_pos', 'pos'],
+    });
+    if (!authResult.authorized) {
+      return unauthorizedResponse(authResult);
+    }
+
+    const hotelCode = authResult.hotelCode;
 
     // Sync deletion to Firebase Firestore under the hotel-specific subcollection
     await deleteDoc(doc(firestoreDb, 'hotels', hotelCode, 'pos_products', String(id)));

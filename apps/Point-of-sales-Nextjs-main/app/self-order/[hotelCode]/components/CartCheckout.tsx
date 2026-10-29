@@ -19,6 +19,12 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
+const ALLOWED_IMAGE_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5 MB
+const ORDER_COOLDOWN_MS = 30 * 1000; // 30-second cooldown between orders
+const MAX_QTY_PER_ITEM = 50;
+const MAX_TOTAL_CART_ITEMS = 100;
+
 interface CartCheckoutProps {
   cart: any[];
   products: any[];
@@ -63,6 +69,43 @@ export default function CartCheckout({
   onUpdateQuantity
 }: CartCheckoutProps) {
   const [serviceType, setServiceType] = useState<'dine-in' | 'room-service' | 'takeaway'>('dine-in');
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string>('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFileError('');
+    const file = e.target.files?.[0];
+    if (!file) {
+      setProofFile(null);
+      return;
+    }
+
+    const mimeType = (file.type || '').toLowerCase().trim();
+    const fileName = (file.name || '').toLowerCase().trim();
+
+    // Explicitly allow only JPG, PNG, WebP and reject SVG (image/svg+xml) to prevent stored XSS
+    if (
+      !ALLOWED_IMAGE_MIME_TYPES.includes(mimeType) ||
+      mimeType === 'image/svg+xml' ||
+      fileName.endsWith('.svg')
+    ) {
+      setFileError('Format file tidak diizinkan. Hanya mendukung JPG, PNG, atau WebP (SVG ditolak).');
+      setProofFile(null);
+      e.target.value = '';
+      alert('Format file tidak diizinkan. Gunakan JPG, PNG, atau WebP.');
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setFileError('Ukuran file terlalu besar (maksimal 5 MB).');
+      setProofFile(null);
+      e.target.value = '';
+      alert('Ukuran file terlalu besar (maksimal 5 MB).');
+      return;
+    }
+
+    setProofFile(file);
+  };
 
   const totalItems = cart.reduce((a, b) => a + b.qty, 0);
 
@@ -92,6 +135,46 @@ export default function CartCheckout({
   const service = Math.round(subtotal * (effectiveServiceRate / 100));
   const tax = Math.round(subtotal * (effectiveTaxRate / 100));
   const grandTotal = subtotal + service + tax;
+
+  const handleSafeUpdateQuantity = (cartItemId: string, currentQty: number, delta: number) => {
+    if (delta > 0) {
+      if (currentQty + delta > MAX_QTY_PER_ITEM) {
+        alert(`Maksimal pemesanan per item adalah ${MAX_QTY_PER_ITEM} porsi.`);
+        return;
+      }
+      if (totalItems + delta > MAX_TOTAL_CART_ITEMS) {
+        alert(`Maksimal total pesanan dalam satu keranjang adalah ${MAX_TOTAL_CART_ITEMS} item.`);
+        return;
+      }
+    }
+    onUpdateQuantity(cartItemId, delta);
+  };
+
+  const handleSafeSubmitOrder = () => {
+    if (totalItems <= 0) return;
+    if (totalItems > MAX_TOTAL_CART_ITEMS) {
+      alert(`Jumlah item melebihi batas maksimal (${MAX_TOTAL_CART_ITEMS} item).`);
+      return;
+    }
+    const overLimitItem = cartItems.find((item) => item.qty > MAX_QTY_PER_ITEM);
+    if (overLimitItem) {
+      alert(`Jumlah untuk "${overLimitItem.name}" melebihi batas maksimal (${MAX_QTY_PER_ITEM} porsi).`);
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      const lastOrderTs = Number(localStorage.getItem('last_self_order_ts') || '0');
+      const now = Date.now();
+      if (lastOrderTs > 0 && now - lastOrderTs < ORDER_COOLDOWN_MS) {
+        const remainingSec = Math.ceil((ORDER_COOLDOWN_MS - (now - lastOrderTs)) / 1000);
+        alert(`Mohon tunggu ${remainingSec} detik sebelum mengirim pesanan berikutnya.`);
+        return;
+      }
+      localStorage.setItem('last_self_order_ts', String(now));
+    }
+
+    onSubmitOrder();
+  };
 
   return (
     <>
@@ -236,6 +319,7 @@ export default function CartCheckout({
                         <input
                           type="text"
                           value={customerName}
+                          maxLength={80}
                           onChange={(e) => setCustomerName(e.target.value)}
                           placeholder="Cth: Bpk. Hendra"
                           className="w-full bg-white border border-gray-200 focus:border-[#0b3d2e] rounded-xl px-3 py-2 text-[13px] text-[#121615] outline-none shadow-xs font-semibold"
@@ -249,6 +333,7 @@ export default function CartCheckout({
                         <input
                           type="text"
                           value={tableNumber}
+                          maxLength={20}
                           onChange={(e) => setTableNumber(e.target.value)}
                           placeholder={serviceType === 'room-service' ? 'Cth: 304' : 'Cth: 12'}
                           className="w-full bg-white border border-gray-200 focus:border-[#0b3d2e] rounded-xl px-3 py-2 text-[13px] text-[#121615] outline-none shadow-xs font-semibold"
@@ -263,6 +348,7 @@ export default function CartCheckout({
                       <input
                         type="text"
                         value={orderNotes}
+                        maxLength={250}
                         onChange={(e) => setOrderNotes(e.target.value)}
                         placeholder="Cth: Tolong sendok ekstra, pisahkan bill, dll"
                         className="w-full bg-white border border-gray-200 focus:border-[#0b3d2e] rounded-xl px-3 py-2 text-[13px] text-[#121615] outline-none shadow-xs"
@@ -327,7 +413,7 @@ export default function CartCheckout({
                         {/* Inline Stepper */}
                         <div className="flex items-center bg-white rounded-xl border border-gray-300 p-0.5 shrink-0 shadow-xs">
                           <button
-                            onClick={() => onUpdateQuantity(item.cartItemId, -1)}
+                            onClick={() => handleSafeUpdateQuantity(item.cartItemId, item.qty, -1)}
                             className="w-6 h-6 flex items-center justify-center text-[#525a56] hover:text-[#121615] active:scale-95"
                           >
                             <Minus size={12} />
@@ -336,7 +422,7 @@ export default function CartCheckout({
                             {item.qty}
                           </span>
                           <button
-                            onClick={() => onUpdateQuantity(item.cartItemId, 1)}
+                            onClick={() => handleSafeUpdateQuantity(item.cartItemId, item.qty, 1)}
                             className="w-6 h-6 flex items-center justify-center text-[#525a56] hover:text-[#121615] active:scale-95"
                           >
                             <Plus size={12} />
@@ -425,6 +511,17 @@ export default function CartCheckout({
                           <div className="bg-white p-3 rounded-2xl shadow-md w-48 h-48 relative border border-gray-200">
                             <Image src={qrisImage} alt="QRIS" fill className="object-contain p-1" />
                           </div>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleFileChange}
+                            className="hidden"
+                          />
+                          {fileError && (
+                            <span className="text-[11px] text-red-600 font-semibold mt-2">
+                              {fileError}
+                            </span>
+                          )}
                         </div>
                       </motion.div>
                     )}
@@ -468,7 +565,7 @@ export default function CartCheckout({
               <div className="p-4 sm:p-5 border-t border-[#c5a059]/15 bg-white">
                 <button
                   disabled={submittingOrder || !customerName.trim() || !tableNumber.trim()}
-                  onClick={onSubmitOrder}
+                  onClick={handleSafeSubmitOrder}
                   className="w-full bg-gradient-to-r from-[#0b3d2e] to-[#124d3b] disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl shadow-[#0b3d2e]/30"
                 >
                   {submittingOrder ? (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebaseAdmin";
 import { sendWelcomeEmail } from "@/lib/emailHelper";
+import crypto from "crypto";
 
 // Daftar fallback permission untuk super claims
 const ALL_KEYS = [
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
     });
 
     // 2. Register Firebase Auth and Users Master
-    const defaultPassword = `Setara${hotelCode}!`;
+    const defaultPassword = `Setara${hotelCode}-${crypto.randomBytes(3).toString("hex")}!`;
     let uid = "";
 
     try {
@@ -86,8 +87,15 @@ export async function POST(request: Request) {
       if (!allowedOutlets.includes(hotelCode)) {
         allowedOutlets.push(hotelCode);
       }
-      // Set custom claims for existing user
-      await adminAuth.setCustomUserClaims(uid, { ...currentClaims, role: "admin", hotelCode, allowedOutlets });
+      const existingRole = typeof currentClaims.role === "string" ? currentClaims.role.toLowerCase() : "";
+      const preservedRole = existingRole === "superadmin" ? "superadmin" : "admin";
+      // Set custom claims for existing user (never overwrite superadmin role)
+      await adminAuth.setCustomUserClaims(uid, {
+        ...currentClaims,
+        role: preservedRole,
+        hotelCode: currentClaims.hotelCode || hotelCode,
+        allowedOutlets
+      });
     } catch (err: any) {
       if (err.code === "auth/user-not-found") {
         // Create new Auth user

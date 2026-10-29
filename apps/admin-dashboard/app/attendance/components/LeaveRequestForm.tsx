@@ -36,8 +36,20 @@ export function LeaveRequestForm({ staffId, staffName, hotelCode }: Props) {
 
     let attachmentUrl: string | undefined;
     if (attachment) {
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
+      if (!allowedTypes.includes(attachment.type.toLowerCase())) {
+        setError("Format file tidak didukung. Harap unggah JPG, PNG, WEBP, atau PDF (bukan SVG).");
+        setSubmitting(false);
+        return;
+      }
+      if (attachment.size > 5 * 1024 * 1024) {
+        setError("Ukuran file lampiran maksimal 5MB.");
+        setSubmitting(false);
+        return;
+      }
       try {
-        const storageRef = ref(storage, `attachments/${hotelCode}/${staffId}/${Date.now()}_${attachment.name}`);
+        const safeName = attachment.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const storageRef = ref(storage, `attachments/${hotelCode}/${staffId}/${Date.now()}_${safeName}`);
         const snapshot = await uploadBytes(storageRef, attachment);
         attachmentUrl = await getDownloadURL(snapshot.ref);
       } catch (err: any) {
@@ -207,7 +219,7 @@ export function LeaveRequestForm({ staffId, staffName, hotelCode }: Props) {
             </label>
             <input
               type="file"
-              accept="image/*,.pdf"
+              accept="image/png,image/jpeg,image/webp,application/pdf"
               onChange={(e) => setAttachment(e.target.files?.[0] || null)}
               required={type === "sakit"}
               className={`${styles.iosInput || styles.input} force-light-input`}

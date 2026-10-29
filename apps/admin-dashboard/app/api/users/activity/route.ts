@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { resolveLocationFromReq } from "@/lib/geoHelper";
+import { requireAuth, requireHotelAccess } from "@/lib/security/serverAuth";
 
 /**
  * User Activity & Audit Trail API
@@ -10,17 +11,26 @@ import { resolveLocationFromReq } from "@/lib/geoHelper";
  */
 export async function GET(req: NextRequest) {
     try {
+        const authCheck = await requireAuth(req);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+        const authUser = authCheck.user;
+
         const { searchParams } = new URL(req.url);
         const hotelCode = searchParams.get("hotelCode");
-        const limitCount = parseInt(searchParams.get("limit") || "60", 10);
+        const limitCount = Math.min(Math.max(parseInt(searchParams.get("limit") || "60", 10) || 60, 1), 200);
         const userId = searchParams.get("userId");
         const moduleFilter = searchParams.get("module");
 
         let logsRef: FirebaseFirestore.Query;
 
         if (hotelCode && hotelCode !== "0" && hotelCode !== "all") {
+            const accessCheck = await requireHotelAccess(req, hotelCode);
+            if ("errorResponse" in accessCheck) return accessCheck.errorResponse;
             logsRef = adminDb.collection(`hotels/${hotelCode}/user_activities`);
         } else {
+            if (!authUser.isSuperadmin) {
+                return NextResponse.json({ success: false, error: "Akses Ditolak: Hanya Superadmin yang dapat melihat log aktivitas global.", logs: [] }, { status: 403 });
+            }
             logsRef = adminDb.collection("system_activity_logs");
         }
 
@@ -54,24 +64,35 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        const authCheck = await requireAuth(req);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+        const authUser = authCheck.user;
+
         const body = await req.json();
         const { 
             hotelCode, userId, userName, userEmail, 
             action, module, description, deviceInfo 
         } = body;
 
-        if (!action || !userEmail) {
+        const effectiveEmail = authUser.email || userEmail;
+        if (!action || !effectiveEmail) {
             return NextResponse.json({ error: "action and userEmail are required" }, { status: 400 });
+        }
+
+        const resolvedHotelCode = hotelCode || authUser.hotelCode || "0";
+        if (!authUser.isSuperadmin && resolvedHotelCode !== "0") {
+            const accessCheck = await requireHotelAccess(req, resolvedHotelCode);
+            if ("errorResponse" in accessCheck) return accessCheck.errorResponse;
         }
 
         // Resolve IP and Geographical Location
         const { ip: ipAddress, location } = await resolveLocationFromReq(req, body.timeZone, body.location);
 
         const logDoc = {
-            hotelCode: hotelCode || "0",
-            userId: userId || "",
-            userName: userName || userEmail.split("@")[0],
-            userEmail,
+            hotelCode: resolvedHotelCode,
+            userId: authUser.uid || userId || "",
+            userName: userName || effectiveEmail.split("@")[0],
+            userEmail: effectiveEmail,
             action,
             module: module || "SYSTEM",
             description: description || "",
@@ -81,8 +102,8 @@ export async function POST(req: NextRequest) {
             timestamp: new Date().toISOString()
         };
 
-        if (hotelCode && hotelCode !== "0") {
-            await adminDb.collection(`hotels/${hotelCode}/user_activities`).add(logDoc);
+        if (resolvedHotelCode && resolvedHotelCode !== "0") {
+            await adminDb.collection(`hotels/${resolvedHotelCode}/user_activities`).add(logDoc);
         }
         await adminDb.collection("system_activity_logs").add(logDoc);
 

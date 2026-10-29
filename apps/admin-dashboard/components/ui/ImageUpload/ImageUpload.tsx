@@ -33,8 +33,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     }, []);
 
     const handleFile = useCallback(async (file: File) => {
-        if (!file.type.startsWith("image/")) {
-            toast.error("Invalid file type. Please upload an image.");
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+        if (!allowedTypes.includes(file.type.toLowerCase())) {
+            toast.error("Format file tidak didukung. Harap unggah gambar PNG, JPG, WEBP, atau GIF (bukan SVG).");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Ukuran gambar maksimal 5MB.");
             return;
         }
 
@@ -136,7 +141,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                     <input
                         type="file"
                         className="hidden"
-                        accept="image/*"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
                         onChange={onFileChange}
                     />
                     <div className="upload-icon">

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { channexSyncService } from "@/lib/channex/syncService";
 import { adminDb } from "@/lib/firebaseAdmin";
-import { getAuthenticatedUser } from "@/lib/security/serverAuth";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 /**
  * Extracts all task UUIDs returned by Channex JSON:API responses
@@ -39,13 +39,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
 
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+        const authUser = authCheck.user;
+
         const start = startDate || new Date().toISOString().split("T")[0];
         const defaultEnd = new Date();
         defaultEnd.setDate(defaultEnd.getDate() + 30);
         const end = endDate || defaultEnd.toISOString().split("T")[0];
-
-        // Resolve accountable user - priority: explicit body fields > server-verified token > users_master settings
-        const authUser = await getAuthenticatedUser(req).catch(() => null);
 
         let resolvedName = body.userName || "";
         let resolvedEmail = body.userEmail || (authUser?.email || "");

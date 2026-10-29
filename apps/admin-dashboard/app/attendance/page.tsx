@@ -122,8 +122,9 @@ export default function AttendancePage() {
           localStorage.removeItem("attendance_session");
           setStaffSession(null);
         } else {
-          // Sesi valid, simpan data terbaru
-          const freshData = { id: snap.id, ...snap.data() };
+          // Sesi valid, simpan data terbaru tanpa menyimpan pin atau payrollConfig
+          const { pin: _omittedPin, payrollConfig: _omittedPayroll, ...safeDocData } = snap.data() || {};
+          const freshData = { id: snap.id, ...safeDocData };
           setStaffSession(freshData as any);
           localStorage.setItem("attendance_session", JSON.stringify(freshData));
         }
@@ -286,33 +287,26 @@ export default function AttendancePage() {
     setIsLoggingIn(true);
 
     try {
-      const staffRef = collection(db, `hotels/${prefillHotelCode}/staff`);
-      const q = query(staffRef, where("nik", "==", loginNik.trim()));
-      const snap = await getDocs(q);
-
-      if (snap.empty) {
-        setLoginError("NIK atau PIN salah.");
-      } else {
-        const staffDoc = snap.docs[0];
-        const rawPin = staffDoc.data().pin;
-        // Konversi pin dari firestore ke string (jaga-jaga jika ter-save sbg angka)
-        const pinString = rawPin ? rawPin.toString().trim() : "";
-        
-        if (pinString !== loginPin.trim()) {
-           setLoginError("NIK atau PIN salah.");
-           return;
-        }
-
-        const staffData = { id: staffDoc.id, ...staffDoc.data() } as Staff;
-        
-        if (staffData.isActive === false) {
-          setLoginError("Akun Anda dinonaktifkan.");
-          return;
-        }
-
-        setStaffSession(staffData);
-        localStorage.setItem("attendance_session", JSON.stringify(staffData));
+      const res = await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify_staff_login",
+          hotelCode: prefillHotelCode,
+          nik: loginNik.trim(),
+          pin: loginPin.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.staff) {
+        setLoginError(data.error || "NIK atau PIN salah.");
+        return;
       }
+
+      const { pin: _omittedPin, payrollConfig: _omittedPayroll, ...safeStaff } = data.staff;
+      const staffData = safeStaff as Staff;
+      setStaffSession(staffData);
+      localStorage.setItem("attendance_session", JSON.stringify(staffData));
     } catch (err: any) {
       setLoginError("Gagal masuk. Silakan coba lagi.");
     } finally {
@@ -341,27 +335,25 @@ export default function AttendancePage() {
     setIsChangingPin(true);
     try {
       const hotelCode = staffSession.hotelCode || prefillHotelCode;
-      const { doc, getDoc } = await import("firebase/firestore");
-      const ref = doc(db, `hotels/${hotelCode}/staff/${staffSession.id}`);
-      const snap = await getDoc(ref);
-      if (snap.exists() && snap.data()?.pin === oldPin) {
-        const res = await fetch("/api/staff", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: staffSession.id, hotelCode, pin: newPin })
-        });
-        if (!res.ok) throw new Error("API error");
-        alert("PIN berhasil diubah!");
-        setShowPinModal(false);
-        setOldPin(""); setNewPin(""); setConfirmPin("");
-        
-        // update session
-        const updatedStaff = { ...staffSession, pin: newPin };
-        setStaffSession(updatedStaff);
-        localStorage.setItem("attendance_session", JSON.stringify(updatedStaff));
-      } else {
-        setPinError("PIN Lama salah.");
+      const res = await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "change_staff_pin",
+          staffId: staffSession.id,
+          hotelCode,
+          oldPin,
+          newPin,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setPinError(data.error || "Gagal mengubah PIN.");
+        return;
       }
+      alert("PIN berhasil diubah!");
+      setShowPinModal(false);
+      setOldPin(""); setNewPin(""); setConfirmPin("");
     } catch (err) {
       setPinError("Terjadi kesalahan sistem.");
     } finally {

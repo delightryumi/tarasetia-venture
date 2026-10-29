@@ -73,7 +73,7 @@ Berikut adalah perbaikan, optimasi, dan fitur baru yang telah diterapkan dan dip
 *   **Perbaikan Compile Error bentodemo.tsx**: Menyelesaikan isu build failure di repositori POS dengan menambahkan impor `setDoc` yang tertinggal pada komponen `bentodemo.tsx`, memulihkan proses deployment berjalan normal.
 *   **Akses Login Saat Layanan Ditangguhkan (Suspended Active Login Guard)**: Menghapus lemparan error pada `loginWithFirestore` saat status `active === false`, sehingga pengguna tetap dapat melakukan login secara sukses. Setelah login, sistem secara otomatis menampilkan modal overlay `<BillingSuspendedModal />` fullscreen yang mengunci seluruh akses modul operasional sambil memperlihatkan rincian jatuh tempo dan opsi keluar dari sesi.
 *   **Pengondisian Otomatis Antarmuka P&L Paket Startup**: Mengotomatiskan penyesuaian halaman P&L (`/pnl`) bagi hotel berlangganan paket **Startup** (`plan: "startup"` / tanpa modul Front Office & Housekeeping). Seluruh komponen *Room Revenue Section*, kartu Executive Summary terkait kamar/housekeeping/fee kamar, serta baris audit tabel P&L disembunyikan secara bersih, berfokus pada operasional POS, DML, SR, PR, F&B, Payroll, dan Accounting.
-*   **Pembaruan Kredensial Master Superadmin**: Memperbarui kredensial master superadmin secara menyeluruh di Firebase Auth (`superadmin@setara.co.id` / `Agnesia27`), dokumen `users_master`, serta seluruh proteksi otorisasi di AuthContext dan POS.
+*   **Pembaruan Kredensial Master Superadmin**: Memperbarui kredensial master superadmin secara menyeluruh di Firebase Auth (`superadmin@setara.co.id`), dokumen `users_master`, serta seluruh proteksi otorisasi di AuthContext dan POS.
 ---
 
 ## 2. Arsitektur Multi-Hotel CRS (Roadmap)

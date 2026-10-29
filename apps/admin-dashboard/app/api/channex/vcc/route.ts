@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { channexClient } from "@/lib/channex/channexClient";
+import { requireHotelAccess } from "@/lib/security/serverAuth";
 
 /**
  * GET: Retrieve list of real OTA bookings from daily_revenue that may have VCC or need payment verification
@@ -13,6 +14,9 @@ export async function GET(req: NextRequest) {
         if (!hotelCode) {
             return NextResponse.json({ error: "hotelCode is required" }, { status: 400 });
         }
+
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
 
         const otaBookingsMap = new Map<string, any>();
 
@@ -64,17 +68,29 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { hotelCode, bookingId, pin, userEmail = "superadmin@mytara.com" } = body;
+        const { hotelCode, bookingId, pin } = body;
 
         if (!hotelCode || !bookingId) {
             return NextResponse.json({ error: "hotelCode and bookingId are required" }, { status: 400 });
         }
 
-        // Security Check: PIN Verification
-        if (pin !== "1234" && pin !== "8888") {
+        const authCheck = await requireHotelAccess(req, hotelCode);
+        if ("errorResponse" in authCheck) return authCheck.errorResponse;
+        const userEmail = authCheck.user.email || body.userEmail || "superadmin@mytara.com";
+
+        const hotelDoc = await adminDb.collection("hotels").doc(hotelCode).get();
+        const hotelData = hotelDoc.data() || {};
+        const configuredPin =
+            hotelData.vccPin ||
+            hotelData.channelManager?.vccPin ||
+            hotelData.securityPin ||
+            process.env.VCC_SECURITY_PIN ||
+            process.env.ADMIN_MASTER_PIN;
+
+        if (!pin || !configuredPin || String(pin).trim() !== String(configuredPin).trim()) {
             return NextResponse.json({
                 success: false,
-                error: "PIN Otorisasi Keamanan Salah. Akses kartu virtual ditolak."
+                error: "PIN Otorisasi Keamanan Salah atau belum dikonfigurasi. Akses kartu virtual ditolak."
             }, { status: 403 });
         }
 

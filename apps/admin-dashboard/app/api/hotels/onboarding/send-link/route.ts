@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { sendOnboardingEmail } from "@/lib/emailHelper";
+import { requireSuperadmin } from "@/lib/security/serverAuth";
 import { randomUUID } from "crypto";
 
 export async function POST(request: Request) {
   try {
+    const authCheck = await requireSuperadmin(request);
+    if ("errorResponse" in authCheck) return authCheck.errorResponse;
+
     const { email, plan, activeModules } = await request.json();
 
     if (!email || !plan) {
@@ -45,8 +49,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Link onboarding berhasil dikirim ke email.",
-      token, // Just for debugging purposes, shouldn't be exposed in real production but it's superadmin dashboard
+      message: "Onboarding link sent successfully",
       emailSent
     });
 
