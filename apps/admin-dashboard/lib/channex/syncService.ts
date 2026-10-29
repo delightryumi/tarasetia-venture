@@ -1854,6 +1854,8 @@ export class ChannexSyncService {
                     }
                 });
             }
+        }
+
         // If no rate plans were resolved from Firestore, query live rate plans from Channex to ensure all rate plans are included with max_stay
         if (restrictionValues.length === 0 && channexPropertyId && customApiKey) {
             try {
