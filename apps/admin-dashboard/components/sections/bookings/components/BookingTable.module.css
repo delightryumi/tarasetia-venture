@@ -118,6 +118,8 @@
     font-size: 14px;
     font-weight: 700;
     color: #0f172a;
+    line-height: 1.3;
+    word-break: break-word;
 }
 
 .guestSubtext {
@@ -241,4 +243,32 @@
     background: #fef3c7;
     color: #b45309;
     border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.overbookPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.roomDangerBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    font-size: 10px;
+    font-weight: 700;
 }

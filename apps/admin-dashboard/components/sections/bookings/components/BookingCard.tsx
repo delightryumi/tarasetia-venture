@@ -71,30 +71,44 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
 
     return (
         <div 
-            className={`${s.card} ${booking.isCancelled ? s.cardCancelled : ""}`}
+            className={`${s.card} ${booking.isCancelled ? s.cardCancelled : ""} ${!booking.isCancelled && (booking.isOverbooked || booking.hasRoomConflict) ? s.cardConflict : ""}`}
             onClick={() => onSelect(booking)}
         >
             {/* Header: OTA Logo & Status */}
             <div className={s.cardHeader}>
                 <div className={s.channelBadge} title={booking.channel}>
                     {booking.channelLogo ? (
-                        <div className={s.otaLogo} style={{ position: "relative", width: 18, height: 18 }}>
+                        <div className={s.otaLogo} style={{ position: "relative", width: 22, height: 22 }}>
                             <Image 
                                 src={booking.channelLogo} 
                                 alt={booking.channel} 
-                                width={18} 
-                                height={18} 
-                                style={{ objectFit: "contain", borderRadius: 3 }}
+                                width={22} 
+                                height={22} 
+                                style={{ objectFit: "contain", borderRadius: 4 }}
                                 onError={(e: any) => {
                                     e.currentTarget.style.display = 'none';
                                 }}
                             />
                         </div>
-                    ) : null}
-                    <span>{booking.channel}</span>
+                    ) : (
+                        <span>{booking.channel}</span>
+                    )}
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    {!booking.isCancelled && (booking.isOverbooked || booking.hasRoomConflict) ? (
+                        <div
+                            className={s.overbookPill}
+                            title={
+                                booking.hasRoomConflict
+                                    ? `Bentrok Nomor Kamar dengan ${booking.conflictWithGuest || "tamu lain"}`
+                                    : "Kapasitas kamar fisik penuh (Overbooking) - silakan pilih kamar manual"
+                            }
+                        >
+                            <WarningCircle size={10} weight="bold" />
+                            <span>{booking.hasRoomConflict ? "Double Room" : "Overbook"}</span>
+                        </div>
+                    ) : null}
                     {booking.isModified ? (
                         <div className={s.revisionPill} title="Reservasi mengalami revisi / perubahan">
                             <span>Revisi</span>
@@ -177,7 +191,9 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
 
                 <div className={s.detailItem}>
                     <Door size={13} className={s.detailIcon} />
-                    <span>Room: {getSafeDisplay(booking.roomNumber, "AUTO")}</span>
+                    <span className={!booking.isCancelled && (booking.isOverbooked || booking.hasRoomConflict) ? s.roomDangerText : ""}>
+                        Room: {getSafeDisplay(booking.roomNumber, "AUTO")}
+                    </span>
                 </div>
 
                 <div className={s.detailItem}>

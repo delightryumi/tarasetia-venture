@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import { 
     X, 
@@ -14,34 +14,203 @@ import {
     WarningCircle,
     Printer,
     IdentificationCard,
-    CloudArrowUp
+    CloudArrowUp,
+    ArrowsLeftRight
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useCurrency } from "@/hooks/useCurrency";
-import { BookingRecord } from "../types";
+import { useAuth } from "@/context/AuthContext";
+import { BookingRecord, RoomTypePhysicalConfig } from "../types";
 import s from "./BookingDetailModal.module.css";
 
 interface BookingDetailModalProps {
     booking: BookingRecord | null;
+    roomTypesList?: RoomTypePhysicalConfig[];
+    allBookings?: BookingRecord[];
     onClose: () => void;
+    onRoomAssigned?: (updatedRoomNumber: string, updatedRoomTypeId?: string, updatedRoomTypeName?: string) => void;
 }
 
-export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps) {
+export function BookingDetailModal({
+    booking,
+    roomTypesList = [],
+    allBookings = [],
+    onClose,
+    onRoomAssigned
+}: BookingDetailModalProps) {
     const router = useRouter();
-    const [copied, setCopied] = React.useState(false);
-    const [copiedBookingId, setCopiedBookingId] = React.useState(false);
-    const [copiedRevisionId, setCopiedRevisionId] = React.useState(false);
-    const [pushingCrs, setPushingCrs] = React.useState(false);
-    const [crsBookingId, setCrsBookingId] = React.useState<string | null>(booking?.channexBookingId || null);
+    const { activeHotelCode, user } = useAuth();
+    const [copied, setCopied] = useState(false);
+    const [pushingCrs, setPushingCrs] = useState(false);
+    const [crsBookingId, setCrsBookingId] = useState<string | null>((booking as any)?.channexBookingId || null);
     const { formatCurrency } = useCurrency();
 
-    // Sync crsBookingId when booking prop changes
+    // Room Assignment / Move Room states
+    const [showRoomPicker, setShowRoomPicker] = useState(false);
+    const [selectedTargetRtId, setSelectedTargetRtId] = useState<string>("");
+    const [selectedTargetRoomNum, setSelectedTargetRoomNum] = useState<string>("");
+    const [savingRoomMove, setSavingRoomMove] = useState(false);
+    const [localRoomNumber, setLocalRoomNumber] = useState<string>(booking?.roomNumber || "AUTO");
+    const [localRoomType, setLocalRoomType] = useState<string>(booking?.roomType || "Standard Room");
+
+    // Sync crsBookingId & local room states when booking prop changes
     useEffect(() => {
         if (booking) {
-            setCrsBookingId(booking.channexBookingId || null);
+            setCrsBookingId((booking as any).channexBookingId || null);
+            setLocalRoomNumber(booking.roomNumber || "AUTO");
+            setLocalRoomType(booking.roomType || "Standard Room");
+            setSelectedTargetRoomNum(booking.roomNumber && booking.roomNumber !== "OVERBOOK" ? booking.roomNumber : "");
+            const matchedRt = roomTypesList.find(
+                (rt) =>
+                    rt.id === booking.roomTypeId ||
+                    rt.name.trim().toLowerCase() === (booking.roomType || "").trim().toLowerCase()
+            ) || roomTypesList[0];
+            setSelectedTargetRtId(matchedRt?.id || booking.roomTypeId || "");
+            setShowRoomPicker(Boolean(booking.isOverbooked || booking.hasRoomConflict));
         }
+    }, [booking, roomTypesList]);
+
+    // Compute stay dates for this booking to inspect room occupancy
+    const stayDates = useMemo(() => {
+        if (!booking) return [];
+        if (Array.isArray(booking._datesOccurred) && booking._datesOccurred.length > 0) {
+            return booking._datesOccurred;
+        }
+        const dates: string[] = [];
+        if (booking.checkInDate) {
+            const start = new Date(`${booking.checkInDate}T00:00:00Z`);
+            const end = booking.checkOutDate
+                ? new Date(`${booking.checkOutDate}T00:00:00Z`)
+                : new Date(start.getTime() + 86400000);
+            for (let d = new Date(start); d < end && dates.length < 60; d.setUTCDate(d.getUTCDate() + 1)) {
+                dates.push(d.toISOString().split("T")[0]);
+            }
+            if (dates.length === 0) dates.push(booking.checkInDate);
+        }
+        return dates;
     }, [booking]);
+
+    const currentTargetRt = useMemo(() => {
+        return (
+            roomTypesList.find((rt) => rt.id === selectedTargetRtId) ||
+            roomTypesList.find(
+                (rt) => rt.name.trim().toLowerCase() === (localRoomType || "").trim().toLowerCase()
+            ) ||
+            roomTypesList[0] ||
+            null
+        );
+    }, [roomTypesList, selectedTargetRtId, localRoomType]);
+
+    // Map each physical room number in currentTargetRt to its occupancy status across stayDates
+    const physicalRoomStatuses = useMemo(() => {
+        if (!booking) return [];
+        const baseRooms = currentTargetRt?.physicalRooms?.length
+            ? currentTargetRt.physicalRooms
+            : ["101", "102", "103", "104"];
+
+        return baseRooms.map((rNum) => {
+            const rUpper = rNum.trim().toUpperCase();
+            const isCurrentBookingRoom =
+                rUpper === String(localRoomNumber || "").trim().toUpperCase() &&
+                (!currentTargetRt ||
+                    currentTargetRt.id === booking.roomTypeId ||
+                    currentTargetRt.name.trim().toLowerCase() === (localRoomType || "").trim().toLowerCase());
+
+            // Check if any OTHER active booking overlaps on stayDates with this physical room
+            const conflictingBooking = allBookings.find((other) => {
+                if (other.isCancelled || other.id === booking.id) return false;
+                const otherRoomUpper = String(other.roomNumber || "").trim().toUpperCase();
+                if (otherRoomUpper !== rUpper) return false;
+
+                if (currentTargetRt) {
+                    const otherMatchesRt =
+                        other.roomTypeId === currentTargetRt.id ||
+                        other.roomType.trim().toLowerCase() === currentTargetRt.name.trim().toLowerCase() ||
+                        currentTargetRt.physicalRooms.some((pr) => pr.toUpperCase() === otherRoomUpper);
+                    if (!otherMatchesRt) return false;
+                }
+
+                // Check date overlap
+                const overlaps = stayDates.some((dStr) => {
+                    if (Array.isArray(other._datesOccurred) && other._datesOccurred.includes(dStr)) {
+                        return true;
+                    }
+                    if (other.checkInDate && other.checkOutDate) {
+                        return dStr >= other.checkInDate && dStr < other.checkOutDate;
+                    }
+                    return other.effectiveDate === dStr;
+                });
+
+                return overlaps;
+            });
+
+            return {
+                roomNumber: rNum,
+                isCurrent: isCurrentBookingRoom,
+                occupiedBy: conflictingBooking ? conflictingBooking.guestName : null,
+                channel: conflictingBooking ? conflictingBooking.channel : null,
+            };
+        });
+    }, [booking, currentTargetRt, localRoomNumber, localRoomType, allBookings, stayDates]);
+
+    const handleSaveRoomAssignment = async () => {
+        if (!booking) return;
+        const cleanRoom = String(selectedTargetRoomNum || "").trim();
+        if (!cleanRoom) {
+            toast.warning("Silakan pilih atau ketik nomor kamar tujuan.");
+            return;
+        }
+        const hotelCode = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "" : "");
+        if (!hotelCode) {
+            toast.error("Kode hotel aktif tidak ditemukan.");
+            return;
+        }
+
+        setSavingRoomMove(true);
+        try {
+            const res = await fetch("/api/bookings/assign-room", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode,
+                    bookingId: booking.bookingId,
+                    reservationId: booking.reservationId,
+                    otaReservationId: booking.otaReservationId,
+                    voucherCode: booking.voucherCode,
+                    guestName: booking.guestName,
+                    checkInDate: booking.checkInDate,
+                    checkOutDate: booking.checkOutDate,
+                    datesOccurred: booking._datesOccurred,
+                    oldRoomNumber: localRoomNumber,
+                    newRoomNumber: cleanRoom,
+                    oldRoomTypeId: booking.roomTypeId,
+                    newRoomTypeId: currentTargetRt?.id || booking.roomTypeId,
+                    newRoomTypeName: currentTargetRt?.name || localRoomType,
+                    movedBy: user?.displayName || (user as any)?.name || user?.email || "Front Desk",
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || "Gagal memindahkan nomor kamar.");
+            }
+
+            setLocalRoomNumber(cleanRoom);
+            if (currentTargetRt?.name) {
+                setLocalRoomType(currentTargetRt.name);
+            }
+            setShowRoomPicker(false);
+            toast.success(data.message || `Nomor kamar berhasil dipindahkan ke ${cleanRoom}`);
+            if (onRoomAssigned) {
+                onRoomAssigned(cleanRoom, currentTargetRt?.id, currentTargetRt?.name);
+            }
+        } catch (err: any) {
+            toast.error(err?.message || "Gagal memindahkan nomor kamar.");
+        } finally {
+            setSavingRoomMove(false);
+        }
+    };
 
     // Close on Escape key press
     useEffect(() => {
@@ -199,6 +368,27 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                         </div>
                     )}
 
+                    {/* Overbooking / Room Conflict Banner */}
+                    {!booking.isCancelled && (booking.isOverbooked || booking.hasRoomConflict || localRoomNumber.toUpperCase() === "OVERBOOK") && (
+                        <div className={s.overbookBanner}>
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                                <WarningCircle size={20} weight="bold" style={{ flexShrink: 0, marginTop: 2 }} />
+                                <div>
+                                    <div className={s.cancelBannerTitle}>
+                                        {booking.hasRoomConflict
+                                            ? `Peringatan Bentrok Kamar (${localRoomNumber})`
+                                            : "Peringatan Overbooking (Kapasitas Kamar Penuh)"}
+                                    </div>
+                                    <div className={s.cancelBannerDesc}>
+                                        {booking.hasRoomConflict
+                                            ? `Nomor kamar ${localRoomNumber} juga terisi oleh tamu "${booking.conflictWithGuest || "lain"}" pada tanggal menginap yang sama. Silakan pindahkan ke nomor kamar fisik yang kosong.`
+                                            : "Seluruh unit fisik pada tipe kamar ini telah terisi saat reservasi masuk. Silakan tetapkan atau pindahkan ke nomor/tipe kamar lain."}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Guest Profile Section */}
                     <div className={s.section}>
                         <div className={s.sectionTitle}>
@@ -227,9 +417,21 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
 
                     {/* Stay & Room Details */}
                     <div className={s.section}>
-                        <div className={s.sectionTitle}>
-                            <Calendar size={16} weight="bold" />
-                            <span>Jadwal & Detail Kamar</span>
+                        <div className={s.sectionTitle} style={{ justifyContent: "space-between" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <Calendar size={16} weight="bold" />
+                                <span>Jadwal & Detail Kamar</span>
+                            </div>
+                            {!booking.isCancelled && (
+                                <button
+                                    type="button"
+                                    className={s.roomAssignBtn}
+                                    onClick={() => setShowRoomPicker((prev) => !prev)}
+                                >
+                                    <ArrowsLeftRight size={13} weight="bold" />
+                                    <span>{showRoomPicker ? "Tutup Panel Kamar" : "Pindah Kamar"}</span>
+                                </button>
+                            )}
                         </div>
                         <div className={s.grid3}>
                             <div className={s.field}>
@@ -249,17 +451,120 @@ export function BookingDetailModal({ booking, onClose }: BookingDetailModalProps
                         <div className={s.grid3} style={{ marginTop: 14 }}>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Tipe Kamar</span>
-                                <span className={s.fieldValue}>{getSafeDisplay(booking.roomType, "Standard Room")}</span>
+                                <span className={s.fieldValue}>{getSafeDisplay(localRoomType, "Standard Room")}</span>
                             </div>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>No. Kamar Fisik</span>
-                                <span className={s.fieldValue}>{getSafeDisplay(booking.roomNumber, "Belum Ditetapkan (AUTO)")}</span>
+                                <span
+                                    className={s.fieldValue}
+                                    style={{
+                                        color:
+                                            localRoomNumber.toUpperCase() === "OVERBOOK" || booking.hasRoomConflict
+                                                ? "#b91c1c"
+                                                : "#0f172a"
+                                    }}
+                                >
+                                    {getSafeDisplay(localRoomNumber, "Belum Ditetapkan (AUTO)")}
+                                </span>
                             </div>
                             <div className={s.field}>
                                 <span className={s.fieldLabel}>Paket Sarapan</span>
                                 <span className={s.fieldValue}>{booking.hasBreakfast ? "Termasuk Sarapan" : "Room Only"}</span>
                             </div>
                         </div>
+
+                        {/* Interactive Manual Room Assignment Panel */}
+                        {showRoomPicker && !booking.isCancelled && (
+                            <div className={s.roomAssignPanel}>
+                                <div className={s.roomAssignHeader}>
+                                    <span className={s.roomAssignTitle}>
+                                        Pilih Nomor Kamar Fisik ({formatDateDisplay(booking.checkInDate)} - {formatDateDisplay(booking.checkOutDate)})
+                                    </span>
+                                    {roomTypesList.length > 1 && (
+                                        <select
+                                            className={s.roomTypeSelect}
+                                            value={selectedTargetRtId}
+                                            onChange={(e) => setSelectedTargetRtId(e.target.value)}
+                                            aria-label="Pilih Tipe Kamar Tujuan"
+                                        >
+                                            {roomTypesList.map((rt) => (
+                                                <option key={rt.id} value={rt.id}>
+                                                    {rt.name} ({rt.totalRooms} Unit)
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
+
+                                <div className={s.roomPillsGrid}>
+                                    {physicalRoomStatuses.map((item) => {
+                                        const isSelected =
+                                            String(selectedTargetRoomNum || "").trim().toUpperCase() ===
+                                            item.roomNumber.trim().toUpperCase();
+                                        const isOccupied = Boolean(item.occupiedBy);
+                                        return (
+                                            <button
+                                                key={item.roomNumber}
+                                                type="button"
+                                                onClick={() => setSelectedTargetRoomNum(item.roomNumber)}
+                                                className={[
+                                                    s.roomPillBtn,
+                                                    isOccupied ? s.roomPillOccupied : s.roomPillAvailable,
+                                                    isSelected ? s.roomPillSelected : ""
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(" ")}
+                                                title={
+                                                    isOccupied
+                                                        ? `Terisi oleh: ${item.occupiedBy} (${item.channel})`
+                                                        : `Kamar ${item.roomNumber} Kosong & Tersedia`
+                                                }
+                                            >
+                                                <span className={s.roomPillNum}>
+                                                    Kamar {item.roomNumber}
+                                                </span>
+                                                <span
+                                                    className={[
+                                                        s.roomPillSub,
+                                                        isOccupied ? s.subOccupied : s.subAvailable
+                                                    ].join(" ")}
+                                                >
+                                                    {item.isCurrent
+                                                        ? "Kamar Saat Ini"
+                                                        : isOccupied
+                                                        ? `Terisi: ${item.occupiedBy}`
+                                                        : "Tersedia (Kosong)"}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className={s.roomAssignFooter}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b" }}>
+                                            Atau Ketik No. Kamar:
+                                        </span>
+                                        <input
+                                            type="text"
+                                            className={s.customRoomInput}
+                                            value={selectedTargetRoomNum}
+                                            onChange={(e) => setSelectedTargetRoomNum(e.target.value)}
+                                            placeholder="Contoh: 101"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className={s.saveRoomBtn}
+                                        disabled={savingRoomMove || !selectedTargetRoomNum.trim()}
+                                        onClick={handleSaveRoomAssignment}
+                                    >
+                                        <Bed size={14} weight="bold" />
+                                        <span>{savingRoomMove ? "Menyimpan..." : "Simpan Pindah Kamar"}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Financials & Settlement */}

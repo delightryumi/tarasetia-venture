@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase"; 
-import { onSnapshot, doc, query, where } from "firebase/firestore";
+import { onSnapshot, doc, query, where, getDocs } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
 
@@ -375,11 +375,13 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
         };
     }, [activeHotelCode, startDateStr, endDateStr]);
 
-    // Separate useEffect for static collections to avoid re-reading when toggling dates
+    // Low-cost 1-shot fetch for static roomTypes collection (avoids ongoing snapshot reads)
     useEffect(() => {
         if (!activeHotelCode || activeHotelCode === "0") return;
 
-        const unsubRooms = onSnapshot(getHotelCollection(db, "roomTypes", activeHotelCode), (snapshot) => {
+        let cancelled = false;
+        getDocs(getHotelCollection(db, "roomTypes", activeHotelCode)).then((snapshot) => {
+            if (cancelled) return;
             let totalRooms = 0;
             const rTypes: any[] = [];
             snapshot.forEach(docSnap => {
@@ -407,10 +409,12 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                     }
                 };
             });
+        }).catch((err) => {
+            console.error("Error loading room types in useOverview:", err);
         });
 
         return () => {
-            unsubRooms();
+            cancelled = true;
         };
     }, [activeHotelCode]);
 

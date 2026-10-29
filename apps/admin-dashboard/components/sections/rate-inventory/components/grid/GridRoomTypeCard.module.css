@@ -27,9 +27,9 @@
 }
 
 .roomTypeTitleCell {
-    width: 230px;
-    min-width: 230px;
-    max-width: 230px;
+    width: 285px;
+    min-width: 285px;
+    max-width: 285px;
     position: sticky;
     left: 0;
     z-index: 12;
@@ -38,7 +38,7 @@
     border-bottom: 1px solid #ecccd3 !important;
     border-left: 3.5px solid #72263d !important;
     padding: 6px 10px;
-    height: 38px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -85,13 +85,13 @@
 }
 
 .roomTypeNameText {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
     color: #581c2b;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.25;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
     letter-spacing: -0.01em;
 }
 
@@ -117,6 +117,37 @@
 :global(.dark) .roomCountPill {
     background-color: #4a1523;
     color: #fce7eb;
+}
+
+.expandRoomsBtn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #72263d;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease;
+}
+
+.expandRoomsBtn:hover {
+    background-color: rgba(114, 38, 61, 0.12);
+}
+
+:global(.dark) .expandRoomsBtn {
+    color: #e07a93;
+}
+
+.rightActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
 }
 
 .btnSyncRoom {

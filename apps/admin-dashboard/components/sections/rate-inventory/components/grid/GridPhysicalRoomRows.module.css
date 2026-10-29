@@ -1,0 +1,700 @@
+/* GridPhysicalRoomRows.module.css - Modular CSS for Physical Room Sub-Rows & Room Assignment Dialog */
+
+.subRow {
+    background-color: #fcfcfd;
+    border-bottom: 1px solid #e4e4e7;
+    transition: background-color 0.15s ease;
+}
+
+:global(.dark) .subRow {
+    background-color: #121620;
+    border-bottom-color: #27272a;
+}
+
+.subRowConflict {
+    background-color: #fff5f5;
+}
+
+:global(.dark) .subRowConflict {
+    background-color: #2a1215;
+}
+
+.roomLabelCell {
+    width: 285px;
+    min-width: 285px;
+    max-width: 285px;
+    position: sticky;
+    left: 0;
+    z-index: 11;
+    background-color: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    border-left: 3.5px solid #94a3b8;
+    padding: 5px 10px 5px 18px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+:global(.dark) .roomLabelCell {
+    background-color: #18181b;
+    border-right-color: #27272a;
+    border-bottom-color: #27272a;
+    border-left-color: #52525b;
+}
+
+.roomLabelCellUnassigned {
+    background-color: #fef2f2;
+    border-left-color: #dc2626;
+}
+
+:global(.dark) .roomLabelCellUnassigned {
+    background-color: #2d1215;
+    border-left-color: #ef4444;
+}
+
+.roomLabelLeft {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.roomNumBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background-color: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+}
+
+:global(.dark) .roomNumBadge {
+    background-color: #27272a;
+    color: #f4f4f5;
+    border-color: #3f3f46;
+}
+
+.roomNumBadgeDanger {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+:global(.dark) .roomNumBadgeDanger {
+    background-color: #450a0a;
+    color: #fca5a5;
+    border-color: #7f1d1d;
+}
+
+.roomSubLabel {
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+:global(.dark) .roomSubLabel {
+    color: #a1a1aa;
+}
+
+.dayCell {
+    min-width: 96px;
+    width: 96px;
+    padding: 3px 3px;
+    border: none !important;
+    text-align: center;
+    vertical-align: middle;
+    box-sizing: border-box;
+    background-color: transparent;
+}
+
+:global(.dark) .dayCell {
+    background-color: transparent;
+    border: none !important;
+}
+
+.dayCellWeekend {
+    background-color: transparent;
+}
+
+:global(.dark) .dayCellWeekend {
+    background-color: transparent;
+}
+
+.dayCellToday {
+    background-color: transparent;
+}
+
+:global(.dark) .dayCellToday {
+    background-color: transparent;
+}
+
+.dayCellConflict {
+    background-color: transparent !important;
+}
+
+:global(.dark) .dayCellConflict {
+    background-color: transparent !important;
+}
+
+.emptySlotPill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 32px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #000000 !important;
+    background-color: #dcfce7 !important;
+    border: none !important;
+    user-select: none;
+    box-sizing: border-box;
+    box-shadow: none !important;
+}
+
+:global(.dark) .emptySlotPill {
+    color: #000000 !important;
+    background-color: #86efac !important;
+    border: none !important;
+}
+
+.emptySlotDash {
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.occupiedPillBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 100%;
+    min-height: 44px;
+    padding: 4px 5px;
+    border-radius: 6px;
+    border: none !important;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+    box-sizing: border-box;
+    box-shadow: none !important;
+    color: #000000 !important;
+}
+
+.occupiedPillBtn:hover {
+    opacity: 0.9;
+}
+
+/* Channel-specific Solid Color Themes (Border-free, pure black text) */
+.themeTraveloka {
+    background-color: #38bdf8 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeTiket {
+    background-color: #fde047 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeBooking {
+    background-color: #60a5fa !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeAgoda {
+    background-color: #f87171 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeAirbnb {
+    background-color: #fb7185 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeExpedia {
+    background-color: #fbbf24 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeTrip {
+    background-color: #22d3ee !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeWalkIn {
+    background-color: #4ade80 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeBookingEngine {
+    background-color: #86efac !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeDefault {
+    background-color: #c084fc !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.occupiedPillBtnSpanned {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.nightsBadge {
+    font-size: 8px;
+    font-weight: 800;
+    color: #000000 !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border: none !important;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+:global(.dark) .nightsBadge {
+    color: #000000 !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.conflictPillBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 100%;
+    min-height: 44px;
+    padding: 4px 5px;
+    border-radius: 6px;
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    border: none !important;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+    box-sizing: border-box;
+    box-shadow: none !important;
+}
+
+.conflictPillBtn:hover {
+    opacity: 0.9;
+}
+
+:global(.dark) .conflictPillBtn {
+    background-color: #dc2626 !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.pillTopRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+}
+
+.channelLogoBadge {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    flex-shrink: 0;
+}
+
+:global(.dark) .channelLogoBadge {
+    background-color: #09090b;
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.channelLogoImg {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+}
+
+.conflictBadge {
+    font-size: 8px;
+    font-weight: 800;
+    background-color: #ef4444;
+    color: #ffffff;
+    padding: 1px 4px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    flex-shrink: 0;
+}
+
+.guestFullName {
+    font-size: 9.5px;
+    font-weight: 500;
+    line-height: 1.25;
+    color: #000000 !important;
+    text-align: center;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    max-width: 100%;
+}
+
+:global(.dark) .guestFullName {
+    color: #000000 !important;
+}
+
+.conflictPillBtn .guestFullName {
+    color: #ffffff !important;
+}
+
+:global(.dark) .conflictPillBtn .guestFullName {
+    color: #ffffff !important;
+}
+
+/* Inline Editor Row for Managing Physical Room Numbers */
+.editorRow {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+:global(.dark) .editorRow {
+    background-color: #18181b;
+    border-bottom-color: #27272a;
+}
+
+.editorContainer {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.editorLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.editorLabel {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+:global(.dark) .editorLabel {
+    color: #f4f4f5;
+}
+
+.editorInput {
+    flex: 1;
+    min-width: 240px;
+    max-width: 460px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #09090b;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+}
+
+:global(.dark) .editorInput {
+    background-color: #09090b;
+    border-color: #3f3f46;
+    color: #f4f4f5;
+}
+
+.editorHint {
+    font-size: 10.5px;
+    color: #64748b;
+}
+
+.editorActions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btnSaveRooms {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid #09090b;
+    background-color: #09090b;
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btnSaveRooms:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btnCancelRooms {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #e4e4e7;
+    background-color: #ffffff;
+    color: #18181b;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Modal Dialog for Moving a Guest's Physical Room */
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(9, 9, 11, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+}
+
+.modalBox {
+    width: 100%;
+    max-width: 480px;
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+:global(.dark) .modalBox {
+    background-color: #18181b;
+    border-color: #27272a;
+}
+
+.modalHeader {
+    padding: 16px 20px;
+    background-color: #fafafa;
+    border-bottom: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+:global(.dark) .modalHeader {
+    background-color: #27272a;
+    border-bottom-color: #3f3f46;
+}
+
+.modalTag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #71717a;
+}
+
+.modalTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #09090b;
+    margin-top: 2px;
+}
+
+:global(.dark) .modalTitle {
+    color: #f4f4f5;
+}
+
+.modalCloseBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid #e4e4e7;
+    background-color: #ffffff;
+    color: #71717a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.modalBody {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.occupantCard {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #e4e4e7;
+    background-color: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+:global(.dark) .occupantCard {
+    background-color: #27272a;
+    border-color: #3f3f46;
+}
+
+.occupantTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.occupantName {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #09090b;
+}
+
+:global(.dark) .occupantName {
+    color: #f4f4f5;
+}
+
+.occupantChannel {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+}
+
+.occupantMeta {
+    font-size: 11.5px;
+    color: #71717a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.roomSelectGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+}
+
+.roomChoiceBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #e4e4e7;
+    background-color: #ffffff;
+    cursor: pointer;
+    min-height: 44px;
+    transition: all 0.15s ease;
+}
+
+.roomChoiceFree {
+    border-color: #a7f3d0;
+    background-color: #ecfdf5;
+}
+
+.roomChoiceBusy {
+    border-color: #fde68a;
+    background-color: #fffbeb;
+}
+
+.roomChoiceActive {
+    border-color: #09090b !important;
+    background-color: #09090b !important;
+    color: #ffffff !important;
+}
+
+.roomChoiceNum {
+    font-size: 12px;
+    font-weight: 700;
+    color: #09090b;
+}
+
+.roomChoiceActive .roomChoiceNum {
+    color: #ffffff;
+}
+
+.roomChoiceStatus {
+    font-size: 10px;
+    font-weight: 600;
+    color: #71717a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.roomChoiceActive .roomChoiceStatus {
+    color: #d4d4d8;
+}
+
+.modalFooter {
+    padding: 14px 20px;
+    background-color: #fafafa;
+    border-top: 1px solid #e4e4e7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+:global(.dark) .modalFooter {
+    background-color: #27272a;
+    border-top-color: #3f3f46;
+}
+

@@ -1,5 +1,13 @@
 export type BookingStatusFilter = "ALL" | "CONFIRMED" | "CHECKED_OUT" | "CANCELLED";
 export type ViewMode = "grid" | "list";
+export type BookingSortOption =
+    | "date_desc"
+    | "date_asc"
+    | "checkin_asc"
+    | "checkin_desc"
+    | "amount_desc"
+    | "amount_asc"
+    | "guest_asc";
 
 export interface BookingRecord {
     id: string;                      // Canonical identifier (bookingId / reservationId / channexBookingId)
@@ -32,6 +40,7 @@ export interface BookingRecord {
     effectiveDate: string;
     bookingDate: string;             // Created / Timestamp date (YYYY-MM-DD)
     timestamp: string;
+    timestampMs?: number;            // Epoch ms when booking entered / was last updated in the system
     nights: number;
     roomType: string;
     roomTypeId?: string;
@@ -69,6 +78,9 @@ export interface BookingRecord {
     isCancelled: boolean;
     isModified?: boolean;
     isRescheduled?: boolean;
+    isOverbooked?: boolean;
+    hasRoomConflict?: boolean;
+    conflictWithGuest?: string;
     revisionCount?: number;
     cancelReason?: string;
     note?: string;
@@ -78,6 +90,15 @@ export interface BookingRecord {
     // Origin doc reference
     _docId?: string;
     _datesOccurred: string[];
+    _lastEntryOrder?: number;
+}
+
+export interface RoomTypePhysicalConfig {
+    id: string;
+    name: string;
+    code: string;
+    totalRooms: number;
+    physicalRooms: string[];
 }
 
 export interface BookingStatsSummary {

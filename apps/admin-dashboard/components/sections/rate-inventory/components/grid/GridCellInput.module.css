@@ -133,6 +133,42 @@
     color: #f87171 !important;
 }
 
+.inputNegative {
+    color: #ffffff !important;
+    background-color: #dc2626 !important;
+    border-color: #991b1b !important;
+    font-weight: 800 !important;
+}
+
+:global(.dark) .inputNegative {
+    color: #ffffff !important;
+    background-color: #b91c1c !important;
+    border-color: #ef4444 !important;
+    font-weight: 800 !important;
+}
+
+.overbookBadge {
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 1.5px;
+    padding: 1px 3.5px;
+    font-size: 7px;
+    font-weight: 800;
+    line-height: 1;
+    background-color: #991b1b;
+    color: #ffffff;
+    border-radius: 3px;
+    z-index: 3;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
 .inputCapped {
     background-color: #f5f3ff !important;
     color: #6d28d9 !important;

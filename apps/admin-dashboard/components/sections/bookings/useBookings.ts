@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { useAuth } from "@/context/AuthContext";
 import { resolveChannelName, getChannelLogo, resolveBookingIdentifiers } from "@/lib/channelHelper";
-import { BookingRecord, BookingStatusFilter, BookingStatsSummary } from "./types";
+import { BookingRecord, BookingStatusFilter, BookingStatsSummary, BookingSortOption, RoomTypePhysicalConfig } from "./types";
 
 interface UseBookingsOptions {
     startDate: string; // YYYY-MM-DD
@@ -15,7 +15,79 @@ interface UseBookingsOptions {
     channelFilter: string;
     roomTypeFilter: string;
     searchQuery: string;
-    sortBy: "date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "guest_asc";
+    sortBy: BookingSortOption;
+}
+
+function parseTimestampValue(raw: any): number {
+    if (!raw) return 0;
+    if (typeof raw === "number") {
+        // Handle seconds vs milliseconds epoch
+        return raw < 1e12 ? raw * 1000 : raw;
+    }
+    if (typeof raw === "object") {
+        if (typeof raw.toMillis === "function") return raw.toMillis();
+        if (typeof raw.seconds === "number") return raw.seconds * 1000;
+    }
+    if (typeof raw === "string") {
+        const trimmed = raw.trim();
+        if (!trimmed) return 0;
+        if (/^\d+$/.test(trimmed)) {
+            const num = Number(trimmed);
+            return num < 1e12 ? num * 1000 : num;
+        }
+        const parsed = Date.parse(trimmed);
+        if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
+}
+
+function resolveEntryTimestamp(
+    entry: any,
+    docData: any,
+    docDate: string,
+    checkInDate: string
+): { iso: string; ms: number; dateStr: string } {
+    // 1. Check explicit entry-level timestamps (pick the latest valid timestamp for newly arrived/revised bookings)
+    const entryCandidates = [
+        entry.timestamp,
+        entry.updatedAt,
+        entry.createdAt,
+        entry.channexRaw?.insertedAt,
+        entry.inserted_at,
+    ];
+
+    let bestMs = 0;
+    for (const c of entryCandidates) {
+        const ms = parseTimestampValue(c);
+        if (ms > bestMs) bestMs = ms;
+    }
+
+    // 2. Fallback to document-level timestamps or date (never fallback to Date.now() so old entries don't jump to front)
+    if (bestMs <= 0) {
+        const docCandidates = [docData?.lastUpdated, docData?.createdAt];
+        for (const c of docCandidates) {
+            const ms = parseTimestampValue(c);
+            if (ms > bestMs) bestMs = ms;
+        }
+    }
+
+    if (bestMs <= 0) {
+        const fallbackDate = entry.bookingDate || checkInDate || docDate || "1970-01-01";
+        const parsedFallback = Date.parse(`${fallbackDate}T00:00:00+07:00`);
+        bestMs = !isNaN(parsedFallback) ? parsedFallback : 0;
+    }
+
+    const d = new Date(bestMs || 0);
+    const dateStr =
+        bestMs > 0
+            ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+            : docDate;
+
+    return {
+        iso: bestMs > 0 ? d.toISOString() : `${docDate}T00:00:00.000Z`,
+        ms: bestMs,
+        dateStr,
+    };
 }
 
 export function useBookings({
@@ -29,8 +101,63 @@ export function useBookings({
 }: UseBookingsOptions) {
     const { activeHotelCode } = useAuth();
     const [rawDocsMap, setRawDocsMap] = useState<Record<string, any>>({});
+    const [roomTypesList, setRoomTypesList] = useState<RoomTypePhysicalConfig[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Fetch Room Types once per hotel session (low-cost single getDocs read)
+    useEffect(() => {
+        if (!activeHotelCode || activeHotelCode === "0") {
+            setRoomTypesList([]);
+            return;
+        }
+        let cancelled = false;
+        getDocs(getHotelCollection(db, "roomTypes", activeHotelCode))
+            .then((snap) => {
+                if (cancelled) return;
+                const list: RoomTypePhysicalConfig[] = snap.docs.map((d) => {
+                    const data = d.data();
+                    const rawPhys: string[] = Array.isArray(data.physicalRooms)
+                        ? data.physicalRooms
+                              .map((p: any) => (typeof p === "string" ? p.trim() : String(p?.number || p?.name || "").trim()))
+                              .filter(Boolean)
+                        : [];
+                    const totalRooms = Math.max(
+                        1,
+                        Number(
+                            data.roomCount ??
+                            data.totalRooms ??
+                            data.roomsCount ??
+                            (rawPhys.length > 0 ? rawPhys.length : (data.quantity ?? 1))
+                        )
+                    );
+                    const paddedPhys = [...rawPhys];
+                    let genericCounter = 1;
+                    while (paddedPhys.length < totalRooms) {
+                        let candidate = `${genericCounter}`;
+                        while (paddedPhys.some((pr) => pr.toUpperCase() === candidate.toUpperCase())) {
+                            genericCounter++;
+                            candidate = `${genericCounter}`;
+                        }
+                        paddedPhys.push(candidate);
+                    }
+                    return {
+                        id: d.id,
+                        name: data.name || "Standard Room",
+                        code: data.code || d.id,
+                        totalRooms,
+                        physicalRooms: paddedPhys,
+                    };
+                });
+                setRoomTypesList(list);
+            })
+            .catch((err) => {
+                console.warn("[useBookings] Could not load roomTypes:", err);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [activeHotelCode]);
 
     // Compute expanded query range with buffer to capture multi-night stays
     const { queryStart, queryEnd } = useMemo(() => {
@@ -103,12 +230,23 @@ export function useBookings({
     // Aggregate & Deduplicate multi-night booking records in-memory (O(N) single pass)
     const allAggregatedBookings = useMemo<BookingRecord[]>(() => {
         const bookingsMap = new Map<string, BookingRecord>();
+        let entryOrderCounter = 0;
 
-        Object.entries(rawDocsMap).forEach(([docId, docData]) => {
+        // Sort rawDocsMap entries deterministically by date ascending before iterating
+        const sortedDocEntries = Object.entries(rawDocsMap).sort(([idA, dataA], [idB, dataB]) => {
+            const dA = dataA?.date || idA;
+            const dB = dataB?.date || idB;
+            return String(dA).localeCompare(String(dB));
+        });
+
+        sortedDocEntries.forEach(([docId, docData]) => {
             const docDate = docData.date || docId.replace(`${activeHotelCode}_`, "") || docId;
             const entries = docData.entries || [];
 
             entries.forEach((entry: any) => {
+                entryOrderCounter += 1;
+                const currentEntryOrder = entryOrderCounter;
+
                 // Only process accommodation bookings (skip stand-alone F&B other_income or breakfast packages)
                 if (entry.isBreakfastPackage || entry.type === "other_income" || (entry.type && entry.type !== "accommodation" && !entry.roomType)) {
                     return;
@@ -192,18 +330,9 @@ export function useBookings({
                     gst === "cancel" ||
                     Boolean(entry.isCancelled);
 
-                // Booking Date / Timestamp
-                let bookingDateStr = docDate;
-                if (entry.timestamp) {
-                    try {
-                        const t = typeof entry.timestamp === "number" ? new Date(entry.timestamp) : new Date(String(entry.timestamp));
-                        if (!isNaN(t.getTime())) {
-                            bookingDateStr = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
-                        }
-                    } catch {
-                        // fallback to docDate
-                    }
-                }
+                // Booking Date / Timestamp (accurate incoming / revision epoch ms)
+                const resolvedTs = resolveEntryTimestamp(entry, docData, docDate, checkInDate);
+                const bookingDateStr = resolvedTs.dateStr || docDate;
 
                 const currentAmount = Number(entry.amount ?? entry.totalAmount ?? 0);
                 const currentGross = Number(entry.grossAmount ?? entry.totalPrice ?? currentAmount);
@@ -265,7 +394,8 @@ export function useBookings({
                         checkOutDate,
                         effectiveDate: entry.effectiveDate || docDate,
                         bookingDate: bookingDateStr || docDate,
-                        timestamp: entry.timestamp || new Date().toISOString(),
+                        timestamp: resolvedTs.iso,
+                        timestampMs: resolvedTs.ms,
                         nights: nightsCount,
                         roomType: safeRoomType,
                         roomTypeId: entry.roomTypeId || "",
@@ -299,6 +429,7 @@ export function useBookings({
                         status: isEntryCancelled ? "CANCELLED" : (entry.status || "CONFIRMED"),
                         guestStatus: entry.guestStatus || (isEntryCancelled ? "cancelled" : "confirmed"),
                         isCancelled: isEntryCancelled,
+                        isOverbooked: Boolean(entry.isOverbooked || safeRoomNumber.toUpperCase() === "OVERBOOK"),
                         isModified: Boolean(
                             entry.isModified || 
                             entry.revisionEvent === "booking_modification" || 
@@ -313,6 +444,7 @@ export function useBookings({
 
                         _docId: docId,
                         _datesOccurred: [docDate],
+                        _lastEntryOrder: currentEntryOrder,
                     });
                 } else {
                     // Update existing consolidated record
@@ -320,6 +452,26 @@ export function useBookings({
 
                     if (!existing._datesOccurred.includes(docDate)) {
                         existing._datesOccurred.push(docDate);
+                    }
+
+                    // Keep latest roomNumber & roomType if moved manually
+                    if (safeRoomNumber && safeRoomNumber !== "AUTO") {
+                        existing.roomNumber = safeRoomNumber;
+                    }
+                    if (entry.isOverbooked || safeRoomNumber.toUpperCase() === "OVERBOOK") {
+                        existing.isOverbooked = true;
+                    } else if (safeRoomNumber && safeRoomNumber !== "AUTO" && safeRoomNumber.toUpperCase() !== "OVERBOOK") {
+                        existing.isOverbooked = false;
+                    }
+
+                    // Keep the newest incoming / revision timestamp across multi-night occurrences
+                    if (resolvedTs.ms > (existing.timestampMs || 0)) {
+                        existing.timestampMs = resolvedTs.ms;
+                        existing.timestamp = resolvedTs.iso;
+                        existing.bookingDate = bookingDateStr || existing.bookingDate;
+                    }
+                    if (currentEntryOrder > (existing._lastEntryOrder || 0)) {
+                        existing._lastEntryOrder = currentEntryOrder;
                     }
 
                     // Keep earliest check-in & latest check-out
@@ -386,7 +538,37 @@ export function useBookings({
             });
         });
 
-        return Array.from(bookingsMap.values());
+        const list = Array.from(bookingsMap.values());
+
+        // Detect physical room double-booking conflicts across active reservations (O(N) date-room bucket check)
+        const dateRoomOccupants = new Map<string, BookingRecord[]>();
+        for (const b of list) {
+            if (b.isCancelled) continue;
+            const rNum = String(b.roomNumber || "").trim().toUpperCase();
+            if (!rNum || rNum === "AUTO" || rNum === "OVERBOOK" || rNum === "UNASSIGNED") continue;
+            const rtKey = String(b.roomTypeId || b.roomType || "").trim().toLowerCase();
+
+            for (const dStr of b._datesOccurred) {
+                const slotKey = `${dStr}::${rtKey}::${rNum}`;
+                const arr = dateRoomOccupants.get(slotKey) || [];
+                arr.push(b);
+                dateRoomOccupants.set(slotKey, arr);
+            }
+        }
+
+        for (const occupants of dateRoomOccupants.values()) {
+            if (occupants.length > 1) {
+                for (const b of occupants) {
+                    b.hasRoomConflict = true;
+                    const others = occupants.filter((o) => o.id !== b.id).map((o) => o.guestName);
+                    if (others.length > 0) {
+                        b.conflictWithGuest = others.join(", ");
+                    }
+                }
+            }
+        }
+
+        return list;
     }, [rawDocsMap]);
 
     // Unique filter options extracted dynamically
@@ -456,17 +638,35 @@ export function useBookings({
             });
         }
 
-        // 6. Sorting
+        // 6. Sorting (Default "date_desc": Newest incoming booking at the very front)
         list.sort((a, b) => {
             if (sortBy === "date_desc") {
-                const dateA = a.checkInDate || a.bookingDate;
-                const dateB = b.checkInDate || b.bookingDate;
-                return dateB.localeCompare(dateA);
+                const tsDiff = (b.timestampMs || 0) - (a.timestampMs || 0);
+                if (tsDiff !== 0) return tsDiff;
+                const bDateDiff = (b.bookingDate || "").localeCompare(a.bookingDate || "");
+                if (bDateDiff !== 0) return bDateDiff;
+                const orderDiff = (b._lastEntryOrder || 0) - (a._lastEntryOrder || 0);
+                if (orderDiff !== 0) return orderDiff;
+                return (b.checkInDate || "").localeCompare(a.checkInDate || "");
             }
             if (sortBy === "date_asc") {
-                const dateA = a.checkInDate || a.bookingDate;
-                const dateB = b.checkInDate || b.bookingDate;
-                return dateA.localeCompare(dateB);
+                const tsDiff = (a.timestampMs || 0) - (b.timestampMs || 0);
+                if (tsDiff !== 0) return tsDiff;
+                const bDateDiff = (a.bookingDate || "").localeCompare(b.bookingDate || "");
+                if (bDateDiff !== 0) return bDateDiff;
+                const orderDiff = (a._lastEntryOrder || 0) - (b._lastEntryOrder || 0);
+                if (orderDiff !== 0) return orderDiff;
+                return (a.checkInDate || "").localeCompare(b.checkInDate || "");
+            }
+            if (sortBy === "checkin_asc") {
+                const ciDiff = (a.checkInDate || a.bookingDate).localeCompare(b.checkInDate || b.bookingDate);
+                if (ciDiff !== 0) return ciDiff;
+                return (b.timestampMs || 0) - (a.timestampMs || 0);
+            }
+            if (sortBy === "checkin_desc") {
+                const ciDiff = (b.checkInDate || b.bookingDate).localeCompare(a.checkInDate || a.bookingDate);
+                if (ciDiff !== 0) return ciDiff;
+                return (b.timestampMs || 0) - (a.timestampMs || 0);
             }
             if (sortBy === "amount_desc") {
                 return (b.totalAmount || b.amount) - (a.totalAmount || a.amount);
@@ -534,6 +734,8 @@ export function useBookings({
 
     return {
         bookings: filteredBookings,
+        allBookings: allAggregatedBookings,
+        roomTypesList,
         rawCount: allAggregatedBookings.length,
         stats,
         filterOptions,

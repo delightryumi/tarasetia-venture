@@ -348,7 +348,7 @@ export const useConfirmationLetter = () => {
         }
 
         const lettersCol = collection(db, `hotels/${hotelId}/confirmation_letters`);
-        const q = query(lettersCol, orderBy("createdAt", "desc"));
+        const q = query(lettersCol, orderBy("createdAt", "desc"), limit(50));
 
         const unsub = onSnapshot(q, (snapshot) => {
             const list: ConfirmationLetter[] = [];

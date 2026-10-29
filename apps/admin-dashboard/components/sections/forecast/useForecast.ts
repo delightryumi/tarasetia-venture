@@ -87,8 +87,9 @@ export const useForecast = (viewMode: "daily" | "monthly" | "yearly", selectedDa
                 trendLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             } else {
                 const numY = Number(year) || new Date().getFullYear();
-                const startYearNum = Math.max(2024, numY - 2);
-                const endYearNum = Math.min(2030, Math.max(numY + 1, startYearNum + 2));
+                // YoY (Year-over-Year) comparison: bounded to prior year + current year to halve Firestore reads
+                const startYearNum = Math.max(2024, numY - 1);
+                const endYearNum = numY;
                 startStr = `${startYearNum}-01-01`;
                 endStr = `${endYearNum}-12-31`;
                 totalDaysForOcc = (Number(year) % 4 === 0 && (Number(year) % 100 !== 0 || Number(year) % 400 === 0)) ? 366 : 365;

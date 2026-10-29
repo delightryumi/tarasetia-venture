@@ -16,7 +16,7 @@ import { BookingCard } from "./components/BookingCard";
 import { BookingTable } from "./components/BookingTable";
 import { BookingDetailModal } from "./components/BookingDetailModal";
 import { BookingStats } from "./components/BookingStats";
-import { BookingStatusFilter, ViewMode, BookingRecord } from "./types";
+import { BookingStatusFilter, ViewMode, BookingRecord, BookingSortOption } from "./types";
 import s from "./BookingsSection.module.css";
 
 export function BookingsSection() {
@@ -48,7 +48,7 @@ export function BookingsSection() {
     const [channelFilter, setChannelFilter] = useState("ALL");
     const [roomTypeFilter, setRoomTypeFilter] = useState("ALL");
     const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("ALL");
-    const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "guest_asc">("date_desc");
+    const [sortBy, setSortBy] = useState<BookingSortOption>("date_desc");
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
 
@@ -68,7 +68,7 @@ export function BookingsSection() {
     }, [activeHotelCode]);
 
     // High-efficiency hook with immediate reactivity
-    const { bookings, rawCount, stats, filterOptions, loading, error } = useBookings({
+    const { bookings, allBookings, roomTypesList, rawCount, stats, filterOptions, loading, error } = useBookings({
         startDate,
         endDate,
         statusFilter,
@@ -92,6 +92,7 @@ export function BookingsSection() {
         setChannelFilter("ALL");
         setRoomTypeFilter("ALL");
         setStatusFilter("ALL");
+        setSortBy("date_desc");
     };
 
     const handleApplySearch = () => {
@@ -214,6 +215,23 @@ export function BookingsSection() {
                             ))}
                         </select>
 
+                        {/* Sort Order Dropdown */}
+                        <select
+                            className={s.selectInput}
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as BookingSortOption)}
+                            aria-label="Sort Bookings"
+                            title="Urutkan Reservasi"
+                        >
+                            <option value="date_desc">Urutan: Terbaru Masuk</option>
+                            <option value="date_asc">Urutan: Terlama Masuk</option>
+                            <option value="checkin_asc">Check-in: Terdekat</option>
+                            <option value="checkin_desc">Check-in: Terjauh</option>
+                            <option value="amount_desc">Total: Tertinggi</option>
+                            <option value="amount_asc">Total: Terendah</option>
+                            <option value="guest_asc">Nama Tamu: A-Z</option>
+                        </select>
+
                         {/* Search Input */}
                         <div className={s.searchInputWrapper}>
                             <MagnifyingGlass size={15} color="#64748b" />
@@ -310,7 +328,23 @@ export function BookingsSection() {
             {selectedBooking && (
                 <BookingDetailModal
                     booking={selectedBooking}
+                    roomTypesList={roomTypesList}
+                    allBookings={allBookings}
                     onClose={() => setSelectedBooking(null)}
+                    onRoomAssigned={(newRoomNumber, newRoomTypeId, newRoomTypeName) => {
+                        setSelectedBooking((prev) =>
+                            prev
+                                ? {
+                                      ...prev,
+                                      roomNumber: newRoomNumber,
+                                      roomTypeId: newRoomTypeId || prev.roomTypeId,
+                                      roomType: newRoomTypeName || prev.roomType,
+                                      isOverbooked: newRoomNumber.toUpperCase() === "OVERBOOK",
+                                      hasRoomConflict: false,
+                                  }
+                                : null
+                        );
+                    }}
                 />
             )}
         </div>

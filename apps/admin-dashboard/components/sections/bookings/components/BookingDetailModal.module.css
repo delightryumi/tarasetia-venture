@@ -262,6 +262,198 @@
     box-shadow: 6px 6px 16px rgba(37, 99, 235, 0.4);
 }
 
+.overbookBanner {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    color: #991b1b;
+}
+
+.roomAssignBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.roomAssignBtn:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+.roomAssignPanel {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.roomAssignHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.roomAssignTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.roomTypeSelect {
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    outline: none;
+}
+
+.roomPillsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+    gap: 8px;
+}
+
+.roomPillBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 3px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    min-height: 48px;
+}
+
+.roomPillBtn:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.roomPillAvailable {
+    border-color: #a7f3d0;
+    background: #f0fdf4;
+}
+
+.roomPillOccupied {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.roomPillSelected {
+    border-color: #09090b !important;
+    background: #09090b !important;
+    color: #ffffff !important;
+}
+
+.roomPillNum {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.roomPillSelected .roomPillNum {
+    color: #ffffff;
+}
+
+.roomPillSub {
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.subAvailable {
+    color: #047857;
+}
+
+.subOccupied {
+    color: #b45309;
+}
+
+.roomPillSelected .roomPillSub {
+    color: #e4e4e7;
+}
+
+.roomAssignFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.customRoomInput {
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+    width: 150px;
+    outline: none;
+}
+
+.saveRoomBtn {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid #09090b;
+    background: #09090b;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.saveRoomBtn:hover:not(:disabled) {
+    background: #27272a;
+}
+
+.saveRoomBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 @media (max-width: 640px) {
     .grid2, .grid3 {
         grid-template-columns: 1fr;

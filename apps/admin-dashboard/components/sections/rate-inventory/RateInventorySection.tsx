@@ -46,6 +46,8 @@ export function RateInventorySection() {
         applyBulkUpdate,
         exportGridToCsv,
         syncAriToChannex,
+        updateRoomTypePhysicalRooms,
+        moveBookingPhysicalRoom,
         loading,
         saving,
         syncingAri,
@@ -267,6 +269,8 @@ export function RateInventorySection() {
                             canChangeRate={canChangeRate}
                             canChangeInventory={canChangeInventory}
                             channelFilter={channelFilter}
+                            onUpdatePhysicalRooms={updateRoomTypePhysicalRooms}
+                            onMoveBookingRoom={moveBookingPhysicalRoom}
                         />
                     </div>
 
@@ -344,6 +348,8 @@ export function RateInventorySection() {
                                         canChangeInventory={canChangeInventory}
                                         channelFilter={channelFilter}
                                         channelConfigs={channelConfigs}
+                                        onUpdatePhysicalRooms={updateRoomTypePhysicalRooms}
+                                        onMoveBookingRoom={moveBookingPhysicalRoom}
                                     />
                                 )}
                             </>

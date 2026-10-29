@@ -64,6 +64,38 @@ export interface DayInventoryStatus {
     extraChildRate: number;
     isChannelCustom?: boolean;
     isCapped?: boolean;
+    isOverbooked?: boolean;
+    hasRoomConflict?: boolean;
+}
+
+export interface PhysicalRoomOccupant {
+    bookingId: string;
+    reservationId: string;
+    otaReservationId?: string;
+    voucherCode?: string;
+    guestName: string;
+    channel: string;
+    checkInDate: string;
+    checkOutDate: string;
+    roomNumber: string;
+    roomTypeId: string;
+    roomTypeName: string;
+    status: string;
+    isOverbooked?: boolean;
+}
+
+export interface PhysicalRoomDayStatus {
+    date: string;
+    roomNumber: string;
+    isOccupied: boolean;
+    isDoubleBooked: boolean;
+    occupants: PhysicalRoomOccupant[];
+}
+
+export interface PhysicalRoomGridRow {
+    roomNumber: string;
+    isUnassignedBucket?: boolean;
+    days: Record<string, PhysicalRoomDayStatus>;
 }
 
 export interface RatePlanGridRow {
@@ -84,6 +116,8 @@ export interface RoomTypeInventoryRow {
     roomTypeName: string;
     roomTypeCode: string;
     totalPhysicalRooms: number;
+    physicalRooms: string[];
+    physicalRoomRows: PhysicalRoomGridRow[];
     basePrice: number;
     days: Record<string, DayInventoryStatus>;
     ratePlans: RatePlanGridRow[];

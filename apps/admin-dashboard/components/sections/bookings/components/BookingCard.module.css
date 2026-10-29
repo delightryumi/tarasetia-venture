@@ -48,21 +48,26 @@
 .channelBadge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 3px 8px;
-    background: #f8fafc;
+    justify-content: center;
+    padding: 3px 6px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 8px;
-    box-shadow: 
-        inset 1px 1px 2px rgba(0, 0, 0, 0.04),
-        inset -1px -1px 2px rgba(255, 255, 255, 0.8);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     font-size: 11px;
     font-weight: 700;
     color: #334155;
 }
 
+:global(.dark) .channelBadge {
+    background: #18181b;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #e4e4e7;
+}
+
 .otaLogo {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     object-fit: contain;
     border-radius: 4px;
     flex-shrink: 0;
@@ -298,4 +303,29 @@
     background: #fef3c7;
     color: #b45309;
     border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.overbookPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.cardConflict {
+    border: 1.5px solid #fca5a5;
+    background: #fffafa;
+}
+
+.roomDangerText {
+    color: #b91c1c;
+    font-weight: 700;
 }

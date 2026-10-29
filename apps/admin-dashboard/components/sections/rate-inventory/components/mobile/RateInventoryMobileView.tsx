@@ -8,6 +8,8 @@ import {
 import s from "./RateInventoryMobileView.module.css";
 import { toast } from "sonner";
 import { useCurrency } from "@/hooks/useCurrency";
+import { MobilePhysicalRoomsPanel } from "./MobilePhysicalRoomsPanel";
+import { PhysicalRoomOccupant } from "../../RateInventoryTypes";
 
 interface RateInventoryMobileViewProps {
     hotelName?: string;
@@ -28,6 +30,13 @@ interface RateInventoryMobileViewProps {
     canChangeRate: boolean;
     canChangeInventory: boolean;
     channelFilter: string;
+    onUpdatePhysicalRooms?: (roomTypeId: string, newRooms: string[]) => Promise<boolean>;
+    onMoveBookingRoom?: (
+        occupant: PhysicalRoomOccupant,
+        newRoomNumber: string,
+        newRoomTypeId?: string,
+        newRoomTypeName?: string
+    ) => Promise<boolean>;
 }
 
 export function RateInventoryMobileView({
@@ -48,7 +57,9 @@ export function RateInventoryMobileView({
     canStopSell,
     canChangeRate,
     canChangeInventory,
-    channelFilter
+    channelFilter,
+    onUpdatePhysicalRooms,
+    onMoveBookingRoom
 }: RateInventoryMobileViewProps) {
     const { currencyCode, formatCurrency, config: currConfig } = useCurrency();
     // Current selected date inside the mobile strip
@@ -280,13 +291,23 @@ export function RateInventoryMobileView({
                                             <span>Stop Sell</span>
                                         </span>
                                     )}
+                                    {(availableRooms < 0 || dayData.hasRoomConflict) && (
+                                        <span className={`${s.roomBadge3D} ${s.badgeStopSell}`}>
+                                            <ShieldAlert size={11} strokeWidth={2.5} />
+                                            <span>{availableRooms < 0 ? `Overbook (${availableRooms})` : "Double Room"}</span>
+                                        </span>
+                                    )}
                                     <span className={`${s.roomBadge3D} ${isSoldOut ? s.badgeSoldOut : s.badgeAvailable}`}>
-                                        {isSoldOut ? "Sold Out" : `${availableRooms} Available`}
+                                        {availableRooms < 0
+                                            ? `${availableRooms} Overbooked`
+                                            : isSoldOut
+                                            ? "Sold Out (0)"
+                                            : `${availableRooms} Available`}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Section: Allotment Stepper (Mode 1) */}
+                            {/* Section: Allotment Stepper & Physical Room Numbers (Mode 1) */}
                             {mobileMode === "allotment" && (
                                 <div className={s.stepperWrapper}>
                                     {isStopSell && (
@@ -295,10 +316,22 @@ export function RateInventoryMobileView({
                                             <span>Stop Sell Aktif: Kamar ini ditutup untuk penjualan pada tanggal ini</span>
                                         </div>
                                     )}
+                                    {(availableRooms < 0 || dayData.hasRoomConflict) && (
+                                        <div className={s.stopSellNoticeBanner}>
+                                            <ShieldAlert size={15} style={{ flexShrink: 0 }} />
+                                            <span>
+                                                {availableRooms < 0
+                                                    ? `Overbooking (${availableRooms} unit): Terjual ${dayData.bookedRooms} dari ${rt.totalPhysicalRooms} unit.`
+                                                    : "Bentrok Nomor Kamar Fisik: 2 tamu berada di nomor kamar yang sama."}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className={s.stepperSection}>
                                         <div className={s.stepperLabelGroup}>
                                             <span className={s.stepperLabel}>Room Inventory</span>
-                                            <span className={s.stepperSub}>Sellable allotment</span>
+                                            <span className={s.stepperSub}>
+                                                Terjual: {dayData.bookedRooms ?? 0} / {rt.totalPhysicalRooms} unit
+                                            </span>
                                         </div>
                                         <div className={s.stepperControl}>
                                             <button 
@@ -310,7 +343,12 @@ export function RateInventoryMobileView({
                                             >
                                                 -
                                             </button>
-                                            <span className={s.stepValue}>{availableRooms}</span>
+                                            <span
+                                                className={s.stepValue}
+                                                style={availableRooms < 0 ? { color: "#dc2626", fontWeight: 800 } : undefined}
+                                            >
+                                                {availableRooms}
+                                            </span>
                                             <button 
                                                 type="button" 
                                                 onClick={handleIncrementInv} 
@@ -321,6 +359,14 @@ export function RateInventoryMobileView({
                                             </button>
                                         </div>
                                     </div>
+
+                                    {/* Physical Room Numbers & Reassignment Panel */}
+                                    <MobilePhysicalRoomsPanel
+                                        roomType={rt}
+                                        selectedDate={selectedDate}
+                                        onUpdatePhysicalRooms={onUpdatePhysicalRooms}
+                                        onMoveBookingRoom={onMoveBookingRoom}
+                                    />
                                 </div>
                             )}
 

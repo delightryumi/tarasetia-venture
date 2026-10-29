@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Bed } from "lucide-react";
-import { RateInventoryTab, RoomTypeInventoryRow, GridFeatureId } from "../RateInventoryTypes";
+import { RateInventoryTab, RoomTypeInventoryRow, GridFeatureId, PhysicalRoomOccupant } from "../RateInventoryTypes";
 import { GridDateHeader } from "./grid/GridDateHeader";
 import { GridTotalAvailableRow } from "./grid/GridTotalAvailableRow";
 import { GridRoomTypeCard } from "./grid/GridRoomTypeCard";
@@ -24,6 +24,13 @@ interface RateInventoryGridProps {
     canChangeInventory?: boolean;
     channelFilter?: string;
     channelConfigs?: Record<string, any>;
+    onUpdatePhysicalRooms?: (roomTypeId: string, newRooms: string[]) => Promise<boolean>;
+    onMoveBookingRoom?: (
+        occupant: PhysicalRoomOccupant,
+        newRoomNumber: string,
+        newRoomTypeId?: string,
+        newRoomTypeName?: string
+    ) => Promise<boolean>;
 }
 
 export function RateInventoryGrid({
@@ -43,7 +50,9 @@ export function RateInventoryGrid({
     canChangeRate = true,
     canChangeInventory = true,
     channelFilter = "all",
-    channelConfigs = {}
+    channelConfigs = {},
+    onUpdatePhysicalRooms,
+    onMoveBookingRoom
 }: RateInventoryGridProps) {
     const isChannelSpecific = channelFilter !== "all";
     const chConfig = isChannelSpecific && channelConfigs ? channelConfigs[channelFilter] : null;
@@ -145,13 +154,15 @@ export function RateInventoryGrid({
                                 stageEdit={stageEdit}
                                 onSyncRoom={onSyncRoom}
                                 syncingRoomTypeId={syncingRoomTypeId}
+                                onUpdatePhysicalRooms={onUpdatePhysicalRooms}
+                                onMoveBookingRoom={onMoveBookingRoom}
                             />
                         ))
                     )}
                 </tbody>
 
                 {/* 3. Sticky Bottom Total Available Row */}
-                {!isPureInventory && matrix.length > 0 && (
+                {matrix.length > 0 && (
                     <tfoot>
                         <GridTotalAvailableRow
                             dateList={dateList}

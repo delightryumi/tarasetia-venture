@@ -25,9 +25,15 @@ import {
     DayInventoryStatus,
     RatePlanGridRow,
     RoomTypeInventoryRow,
+    PhysicalRoomGridRow,
+    PhysicalRoomDayStatus,
+    PhysicalRoomOccupant,
     BulkUpdateParams,
     BulkUpdateItem
 } from "./RateInventoryTypes";
+
+// Module-level cache for hotel payment gateway tax settings
+const taxSettingsCache: Record<string, { isInc: boolean; tRate: number; sRate: number }> = {};
 
 export const useRateInventory = () => {
     const { activeHotelCode, activeHotelName, user } = useAuth();
@@ -85,6 +91,15 @@ export const useRateInventory = () => {
     // Load initial Tax Inclusive setting & tax/service rates from payment_gateway settings
     useEffect(() => {
         if (!activeHotelCode || activeHotelCode === "0") return;
+        if (taxSettingsCache[activeHotelCode]) {
+            const cached = taxSettingsCache[activeHotelCode];
+            setTaxInclusive(cached.isInc);
+            setSavedTaxInclusive(cached.isInc);
+            setTaxRate(cached.tRate);
+            setServiceRate(cached.sRate);
+            return;
+        }
+
         const pgRef = doc(db, "hotels", activeHotelCode, "settings", "payment_gateway");
         getDoc(pgRef).then((snap) => {
             if (snap.exists()) {
@@ -92,6 +107,7 @@ export const useRateInventory = () => {
                 const isInc = !!data?.pricing?.isTaxIncludedInRate;
                 const tRate = typeof data?.pricing?.taxRate === "number" ? data.pricing.taxRate : 10;
                 const sRate = typeof data?.pricing?.serviceRate === "number" ? data.pricing.serviceRate : 10;
+                taxSettingsCache[activeHotelCode] = { isInc, tRate, sRate };
                 setTaxInclusive(isInc);
                 setSavedTaxInclusive(isInc);
                 setTaxRate(tRate);
@@ -322,7 +338,7 @@ export const useRateInventory = () => {
         });
 
         return () => unsub();
-    }, [activeHotelCode, dateList]);
+    }, [activeHotelCode, startDate, daysCount]);
 
     // 4. Fetch ARI Overrides for Date Window
     useEffect(() => {
@@ -349,7 +365,7 @@ export const useRateInventory = () => {
         });
 
         return () => unsub();
-    }, [activeHotelCode, dateList]);
+    }, [activeHotelCode, startDate, daysCount]);
 
     // 5. Compute Full Grid Matrix with Overrides & Staged Changes (Supporting Per-Channel Rates & Capped Allotment)
     const matrix: RoomTypeInventoryRow[] = useMemo(() => {
@@ -367,6 +383,46 @@ export const useRateInventory = () => {
                 (rp.roomTypeName && rp.roomTypeName.trim().toLowerCase() === rt.name.trim().toLowerCase()) ||
                 (Array.isArray(rp.roomTypeNames) && rp.roomTypeNames.some(name => name?.trim().toLowerCase() === rt.name?.trim().toLowerCase()))
             );
+
+            // Build canonical physical room numbers list (padded up to totalRooms, matching Walk-In & Channex Sync)
+            const totalRooms = rt.totalRooms || 1;
+            const canonicalPhysicalRooms: string[] = [...(rt.physicalRooms || []).map(p => String(p || "").trim()).filter(Boolean)];
+            let genericRoomCounter = 1;
+            while (canonicalPhysicalRooms.length < totalRooms) {
+                let candidateNum = `${genericRoomCounter}`;
+                while (canonicalPhysicalRooms.some(pr => pr.toUpperCase() === candidateNum.toUpperCase())) {
+                    genericRoomCounter++;
+                    candidateNum = `${genericRoomCounter}`;
+                }
+                canonicalPhysicalRooms.push(candidateNum);
+            }
+
+            // Initialize per-physical-room day maps
+            const physicalRoomDaysMap: Record<string, Record<string, PhysicalRoomDayStatus>> = {};
+            canonicalPhysicalRooms.forEach(rNum => {
+                physicalRoomDaysMap[rNum.toUpperCase()] = {};
+                dateList.forEach(dStr => {
+                    physicalRoomDaysMap[rNum.toUpperCase()][dStr] = {
+                        date: dStr,
+                        roomNumber: rNum,
+                        isOccupied: false,
+                        isDoubleBooked: false,
+                        occupants: []
+                    };
+                });
+            });
+
+            const unassignedDaysMap: Record<string, PhysicalRoomDayStatus> = {};
+            let hasAnyUnassigned = false;
+            dateList.forEach(dStr => {
+                unassignedDaysMap[dStr] = {
+                    date: dStr,
+                    roomNumber: "AUTO / OVERBOOK",
+                    isOccupied: false,
+                    isDoubleBooked: false,
+                    occupants: []
+                };
+            });
 
             // Days status for room type summary row (inventory)
             const roomTypeDaysStatus: Record<string, DayInventoryStatus> = {};
@@ -394,7 +450,7 @@ export const useRateInventory = () => {
                     const entryRoomNumber = String(entry.roomNumber || "").trim().toUpperCase();
                     const currentRtName = rt.name.trim().toLowerCase();
                     const currentRtCode = rt.code.trim().toLowerCase();
-                    const physRooms = (rt.physicalRooms || []).map(p => p.toUpperCase());
+                    const physRooms = canonicalPhysicalRooms.map(p => p.toUpperCase());
 
                     const isMatch =
                         (entryRoomTypeId && entryRoomTypeId === rt.id) ||
@@ -406,6 +462,39 @@ export const useRateInventory = () => {
                     if (isMatch) {
                         const count = Math.max(1, Number(entry.roomsCount || entry.roomCount) || 1);
                         bookedCount += count;
+
+                        const occupantObj: PhysicalRoomOccupant = {
+                            bookingId: String(entry.bookingId || entry.channexBookingId || entry.reservationId || ""),
+                            reservationId: String(entry.reservationId || entry.voucherCode || entry.bookingId || ""),
+                            otaReservationId: entry.otaReservationId ? String(entry.otaReservationId) : undefined,
+                            voucherCode: entry.voucherCode ? String(entry.voucherCode) : undefined,
+                            guestName: String(entry.guestName || "Tamu").trim(),
+                            channel: String(entry.channel || entry.otaName || entry.source || "Walk-In").trim(),
+                            checkInDate: String(entry.checkInDate || entry.checkIn || dateStr),
+                            checkOutDate: String(entry.checkOutDate || entry.checkOut || dateStr),
+                            roomNumber: String(entry.roomNumber || "AUTO").trim(),
+                            roomTypeId: rt.id,
+                            roomTypeName: rt.name,
+                            status: String(entry.status || "CONFIRMED"),
+                            isOverbooked: Boolean(entry.isOverbooked || entryRoomNumber === "OVERBOOK")
+                        };
+
+                        if (entryRoomNumber && physicalRoomDaysMap[entryRoomNumber]) {
+                            const slot = physicalRoomDaysMap[entryRoomNumber][dateStr];
+                            slot.occupants.push(occupantObj);
+                            slot.isOccupied = true;
+                            if (slot.occupants.length > 1) {
+                                slot.isDoubleBooked = true;
+                            }
+                        } else {
+                            hasAnyUnassigned = true;
+                            const uSlot = unassignedDaysMap[dateStr];
+                            uSlot.occupants.push(occupantObj);
+                            uSlot.isOccupied = true;
+                            if (occupantObj.isOverbooked || uSlot.occupants.length > 1) {
+                                uSlot.isDoubleBooked = true;
+                            }
+                        }
                     }
                 });
 
@@ -416,8 +505,8 @@ export const useRateInventory = () => {
                     : `inv_${rt.id}_${dateStr}`;
                 const hasStagedInv = stagedUpdates[stagedInvKey] !== undefined;
                 
-                const totalRooms = rt.totalRooms || 1;
-                let availableRooms = Math.max(0, totalRooms - bookedCount);
+                // Allow negative availableRooms when bookedCount > totalRooms so Overbooking (-1, -2) is detected in Tara!
+                let availableRooms = totalRooms - bookedCount;
                 let isCapped = false;
 
                 const chSeparationMode = chConfig?.separationMode || "merged";
@@ -431,12 +520,12 @@ export const useRateInventory = () => {
                         availableRooms = Number(dayOverride.channels[channelCode].allotments[rt.id].allotmentLimit) || 0;
                         isCapped = true;
                     } else {
-                        // Inherit from physical shared available rooms
-                        availableRooms = Math.max(0, totalRooms - bookedCount);
+                        // Inherit from physical shared available rooms (preserves negative on overbook)
+                        availableRooms = totalRooms - bookedCount;
                     }
                 } else if (isChannelSpecific) {
                     // Allotment is not separated: follows Common Pool physical available rooms
-                    availableRooms = Math.max(0, totalRooms - bookedCount);
+                    availableRooms = totalRooms - bookedCount;
                     isCapped = false;
                 } else {
                     if (hasStagedInv) {
@@ -446,7 +535,12 @@ export const useRateInventory = () => {
                     }
                 }
 
-                const occupancyPercent = totalRooms > 0 ? Math.min(100, Math.round((bookedCount / totalRooms) * 100)) : 0;
+                const hasRoomConflictOnDay =
+                    canonicalPhysicalRooms.some(rNum => (physicalRoomDaysMap[rNum.toUpperCase()]?.[dateStr]?.occupants.length || 0) > 1) ||
+                    unassignedDaysMap[dateStr]?.occupants.some(o => o.isOverbooked);
+                const isOverbookedOnDay = availableRooms < 0 || hasRoomConflictOnDay;
+
+                const occupancyPercent = totalRooms > 0 ? Math.round((bookedCount / totalRooms) * 100) : 0;
 
                 roomTypeDaysStatus[dateStr] = {
                     date: dateStr,
@@ -462,7 +556,9 @@ export const useRateInventory = () => {
                     rate: rt.basePrice,
                     extraAdultRate: 0,
                     extraChildRate: 0,
-                    isCapped
+                    isCapped,
+                    isOverbooked: isOverbookedOnDay,
+                    hasRoomConflict: hasRoomConflictOnDay
                 };
             });
 
@@ -709,11 +805,27 @@ export const useRateInventory = () => {
                 }
             });
 
+            const physicalRoomRows: PhysicalRoomGridRow[] = canonicalPhysicalRooms.map(rNum => ({
+                roomNumber: rNum,
+                isUnassignedBucket: false,
+                days: physicalRoomDaysMap[rNum.toUpperCase()] || {}
+            }));
+
+            if (hasAnyUnassigned) {
+                physicalRoomRows.push({
+                    roomNumber: "AUTO / OVERBOOK",
+                    isUnassignedBucket: true,
+                    days: unassignedDaysMap
+                });
+            }
+
             return {
                 roomTypeId: rt.id,
                 roomTypeName: rt.name,
                 roomTypeCode: rt.code,
                 totalPhysicalRooms: rt.totalRooms,
+                physicalRooms: canonicalPhysicalRooms,
+                physicalRoomRows,
                 basePrice: rt.basePrice,
                 days: roomTypeDaysStatus,
                 ratePlans: ratePlanRows
@@ -1726,6 +1838,90 @@ export const useRateInventory = () => {
         }
     };
 
+    // Update physical room numbers list for a room type (low-cost 1 document update)
+    const updateRoomTypePhysicalRooms = useCallback(async (roomTypeId: string, newRooms: string[]): Promise<boolean> => {
+        if (!activeHotelCode || activeHotelCode === "0") return false;
+        const cleaned = Array.from(new Set(newRooms.map(r => String(r || "").trim()).filter(Boolean)));
+        if (cleaned.length === 0) {
+            toast.warning("Minimal harus ada 1 nomor kamar fisik.");
+            return false;
+        }
+        try {
+            const res = await fetch("/api/bookings/assign-room", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode: activeHotelCode,
+                    roomTypeId,
+                    physicalRooms: cleaned
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || "Gagal menyimpan nomor kamar fisik.");
+            }
+            setRoomTypes(prev =>
+                prev.map(rt =>
+                    rt.id === roomTypeId
+                        ? { ...rt, physicalRooms: cleaned }
+                        : rt
+                )
+            );
+            toast.success(data.message || "Nomor kamar fisik berhasil diperbarui.");
+            return true;
+        } catch (err: any) {
+            toast.error(err?.message || "Gagal memperbarui nomor kamar fisik.");
+            return false;
+        }
+    }, [activeHotelCode]);
+
+    // Move an occupied booking to another physical room number (atomic batch via /api/bookings/assign-room)
+    const moveBookingPhysicalRoom = useCallback(async (
+        occupant: PhysicalRoomOccupant,
+        newRoomNumber: string,
+        newRoomTypeId?: string,
+        newRoomTypeName?: string
+    ): Promise<boolean> => {
+        if (!activeHotelCode || activeHotelCode === "0") return false;
+        const cleanRoom = String(newRoomNumber || "").trim();
+        if (!cleanRoom) {
+            toast.warning("Nomor kamar tujuan wajib dipilih.");
+            return false;
+        }
+        try {
+            const { user_name, user_email } = getAuthorIdentity();
+            const res = await fetch("/api/bookings/assign-room", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    hotelCode: activeHotelCode,
+                    bookingId: occupant.bookingId,
+                    reservationId: occupant.reservationId,
+                    otaReservationId: occupant.otaReservationId,
+                    voucherCode: occupant.voucherCode,
+                    guestName: occupant.guestName,
+                    checkInDate: occupant.checkInDate,
+                    checkOutDate: occupant.checkOutDate,
+                    oldRoomNumber: occupant.roomNumber,
+                    newRoomNumber: cleanRoom,
+                    oldRoomTypeId: occupant.roomTypeId,
+                    newRoomTypeId: newRoomTypeId || occupant.roomTypeId,
+                    newRoomTypeName: newRoomTypeName || occupant.roomTypeName,
+                    movedBy: user_name || user_email || "Front Desk"
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || "Gagal memindahkan kamar.");
+            }
+            toast.success(data.message || `Tamu ${occupant.guestName} berhasil dipindahkan ke Kamar ${cleanRoom}.`);
+            return true;
+        } catch (err: any) {
+            toast.error(err?.message || "Gagal memindahkan kamar.");
+            return false;
+        }
+    }, [activeHotelCode, getAuthorIdentity]);
+
     return {
         activeHotelCode,
         activeHotelName,
@@ -1763,6 +1959,8 @@ export const useRateInventory = () => {
         exportGridToCsv,
         syncAriToChannex,
         syncDeltaToChannex,
+        updateRoomTypePhysicalRooms,
+        moveBookingPhysicalRoom,
         loading,
         saving,
         syncingAri,

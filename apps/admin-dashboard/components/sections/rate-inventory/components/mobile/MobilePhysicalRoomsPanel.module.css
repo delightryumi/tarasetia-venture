@@ -1,0 +1,455 @@
+/* MobilePhysicalRoomsPanel.module.css - Modular CSS for Mobile Physical Room Numbers & Reassignment */
+
+.panelWrapper {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #e4e4e7;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+:global(.dark) .panelWrapper {
+    border-top-color: #27272a;
+}
+
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.panelTitleGroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.panelTitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #09090b;
+    letter-spacing: -0.01em;
+}
+
+:global(.dark) .panelTitle {
+    color: #f4f4f5;
+}
+
+.editRoomsBtn {
+    min-height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid #e4e4e7;
+    background-color: #fafafa;
+    color: #18181b;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+:global(.dark) .editRoomsBtn {
+    background-color: #27272a;
+    border-color: #3f3f46;
+    color: #f4f4f5;
+}
+
+.editorBox {
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+:global(.dark) .editorBox {
+    background-color: #27272a;
+    border-color: #3f3f46;
+}
+
+.editorInput {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid #d4d4d8;
+    background-color: #ffffff;
+    color: #09090b;
+    font-size: 13px;
+    font-weight: 600;
+    box-sizing: border-box;
+    outline: none;
+}
+
+:global(.dark) .editorInput {
+    background-color: #09090b;
+    border-color: #52525b;
+    color: #f4f4f5;
+}
+
+.editorActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.btnSecondary {
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid #e4e4e7;
+    background-color: #ffffff;
+    color: #18181b;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btnPrimary {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid #09090b;
+    background-color: #09090b;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.roomsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.roomSlotCard {
+    min-height: 52px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #e4e4e7;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.slotEmpty {
+    border: none !important;
+    background-color: #dcfce7 !important;
+    box-shadow: none !important;
+}
+
+:global(.dark) .slotEmpty {
+    border: none !important;
+    background-color: #86efac !important;
+}
+
+.slotOccupied {
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.slotOccupied:hover {
+    opacity: 0.9;
+}
+
+/* Channel-specific Solid Color Themes for Mobile Cards */
+.themeTraveloka {
+    background-color: #38bdf8 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeTiket {
+    background-color: #fde047 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeBooking {
+    background-color: #60a5fa !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeAgoda {
+    background-color: #f87171 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeAirbnb {
+    background-color: #fb7185 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeExpedia {
+    background-color: #fbbf24 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeTrip {
+    background-color: #22d3ee !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeWalkIn {
+    background-color: #4ade80 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeBookingEngine {
+    background-color: #86efac !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.themeDefault {
+    background-color: #c084fc !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.slotConflict {
+    border: 1.5px solid #ef4444;
+    background-color: #fef2f2;
+    cursor: pointer;
+}
+
+:global(.dark) .slotConflict {
+    border-color: #f87171;
+    background-color: #450a0a;
+}
+
+.slotTopRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.roomNumText {
+    font-size: 12px;
+    font-weight: 800;
+    color: #000000 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+:global(.dark) .roomNumText {
+    color: #000000 !important;
+}
+
+.slotStatusTag {
+    font-size: 9px;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
+.tagEmpty {
+    color: #15803d;
+    background-color: #dcfce7;
+    border: 1px solid #bbf7d0;
+}
+
+.tagOccupied {
+    color: #1e40af;
+    background-color: #dbeafe;
+}
+
+.tagConflict {
+    color: #991b1b;
+    background-color: #fee2e2;
+}
+
+.channelLogoBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+:global(.dark) .channelLogoBadge {
+    background-color: #09090b;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.channelLogoImg {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+}
+
+.conflictTag {
+    font-size: 8px;
+    font-weight: 800;
+    color: #ffffff;
+    background-color: #ef4444;
+    padding: 1px 4px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.nightsBadge {
+    font-size: 8px;
+    font-weight: 800;
+    color: #000000 !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border: none !important;
+    padding: 1px 4px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+:global(.dark) .nightsBadge {
+    color: #000000 !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.guestText {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.25;
+    color: #000000 !important;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+
+:global(.dark) .guestText {
+    color: #000000 !important;
+}
+
+.guestText {
+    color: #e4e4e7;
+}
+
+.emptySubText {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #059669;
+}
+
+:global(.dark) .emptySubText {
+    color: #6ee7b7;
+}
+
+/* Bottom Sheet Modal for Moving Room on Mobile */
+.sheetBackdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(9, 9, 11, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.sheetContainer {
+    width: 100%;
+    max-width: 500px;
+    background-color: #ffffff;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 16px 18px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.18);
+}
+
+:global(.dark) .sheetContainer {
+    background-color: #18181b;
+}
+
+.sheetHandle {
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background-color: #d4d4d8;
+    margin: 0 auto 4px;
+}
+
+.sheetHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sheetTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #09090b;
+}
+
+:global(.dark) .sheetTitle {
+    color: #f4f4f5;
+}
+
+.occupantPill {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #e4e4e7;
+    background-color: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.choiceGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.choiceBtn {
+    min-height: 46px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #e4e4e7;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+}
+
+.choiceBtnActive {
+    border-color: #09090b !important;
+    background-color: #09090b !important;
+    color: #ffffff !important;
+}
+

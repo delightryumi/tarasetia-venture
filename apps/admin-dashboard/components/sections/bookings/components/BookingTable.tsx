@@ -166,9 +166,24 @@ export function BookingTable({ bookings, onSelect }: BookingTableProps) {
                                     <div style={{ fontWeight: 600, color: "#334155" }}>
                                         {getSafeDisplay(booking.roomType, "Standard Room")}
                                     </div>
-                                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
-                                        Kamar: <strong style={{ color: "#0f172a" }}>{getSafeDisplay(booking.roomNumber, "AUTO")}</strong>
-                                        {booking.hasBreakfast ? " · Termasuk Sarapan" : ""}
+                                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 2, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                        <span>
+                                            Kamar: <strong style={{ color: !booking.isCancelled && (booking.isOverbooked || booking.hasRoomConflict) ? "#b91c1c" : "#0f172a" }}>{getSafeDisplay(booking.roomNumber, "AUTO")}</strong>
+                                            {booking.hasBreakfast ? " · Termasuk Sarapan" : ""}
+                                        </span>
+                                        {!booking.isCancelled && (booking.isOverbooked || booking.hasRoomConflict) ? (
+                                            <span
+                                                className={s.roomDangerBadge}
+                                                title={
+                                                    booking.hasRoomConflict
+                                                        ? `Bentrok Nomor Kamar dengan ${booking.conflictWithGuest || "tamu lain"}`
+                                                        : "Overbooking - silakan pindahkan nomor kamar"
+                                                }
+                                            >
+                                                <WarningCircle size={10} weight="bold" />
+                                                <span>{booking.hasRoomConflict ? "Double Room" : "Overbook"}</span>
+                                            </span>
+                                        ) : null}
                                     </div>
                                 </td>
 

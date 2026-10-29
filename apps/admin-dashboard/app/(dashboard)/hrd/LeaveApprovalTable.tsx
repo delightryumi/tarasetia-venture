@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query, where, orderBy, limit } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import type { LeaveRequest } from "./types";
@@ -35,7 +35,7 @@ export function LeaveApprovalTable({ hotelCode }: Props) {
   useEffect(() => {
     if (!hotelCode) return;
     const colRef = collection(db, `hotels/${hotelCode}/leave_requests`);
-    const q = query(colRef, where("status", "==", filter), orderBy("createdAt", "desc"));
+    const q = query(colRef, where("status", "==", filter), orderBy("createdAt", "desc"), limit(50));
     const unsub = onSnapshot(q, (snap) => {
       setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() } as LeaveRequest)));
       setLoading(false);

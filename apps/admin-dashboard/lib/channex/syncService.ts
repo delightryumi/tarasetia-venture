@@ -585,6 +585,8 @@ export class ChannexSyncService {
         const affectedDates = new Set<string>();
         let previousStay: { arrivalDate?: string; departureDate?: string } | undefined = undefined;
         let matchedOriginalBooking: any = null;
+        let existingRevenueSnap: any = null;
+        const cachedDailyEntriesByDate = new Map<string, { ref: any; exists: boolean; entries: any[] }>();
         try {
             // Check explicit previous stay fields from payload or booking if present
             const rawPrevArr = (booking as any)?.previous_arrival_date || (payload as any)?.previous_arrival_date || (booking as any)?.original_arrival_date;
@@ -616,12 +618,13 @@ export class ChannexSyncService {
             const startStr = minSearchDate.toISOString().split("T")[0];
             const endStr = maxSearchDate.toISOString().split("T")[0];
 
-            const existingRevenueSnap = await adminDb.collection(`hotels/${hotelCode}/daily_revenue`)
+            existingRevenueSnap = await adminDb.collection(`hotels/${hotelCode}/daily_revenue`)
                 .where("date", ">=", startStr)
                 .where("date", "<=", endStr)
                 .get();
             for (const doc of existingRevenueSnap.docs) {
                 const dayData = doc.data();
+                const docDate = dayData.date || doc.id.replace(`${hotelCode}_`, "");
                 const entries = dayData.entries || [];
                 const matchingEntry = entries.find(isMatchingBooking);
                 if (matchingEntry) {
@@ -634,7 +637,6 @@ export class ChannexSyncService {
                             departureDate: matchingEntry.checkOutDate
                         };
                     }
-                    const docDate = dayData.date || doc.id.replace(`${hotelCode}_`, "");
                     affectedDates.add(docDate);
                     
                     if (isCancelled) {
@@ -671,6 +673,7 @@ export class ChannexSyncService {
                             entries: cleanEntry(updatedEntries),
                             lastUpdated: new Date().toISOString()
                         });
+                        cachedDailyEntriesByDate.set(docDate, { ref: doc.ref, exists: true, entries: updatedEntries });
                     } else {
                         // For date modifications: clear out slots that may no longer be part of new stay range
                         const cleanedEntries = entries.filter((e: any) => !isMatchingBooking(e));
@@ -679,7 +682,10 @@ export class ChannexSyncService {
                             entries: cleanEntry(cleanedEntries),
                             lastUpdated: new Date().toISOString()
                         });
+                        cachedDailyEntriesByDate.set(docDate, { ref: doc.ref, exists: true, entries: cleanedEntries });
                     }
+                } else {
+                    cachedDailyEntriesByDate.set(docDate, { ref: doc.ref, exists: true, entries: [...entries] });
                 }
             }
         } catch (cleanErr) {
@@ -835,7 +841,11 @@ export class ChannexSyncService {
 
         // Process each booked room (skip creating new entries if already cancelled in existing daily records)
         if (!isCancelled || affectedDates.size === 0) {
-            for (const bookedRoom of (booking.rooms || [])) {
+            const assignedInCurrentReservation = new Set<string>();
+            const pendingWritesByDate = new Map<string, { ref: any; exists: boolean; entries: any[] }>();
+
+            for (let roomIdx = 0; roomIdx < (booking.rooms || []).length; roomIdx++) {
+                const bookedRoom = booking.rooms[roomIdx];
                 const mappedRoomType = roomTypes.find((rt: any) => 
                     rt.channexRoomTypeId === bookedRoom.room_type_id || 
                     rt.id === bookedRoom.room_type_id ||
@@ -846,9 +856,150 @@ export class ChannexSyncService {
                 const roomTypeId = mappedRoomType?.id || bookedRoom.room_type_id;
                 primaryRoomTypeName = roomTypeName;
 
-                // Find an available physical room number
-                const physicalRooms = (mappedRoomType?.physicalRooms || []).map((r: any) => typeof r === "string" ? r : r.number || r.name).filter(Boolean);
-                const assignedRoomNumber = physicalRooms[0] || "AUTO";
+                // Build canonical physical room list (padded up to allotment capacity, matching Walk-In logic)
+                const rawPhysicalRooms: string[] = (mappedRoomType?.physicalRooms || [])
+                    .map((r: any) => (typeof r === "string" ? r.trim() : String(r?.number || r?.name || "").trim()))
+                    .filter(Boolean);
+                const roomAllotment = Math.max(
+                    1,
+                    Number(
+                        mappedRoomType?.roomCount ??
+                        mappedRoomType?.totalRooms ??
+                        mappedRoomType?.roomsCount ??
+                        (rawPhysicalRooms.length > 0 ? rawPhysicalRooms.length : (mappedRoomType?.quantity ?? 1))
+                    )
+                );
+                const physicalRooms: string[] = [...rawPhysicalRooms];
+                let genericRoomCounter = 1;
+                while (physicalRooms.length < roomAllotment) {
+                    let candidateNum = `${genericRoomCounter}`;
+                    while (physicalRooms.some(pr => pr.toUpperCase() === candidateNum.toUpperCase())) {
+                        genericRoomCounter++;
+                        candidateNum = `${genericRoomCounter}`;
+                    }
+                    physicalRooms.push(candidateNum);
+                }
+
+                // Divide rate per night & determine stay date strings first
+                const roomNights = bookedRoom.days && bookedRoom.days.length > 0 ? bookedRoom.days.length : nights;
+                const avgNightlyRate = Math.round(totalPrice / roomNights);
+                const stayDateStrings: string[] = [];
+                for (let i = 0; i < roomNights; i++) {
+                    const currentDate = new Date(start);
+                    currentDate.setDate(currentDate.getDate() + i);
+                    stayDateStrings.push(currentDate.toISOString().split("T")[0]);
+                }
+
+                // Ensure stay dates are loaded in cachedDailyEntriesByDate (reusing existingRevenueSnap with 0 extra reads when present)
+                for (const dStr of stayDateStrings) {
+                    if (!cachedDailyEntriesByDate.has(dStr)) {
+                        const dRef = adminDb.collection(`hotels/${hotelCode}/daily_revenue`).doc(`${hotelCode}_${dStr}`);
+                        const dSnap = await dRef.get();
+                        if (dSnap.exists) {
+                            const rawEnts = dSnap.data()?.entries || [];
+                            cachedDailyEntriesByDate.set(dStr, {
+                                ref: dRef,
+                                exists: true,
+                                entries: rawEnts.filter((e: any) => !isMatchingBooking(e))
+                            });
+                        } else {
+                            cachedDailyEntriesByDate.set(dStr, {
+                                ref: dRef,
+                                exists: false,
+                                entries: []
+                            });
+                        }
+                    }
+                }
+
+                // Inspect occupied physical rooms & total active sold count across all nights of the stay
+                const occupiedRoomNumbersOnStay = new Set<string>(assignedInCurrentReservation);
+                let maxSoldOnAnyStayNight = 0;
+
+                for (const dStr of stayDateStrings) {
+                    const dayState = pendingWritesByDate.get(dStr) || cachedDailyEntriesByDate.get(dStr);
+                    const dayEntries = dayState?.entries || [];
+                    let nightSoldForType = 0;
+
+                    for (const e of dayEntries) {
+                        const st = String(e.status || "").toUpperCase();
+                        const pst = String(e.paymentStatus || "").toUpperCase();
+                        const isEntCancelled =
+                            st === "CANCELLED" ||
+                            st === "CANCEL" ||
+                            st === "VOID" ||
+                            st === "VOIDED" ||
+                            pst === "CANCELLED" ||
+                            pst === "CANCEL" ||
+                            Boolean(e.isCancelled) ||
+                            Boolean(e.isDeleted) ||
+                            Boolean(e.isHidden) ||
+                            Number(e.roomCount) === 0;
+                        if (isEntCancelled) continue;
+
+                        const isAcc = e.type === "accommodation" || (!e.type && e.guestName && !String(e.guestName).startsWith("POS Order"));
+                        if (!isAcc || e.isBreakfastPackage || e.type === "other_income") continue;
+
+                        const eRtId = e.roomTypeId;
+                        const eRtName = String(e.roomType || "").trim().toLowerCase();
+                        const eRoomNum = String(e.roomNumber || "").trim().toUpperCase();
+                        const isSameRoomType =
+                            (eRtId && eRtId === roomTypeId) ||
+                            (eRtName && eRtName === roomTypeName.trim().toLowerCase()) ||
+                            (eRoomNum && physicalRooms.some(pr => pr.toUpperCase() === eRoomNum));
+
+                        if (isSameRoomType) {
+                            nightSoldForType += Math.max(1, Number(e.roomsCount || e.roomCount) || 1);
+                            if (eRoomNum && eRoomNum !== "AUTO" && eRoomNum !== "UNASSIGNED" && eRoomNum !== "OVERBOOK") {
+                                occupiedRoomNumbersOnStay.add(eRoomNum);
+                            }
+                        }
+                    }
+
+                    if (nightSoldForType > maxSoldOnAnyStayNight) {
+                        maxSoldOnAnyStayNight = nightSoldForType;
+                    }
+                }
+
+                // Smart Auto-Select Physical Room:
+                // 1. If modifying an existing booking and its previous physical room is still free, keep it
+                // 2. Otherwise pick the first unoccupied room from physicalRooms
+                // 3. If capacity is exceeded or all physical rooms are occupied, mark as OVERBOOK
+                let assignedRoomNumber = "AUTO";
+                let isOverbookedRoom = maxSoldOnAnyStayNight >= roomAllotment;
+
+                const prevAssigned = matchedOriginalBooking?.roomNumber
+                    ? String(matchedOriginalBooking.roomNumber).trim()
+                    : "";
+                const prevAssignedUpper = prevAssigned.toUpperCase();
+
+                if (
+                    roomIdx === 0 &&
+                    prevAssigned &&
+                    prevAssignedUpper !== "AUTO" &&
+                    prevAssignedUpper !== "OVERBOOK" &&
+                    prevAssignedUpper !== "UNASSIGNED" &&
+                    physicalRooms.some(pr => pr.toUpperCase() === prevAssignedUpper) &&
+                    !occupiedRoomNumbersOnStay.has(prevAssignedUpper) &&
+                    !isOverbookedRoom
+                ) {
+                    assignedRoomNumber = prevAssigned;
+                } else {
+                    const freeRoom = physicalRooms.find(pr => !occupiedRoomNumbersOnStay.has(pr.toUpperCase()));
+                    if (freeRoom && !isOverbookedRoom) {
+                        assignedRoomNumber = freeRoom;
+                    } else if (freeRoom && isOverbookedRoom) {
+                        // Even if a numbered slot looks free because another booking used "AUTO", total sold exceeds allotment
+                        assignedRoomNumber = "OVERBOOK";
+                    } else {
+                        assignedRoomNumber = "OVERBOOK";
+                        isOverbookedRoom = true;
+                    }
+                }
+
+                if (assignedRoomNumber !== "OVERBOOK" && assignedRoomNumber !== "AUTO") {
+                    assignedInCurrentReservation.add(assignedRoomNumber.toUpperCase());
+                }
                 primaryRoomNumber = assignedRoomNumber;
 
                 // Check if rate plan or booking includes breakfast (USALI Package Plan)
@@ -879,14 +1030,8 @@ export class ChannexSyncService {
 
                 const adults = Math.max(1, Number((bookedRoom as any).occupancy?.adults || (bookedRoom as any).adults || (bookedRoom as any).occupancy || 2));
 
-                // Divide rate per night
-                const roomNights = bookedRoom.days && bookedRoom.days.length > 0 ? bookedRoom.days.length : nights;
-                const avgNightlyRate = Math.round(totalPrice / roomNights);
-
                 for (let i = 0; i < roomNights; i++) {
-                    const currentDate = new Date(start);
-                    currentDate.setDate(currentDate.getDate() + i);
-                    const dateStr = currentDate.toISOString().split("T")[0];
+                    const dateStr = stayDateStrings[i];
                     affectedDates.add(dateStr);
 
                     const rawDailyAmount = bookedRoom.days && bookedRoom.days[i] ? Number(bookedRoom.days[i].amount) : avgNightlyRate;
@@ -930,9 +1075,9 @@ export class ChannexSyncService {
                     const entryObject = {
                         type: "accommodation",
                         guestName,
-                        bookingId: resolvedBookingId,
+                        bookingId: (booking.rooms || []).length > 1 ? `${resolvedBookingId}-R${roomIdx + 1}` : resolvedBookingId,
                         channexBookingId: resolvedBookingId,
-                        reservationId: resolvedReservationId,
+                        reservationId: (booking.rooms || []).length > 1 ? `${resolvedReservationId}-R${roomIdx + 1}` : resolvedReservationId,
                         revisionId: revisionId,
                         channexRevisionId: revisionId,
                         revisionEvent: payload.event,
@@ -941,6 +1086,7 @@ export class ChannexSyncService {
                         cancelledRevisionId: isCancelled ? revisionId : (existingCancelledRevId || matchedOriginalBooking?.cancelledRevisionId || null),
                         isModified: isModified || Boolean(existingModifiedRevId || matchedOriginalBooking?.modifiedRevisionId),
                         isCancelled: isCancelled,
+                        isOverbooked: isOverbookedRoom,
                         otaReservationId: resolvedOtaReservationId,
                         channel: channelName,
                         source: channelName,
@@ -996,7 +1142,7 @@ export class ChannexSyncService {
                         propertyName,
                         currency: propertyCurrency,
                         staffName: "Channex Channel Manager",
-                        note: `OTA Booking via ${channelName}. Ref: ${otaBookingId}.${isWithBreakfast ? ' [USALI Room Charge (Net of Breakfast)]' : ''} [Recon: ${revenueRecordingMode === 'net' ? 'Net-to-Hotel' : 'Gross'}] ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
+                        note: `OTA Booking via ${channelName}. Ref: ${otaBookingId}.${isOverbookedRoom ? ' [OVERBOOKING DETECTED - PLEASE REASSIGN ROOM]' : ''}${isWithBreakfast ? ' [USALI Room Charge (Net of Breakfast)]' : ''} [Recon: ${revenueRecordingMode === 'net' ? 'Net-to-Hotel' : 'Gross'}] ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
                         timestamp: new Date().toISOString(),
                         isOTA: true,
                         channexRaw: {
@@ -1017,7 +1163,7 @@ export class ChannexSyncService {
                             revenueType: "breakfast",
                             guestName: `${guestName} (Breakfast Package)`,
                             rawGuestName: guestName,
-                            bookingId: `${otaBookingId}-BFT`,
+                            bookingId: `${otaBookingId}-BFT${(booking.rooms || []).length > 1 ? `-R${roomIdx + 1}` : ""}`,
                             parentBookingId: otaBookingId,
                             channexBookingId: resolvedBookingId,
                             phone: guest.phone || "",
@@ -1054,27 +1200,32 @@ export class ChannexSyncService {
                         entriesToAdd.push(cleanEntry(breakfastEntry));
                     }
 
-                    const dailyDocRef = adminDb.collection(`hotels/${hotelCode}/daily_revenue`).doc(`${hotelCode}_${dateStr}`);
-                    const dailyDoc = await dailyDocRef.get();
+                    const baseDayState = pendingWritesByDate.get(dateStr) || cachedDailyEntriesByDate.get(dateStr)!;
+                    const updatedDayEntries = [...baseDayState.entries, ...entriesToAdd];
+                    pendingWritesByDate.set(dateStr, {
+                        ref: baseDayState.ref,
+                        exists: baseDayState.exists,
+                        entries: updatedDayEntries
+                    });
+                }
+            }
 
-                    if (dailyDoc.exists) {
-                        const existingEntries = dailyDoc.data()?.entries || [];
-                        const filteredEntries = existingEntries.filter((e: any) => !isMatchingBooking(e));
-                        filteredEntries.push(...entriesToAdd);
-
-                        await dailyDocRef.update({
-                            entries: cleanEntry(filteredEntries),
-                            date: dateStr,
-                            lastUpdated: new Date().toISOString()
-                        });
-                    } else {
-                        await dailyDocRef.set({
-                            entries: cleanEntry(entriesToAdd),
-                            date: dateStr,
-                            hotelId: hotelCode,
-                            createdAt: new Date().toISOString()
-                        });
-                    }
+            // Persist all updated stay date documents (1 write per stay date, zero redundant reads)
+            const cleanEntriesArray = (arr: any[]) => JSON.parse(JSON.stringify(arr, (_, v) => (v === undefined ? null : v)));
+            for (const [dateStr, dayState] of pendingWritesByDate.entries()) {
+                if (dayState.exists) {
+                    await dayState.ref.update({
+                        entries: cleanEntriesArray(dayState.entries),
+                        date: dateStr,
+                        lastUpdated: new Date().toISOString()
+                    });
+                } else {
+                    await dayState.ref.set({
+                        entries: cleanEntriesArray(dayState.entries),
+                        date: dateStr,
+                        hotelId: hotelCode,
+                        createdAt: new Date().toISOString()
+                    });
                 }
             }
         }
@@ -1274,7 +1425,7 @@ export class ChannexSyncService {
 
                 let availableQty = Math.max(0, totalAllotment - occupiedCount);
                 if (dayOverride?.inventoryOverrides && dayOverride.inventoryOverrides[rt.id] !== undefined) {
-                    availableQty = Number(dayOverride.inventoryOverrides[rt.id]);
+                    availableQty = Math.max(0, Number(dayOverride.inventoryOverrides[rt.id]));
                 }
 
                 dailySlots.push({ dateStr, qty: availableQty });
@@ -1288,7 +1439,6 @@ export class ChannexSyncService {
         if (availabilityValues.length > 0) {
             const payload: ChannexAvailabilityPayload = { values: availabilityValues };
             console.log(`[ChannexSync] Pushing ${availabilityValues.length} compressed availability ranges to Channex for Property ${channexPropertyId}`);
-            const hotelData = hotelDoc.data();
             const customApiKey = hotelData?.channelManager?.apiKey || process.env.CHANNEX_API_KEY;
             const env = hotelData?.channelManager?.environment || hotelData?.channelManager?.env || (process.env.CHANNEX_ENV as any) || "staging";
             // Throttle to respect Channex 10 availability req/min limit

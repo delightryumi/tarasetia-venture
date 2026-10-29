@@ -25,7 +25,7 @@ export const GridTotalAvailableRow = React.memo(function GridTotalAvailableRow({
                     <button
                         type="button"
                         className={styles.infoBtn}
-                        title={`Total Available Inventory (Property Capacity: ${totalPhysicalRooms} Units)`}
+                        title={`Total Available Inventory (Property Capacity: ${totalPhysicalRooms} Rooms)`}
                     >
                         <Info size={13} />
                     </button>
@@ -35,6 +35,7 @@ export const GridTotalAvailableRow = React.memo(function GridTotalAvailableRow({
             {dateList.map(dateStr => {
                 const avail = totalDailyAvailable[dateStr] ?? totalPhysicalRooms;
                 const isToday = dateStr === todayStr;
+                const isNegative = avail < 0;
 
                 return (
                     <td
@@ -43,8 +44,13 @@ export const GridTotalAvailableRow = React.memo(function GridTotalAvailableRow({
                             styles.colDay,
                             isToday ? styles.colToday : ""
                         ].filter(Boolean).join(" ")}
+                        style={isNegative ? { backgroundColor: "#fef2f2" } : undefined}
+                        title={isNegative ? `OVERBOOKING: ${avail} rooms` : `Total Available: ${avail} rooms`}
                     >
-                        <span className={styles.valueText}>
+                        <span
+                            className={styles.valueText}
+                            style={isNegative ? { color: "#dc2626", fontWeight: 800 } : undefined}
+                        >
                             {avail}
                         </span>
                     </td>

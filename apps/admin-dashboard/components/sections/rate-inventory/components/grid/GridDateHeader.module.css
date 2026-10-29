@@ -14,9 +14,9 @@
 }
 
 .colTitle {
-    width: 230px;
-    min-width: 230px;
-    max-width: 230px;
+    width: 285px;
+    min-width: 285px;
+    max-width: 285px;
     position: sticky;
     left: 0;
     z-index: 30;
@@ -107,7 +107,8 @@
 
 /* Day Columns */
 .colDay {
-    min-width: 68px;
+    min-width: 96px;
+    width: 96px;
     padding: 4px 2px;
     height: 42px;
     text-align: center;
