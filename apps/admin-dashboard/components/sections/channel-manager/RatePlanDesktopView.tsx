@@ -130,7 +130,7 @@ export const RatePlanDesktopView: React.FC<RatePlanDesktopViewProps> = ({
                             style={{ cursor: "pointer" }}
                         >
                             <Copy size={11} />
-                            <span>UUID: <b>{channexPropertyId.slice(0, 8)}...</b></span>
+                            <span>Property UUID: <b>{channexPropertyId}</b></span>
                         </div>
                     ) : null}
                     <div className={styles.currencyPill} title={`Base Currency: ${currConfig?.name || "IDR"}`}>
@@ -390,6 +390,47 @@ export const RatePlanDesktopView: React.FC<RatePlanDesktopViewProps> = ({
                                     </div>
                                 </div>
 
+                                {/* Rate Plan Channel Manager UUIDs (Full display with 1-click copy) */}
+                                <div className={styles.folioUuidList}>
+                                    {plan.channexRatePlanIds && Object.keys(plan.channexRatePlanIds).length > 0 ? (
+                                        Object.entries(plan.channexRatePlanIds).map(([rtId, cUuid]) => {
+                                            const rt = roomTypes.find(r => r.id === rtId);
+                                            const roomLabel = rt?.name || "Room";
+                                            return (
+                                                <div
+                                                    key={rtId}
+                                                    className={styles.uuidRowPill}
+                                                    onClick={() => copyToClipboard(cUuid as string, `UUID (${roomLabel})`)}
+                                                    title={`Klik untuk menyalin UUID ${roomLabel}: ${cUuid}`}
+                                                >
+                                                    <div className={styles.uuidLeft}>
+                                                        <Copy size={9} className={styles.uuidCopyIcon} />
+                                                        <span className={styles.uuidTag}>{roomLabel}:</span>
+                                                    </div>
+                                                    <code className={styles.uuidVal}>{cUuid as string}</code>
+                                                </div>
+                                            );
+                                        })
+                                    ) : plan.channexRatePlanId ? (
+                                        <div
+                                            className={styles.uuidRowPill}
+                                            onClick={() => copyToClipboard(plan.channexRatePlanId!, "Channel Manager Rate UUID")}
+                                            title={`Klik untuk menyalin UUID: ${plan.channexRatePlanId}`}
+                                        >
+                                            <div className={styles.uuidLeft}>
+                                                <Copy size={9} className={styles.uuidCopyIcon} />
+                                                <span className={styles.uuidTag}>UUID Channex:</span>
+                                            </div>
+                                            <code className={styles.uuidVal}>{plan.channexRatePlanId}</code>
+                                        </div>
+                                    ) : (
+                                        <div className={styles.uuidRowUnsynced}>
+                                            <span className={styles.uuidUnsyncedDot} />
+                                            <span>Belum Terhubung ke Channel Manager</span>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Compact Footer */}
                                 <div className={styles.folioCardFooter}>
                                     <div className={styles.folioSyncPill}>
@@ -403,38 +444,8 @@ export const RatePlanDesktopView: React.FC<RatePlanDesktopViewProps> = ({
                                             onClick={() => copyToClipboard(plan.id, "PMS Plan ID")}
                                             title={`Click to copy PMS Plan ID: ${plan.id}`}
                                         >
-                                            <Copy size={9} /> PMS: <b>{plan.id.slice(0, 6)}</b>
+                                            <Copy size={9} /> PMS: <b>{plan.id}</b>
                                         </span>
-
-                                        {isChannelSynced ? (
-                                            <span
-                                                className={`${styles.idPill} ${styles.idPillChannex}`}
-                                                onClick={() => {
-                                                    if (syncedRoomCount > 1 && plan.channexRatePlanIds) {
-                                                        const firstVal = Object.values(plan.channexRatePlanIds)[0];
-                                                        copyToClipboard(firstVal, "Channel Manager Rate UUID");
-                                                    } else if (primaryUuid) {
-                                                        copyToClipboard(primaryUuid, "Channel Manager Rate UUID");
-                                                    }
-                                                }}
-                                                title={
-                                                    syncedRoomCount > 1
-                                                        ? `Click to copy primary UUID (${syncedRoomCount} rooms mapped)`
-                                                        : `Click to copy Channel Manager UUID: ${primaryUuid}`
-                                                }
-                                            >
-                                                <Copy size={9} />
-                                                <span>{syncedRoomCount > 1 ? `UUID (${syncedRoomCount})` : `UUID: ${primaryUuid.slice(0, 4)}..`}</span>
-                                            </span>
-                                        ) : (
-                                            <span
-                                                className={`${styles.idPill} ${styles.idPillUnsynced}`}
-                                                onClick={() => toast.info("Rate Plan ini belum disinkronkan ke Channel Manager. Buka tab Go Live lalu jalankan Sync Master.")}
-                                                title="Belum terdaftar di Channel Manager"
-                                            >
-                                                Not Synced
-                                            </span>
-                                        )}
 
                                         <button
                                             type="button"
@@ -466,7 +477,7 @@ export const RatePlanDesktopView: React.FC<RatePlanDesktopViewProps> = ({
                                     <th>Policy</th>
                                     <th>Min. Stay</th>
                                     <th>Status</th>
-                                    <th>Sync</th>
+                                    <th>Sync &amp; Channel Manager UUID</th>
                                     <th style={{ textAlign: "right" }}>Actions</th>
                                 </tr>
                             </thead>
@@ -549,21 +560,57 @@ export const RatePlanDesktopView: React.FC<RatePlanDesktopViewProps> = ({
                                                         {plan.stopSell ? "Stop Sell" : "Open"}
                                                     </span>
                                                 </td>
-                                                <td style={{ whiteSpace: "nowrap" }}>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                                                        <span className={styles.folioSyncPill}>
-                                                            <span className={plan.channexRatePlanId ? styles.dotBlack : styles.dotGray} />
-                                                            {plan.channexRatePlanId ? "Synced" : "PMS"}
-                                                        </span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handlePingRatePlan(plan)}
-                                                            disabled={pingingId === plan.id}
-                                                            className={styles.btnFolioPing}
-                                                            title="Ping ARI"
-                                                        >
-                                                            <Activity size={9} className={pingingId === plan.id ? "animate-spin" : ""} />
-                                                        </button>
+                                                <td style={{ minWidth: 260 }}>
+                                                    <div className={styles.ledgerSyncCol}>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                                                            <span className={styles.folioSyncPill}>
+                                                                <span className={isChannelSynced ? styles.dotBlack : styles.dotGray} />
+                                                                <span>{isChannelSynced ? "Synced" : "PMS Direct"}</span>
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handlePingRatePlan(plan)}
+                                                                disabled={pingingId === plan.id}
+                                                                className={styles.btnFolioPing}
+                                                                title="Ping ARI"
+                                                            >
+                                                                <Activity size={9} className={pingingId === plan.id ? "animate-spin" : ""} />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Full UUID listing in Ledger table */}
+                                                        {plan.channexRatePlanIds && Object.keys(plan.channexRatePlanIds).length > 0 ? (
+                                                            <div className={styles.ledgerUuidWrap}>
+                                                                {Object.entries(plan.channexRatePlanIds).map(([rtId, cUuid]) => {
+                                                                    const rt = roomTypes.find(r => r.id === rtId);
+                                                                    const roomLabel = rt?.name || "Room";
+                                                                    return (
+                                                                        <div
+                                                                            key={rtId}
+                                                                            className={styles.ledgerUuidPill}
+                                                                            onClick={() => copyToClipboard(cUuid as string, `UUID (${roomLabel})`)}
+                                                                            title={`Klik untuk menyalin UUID ${roomLabel}: ${cUuid}`}
+                                                                        >
+                                                                            <Copy size={9} className={styles.uuidCopyIcon} />
+                                                                            <span className={styles.ledgerUuidRoomLabel}>{roomLabel}:</span>
+                                                                            <code className={styles.ledgerUuidCode}>{cUuid as string}</code>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        ) : plan.channexRatePlanId ? (
+                                                            <div
+                                                                className={styles.ledgerUuidPill}
+                                                                onClick={() => copyToClipboard(plan.channexRatePlanId!, "Channel Manager Rate UUID")}
+                                                                title={`Klik untuk menyalin UUID: ${plan.channexRatePlanId}`}
+                                                            >
+                                                                <Copy size={9} className={styles.uuidCopyIcon} />
+                                                                <span className={styles.ledgerUuidRoomLabel}>UUID:</span>
+                                                                <code className={styles.ledgerUuidCode}>{plan.channexRatePlanId}</code>
+                                                            </div>
+                                                        ) : (
+                                                            <span className={styles.ledgerNotSyncedText}>Belum Terhubung</span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td style={{ whiteSpace: "nowrap" }}>

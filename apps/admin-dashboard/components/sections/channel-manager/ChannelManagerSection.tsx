@@ -976,7 +976,7 @@ export function ChannelManagerSection() {
                         {channexPropertyId && (
                             <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500 bg-zinc-50 border border-zinc-200/80 rounded-md px-2 py-0.5 font-mono">
                                 <span className="text-[10px] text-zinc-400 uppercase font-semibold">UUID</span>
-                                <code>{channexPropertyId.slice(0, 8)}...</code>
+                                <code>{channexPropertyId}</code>
                                 <button
                                     type="button"
                                     onClick={() => copyText(channexPropertyId, "Channex Property UUID")}

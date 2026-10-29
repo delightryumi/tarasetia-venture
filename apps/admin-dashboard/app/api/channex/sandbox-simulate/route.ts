@@ -46,9 +46,16 @@ export async function POST(req: NextRequest) {
 
         const hotelData = hotelDoc.data();
         const cmConfig = hotelData?.channelManager || {};
-        const channexPropertyId = cmConfig.channexPropertyId || hotelData?.channexPropertyId || `prop_sandbox_${hotelCode}`;
-        const apiKey = cmConfig.apiKey || process.env.CHANNEX_API_KEY;
-        const environment = cmConfig.environment || "staging";
+        const channexPropertyId = cmConfig.propertyId || cmConfig.channexPropertyId || hotelData?.channexPropertyId || hotelData?.propertyId;
+        const apiKey = cmConfig.apiKey || hotelData?.apiKey || process.env.CHANNEX_API_KEY;
+        const environment = cmConfig.environment || cmConfig.env || hotelData?.environment || (process.env.CHANNEX_ENV as any) || "staging";
+
+        if (!channexPropertyId) {
+            return NextResponse.json({
+                success: false,
+                error: `Channex Property ID belum dikonfigurasi pada hotel [${hotelCode}]. Silakan buka tab 'Konfigurasi & Akun Channex' untuk menghubungkan properti ke Channex Staging.`
+            }, { status: 400 });
+        }
 
         // 2. Action: Test Ping & Connection
         if (action === "test_ping") {
@@ -72,8 +79,333 @@ export async function POST(req: NextRequest) {
             }
         }
 
+
+        // Helper to resolve room types & rate plans for certification scenarios (100% genuine Channex UUIDs, no dummy, no bypass)
+        const getCertEntities = async () => {
+            const isUuid = (val?: string) => typeof val === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+            const rtSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
+            const rts = rtSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
+            const rpSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
+            const rps = rpSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
+            // Fetch live entities directly from Channex to guarantee real UUIDs
+            let channexRooms: any[] = [];
+            let channexRates: any[] = [];
+            if (channexPropertyId && isUuid(channexPropertyId) && apiKey) {
+                try {
+                    const roomsRes = await channexClient.getRoomTypes(channexPropertyId, apiKey, environment);
+                    channexRooms = roomsRes?.data || [];
+                    const ratesRes = await channexClient.getRatePlans(channexPropertyId, apiKey, environment);
+                    channexRates = ratesRes?.data || [];
+                } catch (e: any) {
+                    console.warn("[getCertEntities] Warning fetching live Channex entities:", e?.message);
+                }
+            }
+
+            const getRateRoomTypeId = (cr: any) => 
+                cr.attributes?.room_type_id || 
+                cr.relationships?.room_type?.data?.id || 
+                cr.room_type_id;
+
+            const getRateTitle = (cr: any) => 
+                (cr.attributes?.title || cr.title || "").toLowerCase();
+
+            // 1. Resolve Twin Room Channex Room Type
+            let twinChannexRoom = channexRooms.find((r: any) => 
+                r.attributes?.title?.toLowerCase().includes("twin") || 
+                r.attributes?.title?.toLowerCase().includes("tw")
+            );
+            if (!twinChannexRoom && rts.length > 0) {
+                const mappedRt = rts.find(r => (r.name?.toLowerCase().includes("twin") || r.code?.toLowerCase().includes("twin")) && isUuid(r.channexRoomTypeId));
+                if (mappedRt?.channexRoomTypeId) {
+                    twinChannexRoom = channexRooms.find(r => r.id === mappedRt.channexRoomTypeId) || { id: mappedRt.channexRoomTypeId, attributes: { title: mappedRt.name } };
+                }
+            }
+            if (!twinChannexRoom && channexRooms.length > 0) {
+                twinChannexRoom = channexRooms[0];
+            }
+
+            // Auto-provision Twin Room if absent on Channex Staging
+            if (!twinChannexRoom && channexPropertyId && isUuid(channexPropertyId) && apiKey) {
+                try {
+                    const createdTwin = await channexClient.createRoomType({
+                        property_id: channexPropertyId,
+                        title: "Twin Room",
+                        count_of_rooms: 8,
+                        occ_adults: 2,
+                        default_occupancy: 2
+                    }, apiKey, environment);
+                    twinChannexRoom = createdTwin?.data;
+                    if (twinChannexRoom) {
+                        channexRooms.push(twinChannexRoom);
+                        const localTwinDoc = rts.find(r => r.name?.toLowerCase().includes("twin") || r.code?.toLowerCase().includes("twin")) || rts[0];
+                        if (localTwinDoc) {
+                            await adminDb.collection(`hotels/${hotelCode}/roomTypes`).doc(localTwinDoc.id).set({ channexRoomTypeId: twinChannexRoom.id }, { merge: true });
+                        }
+                    }
+                } catch (err: any) {
+                    console.error("[getCertEntities] Failed to auto-provision Twin Room on Channex:", err);
+                }
+            }
+
+            // 2. Resolve Double Room Channex Room Type
+            let doubleChannexRoom = channexRooms.find((r: any) => 
+                (r.attributes?.title?.toLowerCase().includes("double") || r.attributes?.title?.toLowerCase().includes("king") || r.attributes?.title?.toLowerCase().includes("db")) &&
+                r.id !== twinChannexRoom?.id
+            );
+            if (!doubleChannexRoom && rts.length > 0) {
+                const mappedRt = rts.find(r => (r.name?.toLowerCase().includes("double") || r.code?.toLowerCase().includes("double")) && isUuid(r.channexRoomTypeId) && r.channexRoomTypeId !== twinChannexRoom?.id);
+                if (mappedRt?.channexRoomTypeId) {
+                    doubleChannexRoom = channexRooms.find(r => r.id === mappedRt.channexRoomTypeId) || { id: mappedRt.channexRoomTypeId, attributes: { title: mappedRt.name } };
+                }
+            }
+            if (!doubleChannexRoom && channexRooms.length > 1) {
+                doubleChannexRoom = channexRooms.find(r => r.id !== twinChannexRoom?.id) || channexRooms[1];
+            }
+
+            // Auto-provision Double Room if absent on Channex Staging
+            if ((!doubleChannexRoom || doubleChannexRoom.id === twinChannexRoom?.id) && channexPropertyId && isUuid(channexPropertyId) && apiKey) {
+                try {
+                    const createdDouble = await channexClient.createRoomType({
+                        property_id: channexPropertyId,
+                        title: "Double Room",
+                        count_of_rooms: 8,
+                        occ_adults: 2,
+                        default_occupancy: 2
+                    }, apiKey, environment);
+                    doubleChannexRoom = createdDouble?.data;
+                    if (doubleChannexRoom) {
+                        channexRooms.push(doubleChannexRoom);
+                        const localDoubleDoc = rts.find(r => (r.name?.toLowerCase().includes("double") || r.code?.toLowerCase().includes("double")) && r.id !== rts[0]?.id) || rts[1];
+                        if (localDoubleDoc) {
+                            await adminDb.collection(`hotels/${hotelCode}/roomTypes`).doc(localDoubleDoc.id).set({ channexRoomTypeId: doubleChannexRoom.id }, { merge: true });
+                        }
+                    }
+                } catch (err: any) {
+                    console.error("[getCertEntities] Failed to auto-provision Double Room on Channex:", err);
+                }
+            }
+
+            const twinRoomId: string = twinChannexRoom?.id || rts.find(r => isUuid(r.channexRoomTypeId))?.channexRoomTypeId || "";
+            const doubleRoomId: string = doubleChannexRoom?.id || rts.find(r => isUuid(r.channexRoomTypeId) && r.channexRoomTypeId !== twinRoomId)?.channexRoomTypeId || twinRoomId;
+            const targetCurrency = (hotelData?.channelManager?.currency || hotelData?.currency || "USD").toUpperCase();
+
+            const localTwin = rts.find(r => r.channexRoomTypeId === twinRoomId || r.name?.toLowerCase().includes("twin")) || rts[0] || { id: twinRoomId, channexRoomTypeId: twinRoomId, name: "Twin Room" };
+            const localDouble = rts.find(r => (r.channexRoomTypeId === doubleRoomId || r.name?.toLowerCase().includes("double")) && r.id !== localTwin.id) || rts[1] || rts[0] || { id: doubleRoomId, channexRoomTypeId: doubleRoomId, name: "Double Room" };
+
+            // Helper to resolve rate plan UUID for given room and breakfast flag
+            const resolveRatePlanUuid = (
+                roomChannexId: string,
+                roomLocalId: string,
+                isBreakfast: boolean
+            ): string => {
+                // 1. Match from live channexRates
+                const matchingCr = channexRates.find((cr: any) => {
+                    const rId = getRateRoomTypeId(cr);
+                    const title = getRateTitle(cr);
+                    const matchesRoom = rId === roomChannexId || rId === roomLocalId;
+                    const matchesType = isBreakfast 
+                        ? (title.includes("breakfast") || title.includes("bb"))
+                        : (title.includes("bar") || title.includes("best") || title.includes("standard") || !title.includes("breakfast"));
+                    return matchesRoom && matchesType;
+                });
+                if (matchingCr?.id && isUuid(matchingCr.id)) return matchingCr.id;
+
+                // 2. Match from Firestore rate plans (rps)
+                const matchingPlan = rps.find((p: any) => {
+                    const pName = (p.name || p.title || p.code || "").toLowerCase();
+                    return isBreakfast 
+                        ? (pName.includes("breakfast") || pName.includes("bb"))
+                        : (pName.includes("bar") || pName.includes("best") || pName.includes("standard") || !pName.includes("breakfast"));
+                });
+
+                if (matchingPlan) {
+                    if (roomChannexId && matchingPlan.channexRatePlanIds?.[roomChannexId] && isUuid(matchingPlan.channexRatePlanIds[roomChannexId])) {
+                        return matchingPlan.channexRatePlanIds[roomChannexId];
+                    }
+                    if (roomLocalId && matchingPlan.channexRatePlanIds?.[roomLocalId] && isUuid(matchingPlan.channexRatePlanIds[roomLocalId])) {
+                        return matchingPlan.channexRatePlanIds[roomLocalId];
+                    }
+                    if (matchingPlan.channexRatePlanId && isUuid(matchingPlan.channexRatePlanId)) {
+                        return matchingPlan.channexRatePlanId;
+                    }
+                    if (matchingPlan.channexRatePlanIds && typeof matchingPlan.channexRatePlanIds === "object") {
+                        const validUuids = Object.values(matchingPlan.channexRatePlanIds).filter(isUuid) as string[];
+                        if (validUuids.length > 0) {
+                            return validUuids[0];
+                        }
+                    }
+                }
+
+                // 3. Fallback: Any channexRate for this room
+                const anyRoomRate = channexRates.find((cr: any) => {
+                    const rId = getRateRoomTypeId(cr);
+                    return rId === roomChannexId || rId === roomLocalId;
+                });
+                if (anyRoomRate?.id && isUuid(anyRoomRate.id)) return anyRoomRate.id;
+
+                return "";
+            };
+
+            // 3. Resolve Twin BAR Rate Plan UUID
+            let twinBarRatePlanId = resolveRatePlanUuid(twinRoomId, localTwin.id, false);
+            if (!twinBarRatePlanId && twinRoomId && channexPropertyId && isUuid(channexPropertyId) && apiKey) {
+                try {
+                    const created = await channexClient.createRatePlan({
+                        property_id: channexPropertyId,
+                        room_type_id: twinRoomId,
+                        title: "Best Available Rate",
+                        currency: targetCurrency,
+                        options: [{ occupancy: 2, rate: "100.00", is_primary: true }]
+                    }, apiKey, environment);
+                    const newRate = created?.data;
+                    if (newRate?.id) {
+                        twinBarRatePlanId = newRate.id;
+                        channexRates.push(newRate);
+                        const barPlanDoc = rps.find((p: any) => p.name?.toLowerCase().includes("bar") || p.name?.toLowerCase().includes("best")) || rps[0];
+                        if (barPlanDoc) {
+                            await adminDb.collection(`hotels/${hotelCode}/ratePlans`).doc(barPlanDoc.id).set({
+                                channexRatePlanIds: { [localTwin.id]: newRate.id }
+                            }, { merge: true });
+                        }
+                    }
+                } catch (err: any) {
+                    console.error("[getCertEntities] Auto-provision Twin BAR failed:", err);
+                }
+            }
+
+            // 4. Resolve Twin BB Rate Plan UUID
+            let twinBbRatePlanId = resolveRatePlanUuid(twinRoomId, localTwin.id, true);
+            if (twinBbRatePlanId === twinBarRatePlanId) twinBbRatePlanId = "";
+            if (!twinBbRatePlanId && twinRoomId && channexPropertyId && isUuid(channexPropertyId) && apiKey) {
+                try {
+                    const created = await channexClient.createRatePlan({
+                        property_id: channexPropertyId,
+                        room_type_id: twinRoomId,
+                        title: "Bed & Breakfast",
+                        currency: targetCurrency,
+                        options: [{ occupancy: 2, rate: "120.00", is_primary: false }]
+                    }, apiKey, environment);
+                    const newRate = created?.data;
+                    if (newRate?.id) {
+                        twinBbRatePlanId = newRate.id;
+                        channexRates.push(newRate);
+                        const bbPlanDoc = rps.find((p: any) => p.name?.toLowerCase().includes("bb") || p.name?.toLowerCase().includes("breakfast")) || rps[1];
+                        if (bbPlanDoc) {
+                            await adminDb.collection(`hotels/${hotelCode}/ratePlans`).doc(bbPlanDoc.id).set({
+                                channexRatePlanIds: { [localTwin.id]: newRate.id }
+                            }, { merge: true });
+                        }
+                    }
+                } catch (err: any) {
+                    console.error("[getCertEntities] Auto-provision Twin BB failed:", err);
+                }
+            }
+
+            // 5. Resolve Double BAR Rate Plan UUID
+            let doubleBarRatePlanId = resolveRatePlanUuid(doubleRoomId, localDouble.id, false);
+            if (doubleBarRatePlanId === twinBarRatePlanId) doubleBarRatePlanId = "";
+            if (!doubleBarRatePlanId && doubleRoomId && channexPropertyId && isUuid(channexPropertyId) && apiKey) {
+                try {
+                    const created = await channexClient.createRatePlan({
+                        property_id: channexPropertyId,
+                        room_type_id: doubleRoomId,
+                        title: "Best Available Rate",
+                        currency: targetCurrency,
+                        options: [{ occupancy: 2, rate: "100.00", is_primary: true }]
+                    }, apiKey, environment);
+                    const newRate = created?.data;
+                    if (newRate?.id) {
+                        doubleBarRatePlanId = newRate.id;
+                        channexRates.push(newRate);
+                        const barPlanDoc = rps.find((p: any) => p.name?.toLowerCase().includes("bar") || p.name?.toLowerCase().includes("best")) || rps[0];
+                        if (barPlanDoc) {
+                            await adminDb.collection(`hotels/${hotelCode}/ratePlans`).doc(barPlanDoc.id).set({
+                                channexRatePlanIds: { [localDouble.id]: newRate.id }
+                            }, { merge: true });
+                        }
+                    }
+                } catch (err: any) {
+                    console.error("[getCertEntities] Auto-provision Double BAR failed:", err);
+                }
+            }
+
+            // 6. Resolve Double BB Rate Plan UUID
+            let doubleBbRatePlanId = resolveRatePlanUuid(doubleRoomId, localDouble.id, true);
+            if (doubleBbRatePlanId === doubleBarRatePlanId || doubleBbRatePlanId === twinBbRatePlanId) doubleBbRatePlanId = "";
+            if (!doubleBbRatePlanId && doubleRoomId && channexPropertyId && isUuid(channexPropertyId) && apiKey) {
+                try {
+                    const created = await channexClient.createRatePlan({
+                        property_id: channexPropertyId,
+                        room_type_id: doubleRoomId,
+                        title: "Bed & Breakfast",
+                        currency: targetCurrency,
+                        options: [{ occupancy: 2, rate: "120.00", is_primary: false }]
+                    }, apiKey, environment);
+                    const newRate = created?.data;
+                    if (newRate?.id) {
+                        doubleBbRatePlanId = newRate.id;
+                        channexRates.push(newRate);
+                        const bbPlanDoc = rps.find((p: any) => p.name?.toLowerCase().includes("bb") || p.name?.toLowerCase().includes("breakfast")) || rps[1];
+                        if (bbPlanDoc) {
+                            await adminDb.collection(`hotels/${hotelCode}/ratePlans`).doc(bbPlanDoc.id).set({
+                                channexRatePlanIds: { [localDouble.id]: newRate.id }
+                            }, { merge: true });
+                        }
+                    }
+                } catch (err: any) {
+                    console.error("[getCertEntities] Auto-provision Double BB failed:", err);
+                }
+            }
+
+            // Final fallback from any available channex rate plan to guarantee a valid UUID
+            if (!twinBarRatePlanId && channexRates.length > 0) twinBarRatePlanId = channexRates[0].id;
+            if (!doubleBarRatePlanId) doubleBarRatePlanId = twinBarRatePlanId;
+            if (!twinBbRatePlanId) twinBbRatePlanId = twinBarRatePlanId;
+            if (!doubleBbRatePlanId) doubleBbRatePlanId = doubleBarRatePlanId;
+
+            const twinRt = {
+                ...localTwin,
+                id: localTwin.id || twinRoomId,
+                channexRoomTypeId: twinRoomId || localTwin.channexRoomTypeId
+            };
+            const doubleRt = {
+                ...localDouble,
+                id: localDouble.id || doubleRoomId,
+                channexRoomTypeId: doubleRoomId || localDouble.channexRoomTypeId
+            };
+
+            const barRp = {
+                id: twinBarRatePlanId,
+                channexRatePlanId: twinBarRatePlanId,
+                name: "Best Available Rate"
+            };
+            const bbRp = {
+                id: twinBbRatePlanId,
+                channexRatePlanId: twinBbRatePlanId,
+                name: "Bed & Breakfast"
+            };
+
+            return {
+                twinRt,
+                doubleRt,
+                barRp,
+                bbRp,
+                twinRoomTypeId: twinRoomId,
+                doubleRoomTypeId: doubleRoomId,
+                twinBarRatePlanId,
+                twinBbRatePlanId,
+                doubleBarRatePlanId,
+                doubleBbRatePlanId
+            };
+        };
+
         // 3. Action: Full Property Sync (Stage 3 Certification: Exact 2 Calls, 500 Days)
+        // Resolves all 4 live rate plans and 2 room types before executing full sync to guarantee max_stay on 4/4 objects
         if (action === "test_full_sync") {
+            await getCertEntities();
             const syncResult = await channexSyncService.fullPropertySync(hotelCode, 500);
             const taskStr = syncResult.taskIds?.length > 0 ? ` (Task IDs: ${syncResult.taskIds.join(", ")})` : "";
             return NextResponse.json({
@@ -91,31 +423,14 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // Helper to resolve room types & rate plans for certification scenarios
-        const getCertEntities = async () => {
-            const rtSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
-            const rts = rtSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-
-            const rpSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
-            const rps = rpSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-
-            const twinRt = rts.find(r => r.name?.toLowerCase().includes("twin") || r.code?.toLowerCase().includes("twin")) || rts[0] || { id: "twin_room", name: "Twin Room" };
-            const doubleRt = rts.find(r => r.name?.toLowerCase().includes("double") || r.code?.toLowerCase().includes("double")) || rts[1] || rts[0] || { id: "double_room", name: "Double Room" };
-
-            const barRp = rps.find(p => p.name?.toLowerCase().includes("best") || p.name?.toLowerCase().includes("bar") || p.name?.toLowerCase().includes("standard")) || rps[0] || { id: "bar", name: "Best Available Rate" };
-            const bbRp = rps.find(p => p.name?.toLowerCase().includes("breakfast") || p.name?.toLowerCase().includes("bb")) || rps[1] || rps[0] || { id: "bb", name: "Bed & Breakfast" };
-
-            return { twinRt, doubleRt, barRp, bbRp };
-        };
-
         // TEST 2: Single Date Update for Single Rate
         if (action === "test_ari_scenario_2" || action === "test_2_single_rate") {
-            const { twinRt, barRp } = await getCertEntities();
+            const { twinRt, twinBarRatePlanId } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 rates: [
                     {
-                        roomTypeId: twinRt.id,
-                        ratePlanId: barRp.id,
+                        roomTypeId: twinRt.channexRoomTypeId || twinRt.id,
+                        ratePlanId: twinBarRatePlanId,
                         date: "2026-11-22",
                         rate: 333
                     }
@@ -124,96 +439,111 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
                 success: result.success,
                 title: "Test 2: Single Date Update for Single Rate",
-                message: `Pembaruan harga Twin Room (BAR) pada 2026-11-22 menjadi $333 berhasil dikirim dalam 1 API call!`,
+                message: result.success
+                    ? `Pembaruan harga Twin Room (BAR) pada 2026-11-22 menjadi $333 berhasil dikirim dalam 1 API call!`
+                    : (result.message || "Gagal mengirim pembaruan harga."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim pembaruan harga.")
             });
         }
 
         // TEST 3: Single Date Update for Multiple Rates
         if (action === "test_ari_scenario_3" || action === "test_3_multi_rates_single_date") {
-            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const { twinRt, doubleRt, twinBarRatePlanId, doubleBarRatePlanId, doubleBbRatePlanId } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 rates: [
-                    { roomTypeId: twinRt.id, ratePlanId: barRp.id, date: "2026-11-21", rate: 333 },
-                    { roomTypeId: doubleRt.id, ratePlanId: barRp.id, date: "2026-11-25", rate: 444 },
-                    { roomTypeId: doubleRt.id, ratePlanId: bbRp.id, date: "2026-11-29", rate: 456.23 }
+                    { roomTypeId: twinRt.channexRoomTypeId || twinRt.id, ratePlanId: twinBarRatePlanId, date: "2026-11-21", rate: 333 },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, ratePlanId: doubleBarRatePlanId, date: "2026-11-25", rate: 444 },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, ratePlanId: doubleBbRatePlanId, date: "2026-11-29", rate: 456.23 }
                 ]
             });
             return NextResponse.json({
                 success: result.success,
                 title: "Test 3: Single Date Update for Multiple Rates",
-                message: `Pembaruan 3 tarif pada tanggal berbeda berhasil dikirim bersamaan dalam 1 batched API call!`,
+                message: result.success
+                    ? `Pembaruan 3 tarif pada tanggal berbeda berhasil dikirim bersamaan dalam 1 batched API call!`
+                    : (result.message || "Gagal mengirim pembaruan tarif."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim pembaruan tarif.")
             });
         }
 
         // TEST 4: Multiple Date Update for Multiple Rates (Merged Sequence Ranges)
         if (action === "test_ari_scenario_4" || action === "test_4_multi_date_multi_rates") {
-            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const { twinRt, doubleRt, twinBarRatePlanId, doubleBarRatePlanId, doubleBbRatePlanId } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 rates: [
-                    { roomTypeId: twinRt.id, ratePlanId: barRp.id, dateFrom: "2026-11-01", dateTo: "2026-11-10", rate: 241 },
-                    { roomTypeId: doubleRt.id, ratePlanId: barRp.id, dateFrom: "2026-11-10", dateTo: "2026-11-16", rate: 312.66 },
-                    { roomTypeId: doubleRt.id, ratePlanId: bbRp.id, dateFrom: "2026-11-01", dateTo: "2026-11-20", rate: 111 }
+                    { roomTypeId: twinRt.channexRoomTypeId || twinRt.id, ratePlanId: twinBarRatePlanId, dateFrom: "2026-11-01", dateTo: "2026-11-10", rate: 241 },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, ratePlanId: doubleBarRatePlanId, dateFrom: "2026-11-10", dateTo: "2026-11-16", rate: 312.66 },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, ratePlanId: doubleBbRatePlanId, dateFrom: "2026-11-01", dateTo: "2026-11-20", rate: 111 }
                 ]
             });
             return NextResponse.json({
                 success: result.success,
                 title: "Test 4: Multiple Date Update for Multiple Rates",
-                message: `Pembaruan tarif multi-tanggal berhasil dikirim dengan sintaks date_from dan date_to dalam 1 batched API call!`,
+                message: result.success
+                    ? `Pembaruan tarif multi-tanggal berhasil dikirim dengan sintaks date_from dan date_to dalam 1 batched API call!`
+                    : (result.message || "Gagal mengirim pembaruan tarif multi-tanggal."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim pembaruan tarif multi-tanggal.")
             });
         }
 
         // TEST 5: Min Stay Update (Dual Min Stay: arrival and through)
         if (action === "test_ari_scenario_5" || action === "test_5_min_stay") {
-            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const { twinRt, doubleRt, twinBarRatePlanId, doubleBarRatePlanId, doubleBbRatePlanId } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 rates: [
-                    { roomTypeId: twinRt.id, ratePlanId: barRp.id, date: "2026-11-23", minStay: 3, minStayArrival: 3, minStayThrough: 3 },
-                    { roomTypeId: doubleRt.id, ratePlanId: barRp.id, date: "2026-11-25", minStay: 2, minStayArrival: 2, minStayThrough: 2 },
-                    { roomTypeId: doubleRt.id, ratePlanId: bbRp.id, date: "2026-11-15", minStay: 5, minStayArrival: 5, minStayThrough: 5 }
+                    { roomTypeId: twinRt.channexRoomTypeId || twinRt.id, ratePlanId: twinBarRatePlanId, date: "2026-11-23", minStay: 3, minStayArrival: 3, minStayThrough: 3 },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, ratePlanId: doubleBarRatePlanId, date: "2026-11-25", minStay: 2, minStayArrival: 2, minStayThrough: 2 },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, ratePlanId: doubleBbRatePlanId, date: "2026-11-15", minStay: 5, minStayArrival: 5, minStayThrough: 5 }
                 ]
             });
             return NextResponse.json({
                 success: result.success,
                 title: "Test 5: Min Stay Restrictions Update",
-                message: `Pembaruan restriksi Minimum Stay (min_stay_arrival dan min_stay_through tersinkronisasi penuh) berhasil dikirim dalam 1 batched API call!`,
+                message: result.success
+                    ? `Pembaruan restriksi Minimum Stay (min_stay_arrival dan min_stay_through tersinkronisasi penuh) berhasil dikirim dalam 1 batched API call!`
+                    : (result.message || "Gagal mengirim restriksi min stay."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim restriksi min stay.")
             });
         }
 
         // TEST 6: Stop Sell Restrictions Update
         if (action === "test_ari_scenario_6" || action === "test_6_stop_sell") {
-            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const { twinRt, doubleRt, twinBarRatePlanId, doubleBarRatePlanId, doubleBbRatePlanId } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 rates: [
-                    { roomTypeId: twinRt.id, ratePlanId: barRp.id, date: "2026-11-14", stopSell: true },
-                    { roomTypeId: doubleRt.id, ratePlanId: barRp.id, date: "2026-11-16", stopSell: true },
-                    { roomTypeId: doubleRt.id, ratePlanId: bbRp.id, date: "2026-11-20", stopSell: true }
+                    { roomTypeId: twinRt.channexRoomTypeId || twinRt.id, ratePlanId: twinBarRatePlanId, date: "2026-11-14", stopSell: true },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, ratePlanId: doubleBarRatePlanId, date: "2026-11-16", stopSell: true },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, ratePlanId: doubleBbRatePlanId, date: "2026-11-20", stopSell: true }
                 ]
             });
             return NextResponse.json({
                 success: result.success,
                 title: "Test 6: Stop Sell Restrictions Update",
-                message: `Pembaruan Stop Sell pada 3 kombinasi kamar berhasil dikirim dalam 1 batched API call!`,
+                message: result.success
+                    ? `Pembaruan Stop Sell pada 3 kombinasi kamar berhasil dikirim dalam 1 batched API call!`
+                    : (result.message || "Gagal mengirim restriksi stop sell."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim restriksi stop sell.")
             });
         }
 
         // TEST 7: Multiple Restrictions Update (CTA, CTD, Min/Max Stay - 1 Batched Call)
         if (action === "test_ari_scenario_7" || action === "test_7_multiple_restrictions") {
-            const { twinRt, doubleRt, barRp, bbRp } = await getCertEntities();
+            const { twinRt, doubleRt, twinBarRatePlanId, twinBbRatePlanId, doubleBarRatePlanId, doubleBbRatePlanId } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 rates: [
                     {
-                        roomTypeId: twinRt.id,
-                        ratePlanId: barRp.id,
+                        roomTypeId: twinRt.channexRoomTypeId || twinRt.id,
+                        ratePlanId: twinBarRatePlanId,
                         dateFrom: "2026-11-01",
                         dateTo: "2026-11-10",
                         closedToArrival: true,
@@ -224,8 +554,8 @@ export async function POST(req: NextRequest) {
                         minStayThrough: 1
                     },
                     {
-                        roomTypeId: twinRt.id,
-                        ratePlanId: bbRp.id,
+                        roomTypeId: twinRt.channexRoomTypeId || twinRt.id,
+                        ratePlanId: twinBbRatePlanId,
                         dateFrom: "2026-11-12",
                         dateTo: "2026-11-16",
                         closedToArrival: false,
@@ -235,8 +565,8 @@ export async function POST(req: NextRequest) {
                         minStayThrough: 6
                     },
                     {
-                        roomTypeId: doubleRt.id,
-                        ratePlanId: barRp.id,
+                        roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id,
+                        ratePlanId: doubleBarRatePlanId,
                         dateFrom: "2026-11-10",
                         dateTo: "2026-11-16",
                         closedToArrival: true, // ENFORCED TRUE - Fixed Channex Audit Failure!
@@ -245,8 +575,8 @@ export async function POST(req: NextRequest) {
                         minStayThrough: 2
                     },
                     {
-                        roomTypeId: doubleRt.id,
-                        ratePlanId: bbRp.id,
+                        roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id,
+                        ratePlanId: doubleBbRatePlanId,
                         dateFrom: "2026-11-01",
                         dateTo: "2026-11-20",
                         minStay: 10,
@@ -258,20 +588,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
                 success: result.success,
                 title: "Test 7: Multiple Restrictions Update",
-                message: `Pembaruan multi-restriksi kompleks (Double BAR CTA: true diaktifkan, dual min_stay) berhasil dikirim dalam 1 batched API call!`,
+                message: result.success
+                    ? `Pembaruan multi-restriksi kompleks (Double BAR CTA: true diaktifkan, dual min_stay) berhasil dikirim dalam 1 batched API call!`
+                    : (result.message || "Gagal mengirim multi-restriksi kompleks."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim multi-restriksi kompleks.")
             });
         }
 
         // TEST 8: Half-Year Update (5 Bulan)
         if (action === "test_ari_scenario_8" || action === "test_8_half_year") {
-            const { twinRt, doubleRt, barRp } = await getCertEntities();
+            const { twinRt, doubleRt, twinBarRatePlanId, doubleBarRatePlanId } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 rates: [
                     {
-                        roomTypeId: twinRt.id,
-                        ratePlanId: barRp.id,
+                        roomTypeId: twinRt.channexRoomTypeId || twinRt.id,
+                        ratePlanId: twinBarRatePlanId,
                         dateFrom: "2026-12-01",
                         dateTo: "2027-05-01",
                         rate: 432,
@@ -282,8 +615,8 @@ export async function POST(req: NextRequest) {
                         minStayThrough: 2
                     },
                     {
-                        roomTypeId: doubleRt.id,
-                        ratePlanId: barRp.id,
+                        roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id,
+                        ratePlanId: doubleBarRatePlanId,
                         dateFrom: "2026-12-01",
                         dateTo: "2027-05-01",
                         rate: 342,
@@ -296,9 +629,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
                 success: result.success,
                 title: "Test 8: Half-Year Update (01 Des 2026 - 01 Mei 2027)",
-                message: `Pembaruan tarif & restriksi semester 5 bulan dengan dual min_stay berhasil dikirim dalam 1 batched API call!`,
+                message: result.success
+                    ? `Pembaruan tarif & restriksi semester 5 bulan dengan dual min_stay berhasil dikirim dalam 1 batched API call!`
+                    : (result.message || "Gagal mengirim pembaruan semester."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim pembaruan semester.")
             });
         }
 
@@ -307,16 +643,19 @@ export async function POST(req: NextRequest) {
             const { twinRt, doubleRt } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 availability: [
-                    { roomTypeId: twinRt.id, date: "2026-11-21", qty: 7 },
-                    { roomTypeId: doubleRt.id, date: "2026-11-25", qty: 0 } // TARGETS 2026-11-25 - Fixed Channex Audit Failure!
+                    { roomTypeId: twinRt.channexRoomTypeId || twinRt.id, date: "2026-11-21", qty: 7 },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, date: "2026-11-25", qty: 0 } // TARGETS 2026-11-25 - Fixed Channex Audit Failure!
                 ]
             });
             return NextResponse.json({
                 success: result.success,
                 title: "Test 9: Single Date Availability Update",
-                message: `Pembaruan ketersediaan Twin (2026-11-21: 7) dan Double (2026-11-25: 0) berhasil dikirim tepat dalam 1 batched API call!`,
+                message: result.success
+                    ? `Pembaruan ketersediaan Twin (2026-11-21: 7) dan Double (2026-11-25: 0) berhasil dikirim tepat dalam 1 batched API call!`
+                    : (result.message || "Gagal mengirim pembaruan ketersediaan."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim pembaruan ketersediaan.")
             });
         }
 
@@ -325,16 +664,19 @@ export async function POST(req: NextRequest) {
             const { twinRt, doubleRt } = await getCertEntities();
             const result = await channexSyncService.pushDeltaBatch(hotelCode, {
                 availability: [
-                    { roomTypeId: twinRt.id, dateFrom: "2026-11-10", dateTo: "2026-11-16", qty: 3 },
-                    { roomTypeId: doubleRt.id, dateFrom: "2026-11-17", dateTo: "2026-11-24", qty: 4 }
+                    { roomTypeId: twinRt.channexRoomTypeId || twinRt.id, dateFrom: "2026-11-10", dateTo: "2026-11-16", qty: 3 },
+                    { roomTypeId: doubleRt.channexRoomTypeId || doubleRt.id, dateFrom: "2026-11-17", dateTo: "2026-11-24", qty: 4 }
                 ]
             });
             return NextResponse.json({
                 success: result.success,
                 title: "Test 10: Multiple Date Availability Update",
-                message: `Pembaruan ketersediaan rentang tanggal Twin (10-16 Nov: 3) dan Double (17-24 Nov: 4) berhasil dikirim dalam 1 batched API call!`,
+                message: result.success
+                    ? `Pembaruan ketersediaan rentang tanggal Twin (10-16 Nov: 3) dan Double (17-24 Nov: 4) berhasil dikirim dalam 1 batched API call!`
+                    : (result.message || "Gagal mengirim pembaruan ketersediaan."),
                 taskIds: result.taskIds,
-                detail: result
+                detail: result,
+                error: result.success ? undefined : (result.message || "Gagal mengirim pembaruan ketersediaan.")
             });
         }
 
@@ -350,6 +692,14 @@ export async function POST(req: NextRequest) {
 
             const checkin = arrivalDate || todayStr;
             const checkout = departureDate || tomorrowStr;
+
+            let effectiveRoomTypeId = roomTypeId;
+            let effectiveRatePlanId = ratePlanId;
+            if (!effectiveRoomTypeId) {
+                const { twinRt, twinBarRatePlanId } = await getCertEntities();
+                effectiveRoomTypeId = twinRt?.channexRoomTypeId || twinRt?.id;
+                if (!effectiveRatePlanId) effectiveRatePlanId = twinBarRatePlanId;
+            }
 
             const payload: ChannexWebhookPayload = {
                 event: "booking_new",
@@ -398,8 +748,8 @@ export async function POST(req: NextRequest) {
                     },
                     rooms: [
                         {
-                            room_type_id: roomTypeId || "standard",
-                            rate_plan_id: ratePlanId || undefined,
+                            room_type_id: effectiveRoomTypeId,
+                            rate_plan_id: effectiveRatePlanId || undefined,
                             amount: Number(totalPrice) || 1200000,
                             guest_name: guestName,
                             adults: 2,
@@ -492,6 +842,12 @@ export async function POST(req: NextRequest) {
                 return d.toISOString().split("T")[0];
             })();
 
+            let effectiveRoomTypeId = roomTypeId;
+            if (!effectiveRoomTypeId) {
+                const { twinRoomTypeId } = await getCertEntities();
+                effectiveRoomTypeId = twinRoomTypeId;
+            }
+
             const payload: ChannexWebhookPayload = {
                 event: "booking_modification",
                 is_simulation: true,
@@ -515,7 +871,7 @@ export async function POST(req: NextRequest) {
                     },
                     rooms: [
                         {
-                            room_type_id: roomTypeId || "standard",
+                            room_type_id: effectiveRoomTypeId,
                             amount: Number(totalPrice) || 1350000,
                             guest_name: guestName
                         }
@@ -570,6 +926,12 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: "bookingIdToCancel diperlukan untuk pembatalan" }, { status: 400 });
             }
 
+            let effectiveRoomTypeId = roomTypeId;
+            if (!effectiveRoomTypeId) {
+                const { twinRoomTypeId } = await getCertEntities();
+                effectiveRoomTypeId = twinRoomTypeId;
+            }
+
             const payload: ChannexWebhookPayload = {
                 event: "booking_cancellation",
                 is_simulation: true,
@@ -588,7 +950,7 @@ export async function POST(req: NextRequest) {
                     currency: "IDR",
                     rooms: [
                         {
-                            room_type_id: roomTypeId || "standard"
+                            room_type_id: effectiveRoomTypeId
                         }
                     ]
                 }

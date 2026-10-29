@@ -224,9 +224,11 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
         }
 
         const rect = e.currentTarget.getBoundingClientRect();
-        // Position flyout aligned to button, clamped within viewport
-        const maxTop = typeof window !== "undefined" ? Math.max(68, window.innerHeight - 380) : 400;
-        const targetTop = Math.min(Math.max(68, rect.top), maxTop);
+        // Dynamically compute flyout height based on item count to avoid false top clamping
+        const estimatedHeight = 54 + (group.items?.length || 3) * 36;
+        const maxTop = typeof window !== "undefined" ? Math.max(64, window.innerHeight - estimatedHeight - 16) : 400;
+        // Accurately align flyout top with the hovered button
+        const targetTop = Math.max(64, Math.min(rect.top - 2, maxTop));
         setFlyoutTop(targetTop);
         setHoveredGroup(group);
     };
@@ -313,7 +315,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                 </div>
 
                 {/* Navigation Scroll Container */}
-                <nav className={styles.navGroup}>
+                <nav className={styles.navGroup} onScroll={() => setHoveredGroup(null)}>
                     {/* Pilih Modul Switcher */}
                     {!isCollapsed ? (
                         <button
@@ -470,7 +472,7 @@ export const ChannelManagerSidebar: React.FC<ChannelManagerSidebarProps> = ({
                         transition={{ duration: 0.12 }}
                         className={styles.flyoutCard}
                         style={{
-                            left: isCollapsed ? "70px" : "230px",
+                            left: isCollapsed ? "68px" : "252px",
                             top: `${flyoutTop}px`
                         }}
                         onMouseEnter={handleFlyoutMouseEnter}

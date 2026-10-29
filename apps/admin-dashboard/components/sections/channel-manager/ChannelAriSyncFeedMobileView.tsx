@@ -170,7 +170,7 @@ export const ChannelAriSyncFeedMobileView: React.FC<ChannelAriSyncFeedViewProps>
                                             ) : (
                                                 <Copy size={9} />
                                             )}
-                                            <span>{log.taskId.slice(0, 10)}...</span>
+                                            <span>{log.taskId}</span>
                                         </span>
                                     ) : (
                                         <span style={{ fontSize: 10, color: "#a1a1aa" }}>session</span>

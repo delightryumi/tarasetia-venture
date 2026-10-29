@@ -766,3 +766,165 @@
   line-height: 1.45;
   margin: 0;
 }
+
+/* Full Rate Plan UUIDs in Folio Card */
+.folioUuidList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  background: #fafafa;
+  border: 1px solid #f4f4f5;
+  border-radius: 6px;
+  margin-top: 2px;
+}
+
+.uuidRowPill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.uuidRowPill:hover {
+  background: #09090b;
+  border-color: #09090b;
+  color: #ffffff;
+}
+
+.uuidRowPill:hover .uuidTag {
+  color: #a1a1aa;
+}
+
+.uuidRowPill:hover .uuidVal {
+  color: #ffffff;
+}
+
+.uuidRowPill:hover .uuidCopyIcon {
+  color: #ffffff;
+}
+
+.uuidLeft {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.uuidCopyIcon {
+  color: #71717a;
+  flex-shrink: 0;
+  transition: color 0.12s ease;
+}
+
+.uuidTag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #52525b;
+  white-space: nowrap;
+}
+
+.uuidVal {
+  font-family: var(--font-geist-mono, "Geist Mono", monospace);
+  font-size: 10px;
+  font-weight: 500;
+  color: #18181b;
+  word-break: break-all;
+  text-align: right;
+  line-height: 1.3;
+}
+
+.uuidRowUnsynced {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: #71717a;
+  padding: 3px 6px;
+}
+
+.uuidUnsyncedDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #d4d4d8;
+  flex-shrink: 0;
+}
+
+/* Full Rate Plan UUIDs in Ledger View (Table) */
+.ledgerSyncCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ledgerUuidWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 380px;
+}
+
+.ledgerUuidPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  font-size: 10px;
+  color: #27272a;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.ledgerUuidPill:hover {
+  background: #09090b;
+  color: #ffffff;
+  border-color: #09090b;
+}
+
+.ledgerUuidPill:hover code {
+  color: #ffffff;
+}
+
+.ledgerUuidPill:hover svg {
+  color: #ffffff;
+}
+
+.ledgerUuidRoomLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.ledgerUuidPill:hover .ledgerUuidRoomLabel {
+  color: #d4d4d8;
+}
+
+.ledgerUuidCode {
+  font-family: var(--font-geist-mono, "Geist Mono", monospace);
+  font-size: 10px;
+  font-weight: 500;
+  color: #09090b;
+  word-break: break-all;
+}
+
+.ledgerNotSyncedText {
+  font-size: 10px;
+  color: #a1a1aa;
+}

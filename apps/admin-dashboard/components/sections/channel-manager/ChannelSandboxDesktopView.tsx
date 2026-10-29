@@ -264,7 +264,7 @@ export const ChannelSandboxDesktopView: React.FC<ChannelSandboxViewProps> = ({
                                                         ) : (
                                                             <Copy size={9} />
                                                         )}
-                                                        <span>{tId.length > 16 ? `${tId.slice(0, 14)}...` : tId}</span>
+                                                        <span>{tId}</span>
                                                     </span>
                                                 ))}
                                             </div>
@@ -509,7 +509,7 @@ export const ChannelSandboxDesktopView: React.FC<ChannelSandboxViewProps> = ({
                                         className={styles.btnSimCancel}
                                     >
                                         <RotateCcw size={12} />
-                                        <span>Batalkan #{simulatedResult.bookingId.slice(0, 8)}</span>
+                                        <span>Batalkan #{simulatedResult.bookingId}</span>
                                     </button>
                                 )}
                             </div>

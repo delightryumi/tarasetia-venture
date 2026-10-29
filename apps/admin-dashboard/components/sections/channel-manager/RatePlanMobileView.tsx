@@ -211,6 +211,57 @@ export const RatePlanMobileView: React.FC<RatePlanDesktopViewProps> = ({
                                     </div>
                                 </div>
 
+                                {/* Full Rate Plan UUIDs on Mobile */}
+                                <div className={styles.mobileUuidBlock}>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 3 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                                            <span className={isSynced ? styles.dotBlack : styles.dotGray} />
+                                            <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", color: "#52525b" }}>
+                                                {isSynced ? "Channel Manager UUIDs" : "PMS Direct (Not Synced)"}
+                                            </span>
+                                        </div>
+                                        <span
+                                            style={{ fontSize: 9.5, color: "#71717a", fontFamily: "var(--font-geist-mono, monospace)", cursor: "pointer" }}
+                                            onClick={() => copyToClipboard(plan.id, "PMS Plan ID")}
+                                            title="Click to copy PMS ID"
+                                        >
+                                            PMS: <b>{plan.id}</b>
+                                        </span>
+                                    </div>
+                                    {plan.channexRatePlanIds && Object.keys(plan.channexRatePlanIds).length > 0 ? (
+                                        Object.entries(plan.channexRatePlanIds).map(([rtId, cUuid]) => {
+                                            const rt = roomTypes.find(r => r.id === rtId);
+                                            const roomLabel = rt?.name || "Room";
+                                            return (
+                                                <div
+                                                    key={rtId}
+                                                    className={styles.mobileUuidRow}
+                                                    onClick={() => copyToClipboard(cUuid as string, `UUID (${roomLabel})`)}
+                                                    title={`Klik untuk menyalin UUID ${roomLabel}: ${cUuid}`}
+                                                >
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                                                        <Copy size={9} />
+                                                        <span style={{ fontWeight: 600 }}>{roomLabel}:</span>
+                                                    </div>
+                                                    <code style={{ fontSize: 9.5, wordBreak: "break-all", textAlign: "right" }}>{cUuid as string}</code>
+                                                </div>
+                                            );
+                                        })
+                                    ) : plan.channexRatePlanId ? (
+                                        <div
+                                            className={styles.mobileUuidRow}
+                                            onClick={() => copyToClipboard(plan.channexRatePlanId!, "Channel Manager Rate UUID")}
+                                            title={`Klik untuk menyalin UUID: ${plan.channexRatePlanId}`}
+                                        >
+                                            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                                                <Copy size={9} />
+                                                <span style={{ fontWeight: 600 }}>UUID:</span>
+                                            </div>
+                                            <code style={{ fontSize: 9.5, wordBreak: "break-all", textAlign: "right" }}>{plan.channexRatePlanId}</code>
+                                        </div>
+                                    ) : null}
+                                </div>
+
                                 {/* Touch action buttons */}
                                 <div className={styles.cardActionsRow}>
                                     <button

@@ -347,3 +347,39 @@
   color: #27272a;
   cursor: pointer;
 }
+
+/* Mobile Full UUID Block */
+.mobileUuidBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  background: #fafafa;
+  border: 1px solid #f4f4f5;
+  border-radius: 6px;
+  margin-top: 2px;
+}
+
+.mobileUuidRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  font-size: 9.5px;
+  color: #18181b;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mobileUuidRow:active {
+  background: #09090b;
+  color: #ffffff;
+}
+
+.mobileUuidRow:active code {
+  color: #ffffff;
+}

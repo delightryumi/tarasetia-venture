@@ -351,7 +351,7 @@ export const ChannelSandboxMobileView: React.FC<ChannelSandboxViewProps> = ({
                             }}
                         >
                             <RotateCcw size={12} />
-                            <span>Cancel Booking #{simulatedResult.bookingId.slice(0, 8)}</span>
+                            <span>Cancel Booking #{simulatedResult.bookingId}</span>
                         </button>
                     )}
 

@@ -458,7 +458,7 @@ export const ChannelCredentialsDesktopView: React.FC<ChannelCredentialsViewProps
                             </span>
                             {webhookRegistrationStatus?.webhookId && (
                                 <span className={styles.webhookIdText}>
-                                    (ID: {webhookRegistrationStatus.webhookId.slice(0, 8)}...)
+                                    (ID: {webhookRegistrationStatus.webhookId})
                                 </span>
                             )}
                         </div>

@@ -1376,7 +1376,7 @@ export class ChannexSyncService {
             dateTo?: string;
             qty: number;
         }>;
-    }): Promise<{
+    }, options?: { skipLog?: boolean }): Promise<{
         success: boolean;
         skipped?: boolean;
         taskIds: string[];
@@ -1417,30 +1417,56 @@ export class ChannexSyncService {
         let restrictionsTaskId: string | undefined;
         let availabilityTaskId: string | undefined;
 
-        const hotelCurrency = (hotelData?.currency || hotelData?.channelManager?.currency || "IDR").toUpperCase();
+        const hotelCurrency = (hotelData?.channelManager?.currency || hotelData?.currency || "USD").toUpperCase();
+
+        const isUuid = (val?: string) => typeof val === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 
         // 1. Process Restrictions & Rates Batch
         const rateItems = deltaPayload.rates || [];
         if (rateItems.length > 0) {
             const restrictionValues: any[] = [];
             for (const r of rateItems) {
-                let rp: any = ratePlans.find((p: any) => p.id === r.ratePlanId || (p as any).channexRatePlanId === r.ratePlanId);
                 let channexRatePlanId: string | undefined;
 
-                if (rp) {
-                    if (r.roomTypeId && rp.channexRatePlanIds?.[r.roomTypeId]) {
-                        channexRatePlanId = rp.channexRatePlanIds[r.roomTypeId];
-                    } else {
-                        channexRatePlanId = rp.channexRatePlanId;
-                    }
+                if (isUuid(r.ratePlanId)) {
+                    channexRatePlanId = r.ratePlanId;
                 } else {
-                    // Check if r.ratePlanId is compound key: `${roomTypeId}_${actualRpId}`
-                    for (const p of ratePlans as any[]) {
-                        if (r.ratePlanId.endsWith(`_${p.id}`)) {
-                            const rtId = r.ratePlanId.substring(0, r.ratePlanId.length - p.id.length - 1);
-                            rp = p;
-                            channexRatePlanId = p.channexRatePlanIds?.[rtId] || p.channexRatePlanId;
-                            break;
+                    let rp: any = ratePlans.find((p: any) => 
+                        p.id === r.ratePlanId || 
+                        (p as any).channexRatePlanId === r.ratePlanId ||
+                        (p.channexRatePlanIds && typeof p.channexRatePlanIds === "object" && Object.values(p.channexRatePlanIds).includes(r.ratePlanId))
+                    );
+
+                    if (rp) {
+                        if (r.roomTypeId) {
+                            if (rp.channexRatePlanIds?.[r.roomTypeId]) {
+                                channexRatePlanId = rp.channexRatePlanIds[r.roomTypeId];
+                            } else {
+                                const matchedLocalRt = roomTypes.find((t: any) => t.id === r.roomTypeId || (t as any).channexRoomTypeId === r.roomTypeId);
+                                if (matchedLocalRt && rp.channexRatePlanIds?.[matchedLocalRt.id]) {
+                                    channexRatePlanId = rp.channexRatePlanIds[matchedLocalRt.id];
+                                } else if (matchedLocalRt && (matchedLocalRt as any).channexRoomTypeId && rp.channexRatePlanIds?.[(matchedLocalRt as any).channexRoomTypeId]) {
+                                    channexRatePlanId = rp.channexRatePlanIds[(matchedLocalRt as any).channexRoomTypeId];
+                                }
+                            }
+                        }
+
+                        if (!channexRatePlanId && rp.channexRatePlanId) {
+                            channexRatePlanId = rp.channexRatePlanId;
+                        }
+
+                        if (!channexRatePlanId && rp.channexRatePlanIds && typeof rp.channexRatePlanIds === "object") {
+                            channexRatePlanId = Object.values(rp.channexRatePlanIds)[0] as string;
+                        }
+                    } else {
+                        // Check if r.ratePlanId is compound key: `${roomTypeId}_${actualRpId}`
+                        for (const p of ratePlans as any[]) {
+                            if (r.ratePlanId.endsWith(`_${p.id}`)) {
+                                const rtId = r.ratePlanId.substring(0, r.ratePlanId.length - p.id.length - 1);
+                                rp = p;
+                                channexRatePlanId = p.channexRatePlanIds?.[rtId] || p.channexRatePlanId;
+                                break;
+                            }
                         }
                     }
                 }
@@ -1493,14 +1519,26 @@ export class ChannexSyncService {
                 restrictionValues.push(valObj);
             }
 
-            if (restrictionValues.length > 0) {
-                // Compress single-date sequences into merged date_from and date_to ranges (Channex Standard)
-                const compressedRestrictions = compressRestrictionRanges(restrictionValues);
-                await throttleAriCall(channexPropertyId);
-                console.log(`[ChannexSync] Executing Delta Batch Restrictions (${compressedRestrictions.length} items compressed from ${restrictionValues.length}) in 1 API call...`);
-                const restRes = await channexClient.pushRestrictions({ values: compressedRestrictions }, customApiKey, env);
-                restrictionsTaskId = restRes?.data?.[0]?.id || restRes?.data?.id;
-                if (restrictionsTaskId) taskIds.push(restrictionsTaskId);
+            try {
+                if (restrictionValues.length > 0) {
+                    // Compress single-date sequences into merged date_from and date_to ranges (Channex Standard)
+                    const compressedRestrictions = compressRestrictionRanges(restrictionValues);
+                    await throttleAriCall(channexPropertyId);
+                    console.log(`[ChannexSync] Executing Delta Batch Restrictions (${compressedRestrictions.length} items compressed from ${restrictionValues.length}) in 1 API call...`);
+                    const restRes = await channexClient.pushRestrictions({ values: compressedRestrictions }, customApiKey, env);
+                    restrictionsTaskId = restRes?.data?.[0]?.id || restRes?.data?.id;
+                    if (restrictionsTaskId) taskIds.push(restrictionsTaskId);
+                }
+            } catch (restErr: any) {
+                console.error(`[ChannexSync] Restrictions push error for Hotel [${hotelCode}]:`, restErr?.message);
+                return {
+                    success: false,
+                    taskIds,
+                    restrictionsTaskId,
+                    availabilityTaskId,
+                    latencyMs: Date.now() - startTime,
+                    message: restErr?.message || "Gagal mengirim restriksi tarif ke Channex."
+                };
             }
         }
 
@@ -1509,8 +1547,14 @@ export class ChannexSyncService {
         if (availItems.length > 0) {
             const availValues: any[] = [];
             for (const a of availItems) {
-                const rt: any = roomTypes.find((t: any) => t.id === a.roomTypeId || (t as any).channexRoomTypeId === a.roomTypeId);
-                const channexRoomTypeId = rt?.channexRoomTypeId || a.roomTypeId;
+                let channexRoomTypeId: string | undefined;
+
+                if (isUuid(a.roomTypeId)) {
+                    channexRoomTypeId = a.roomTypeId;
+                } else {
+                    const rt: any = roomTypes.find((t: any) => t.id === a.roomTypeId || (t as any).channexRoomTypeId === a.roomTypeId);
+                    channexRoomTypeId = rt?.channexRoomTypeId || a.roomTypeId;
+                }
 
                 const valObj: any = {
                     property_id: channexPropertyId,
@@ -1528,33 +1572,46 @@ export class ChannexSyncService {
                 availValues.push(valObj);
             }
 
-            if (availValues.length > 0) {
-                // Compress availability if any single date items are consecutive
-                const alreadyAvailRanges: any[] = [];
-                const singleAvailMap: Map<string, Array<{ dateStr: string; qty: number }>> = new Map();
-                availValues.forEach(a => {
-                    if (a.date_from && a.date_to) {
-                        alreadyAvailRanges.push(a);
-                    } else if (a.date) {
-                        const key = `${a.property_id}_${a.room_type_id}`;
-                        if (!singleAvailMap.has(key)) singleAvailMap.set(key, []);
-                        singleAvailMap.get(key)!.push({ dateStr: a.date, qty: a.availability });
-                    } else {
-                        alreadyAvailRanges.push(a);
-                    }
-                });
-                const compressedAvail = [...alreadyAvailRanges];
-                singleAvailMap.forEach((list, key) => {
-                    const [pId, rtId] = key.split("_");
-                    list.sort((x, y) => (x.dateStr < y.dateStr ? -1 : 1));
-                    compressedAvail.push(...compressAvailabilityRanges(list, pId, rtId));
-                });
+            try {
+                if (availValues.length > 0) {
+                    // Compress availability if any single date items are consecutive (safe from underscore collision)
+                    const alreadyAvailRanges: any[] = [];
+                    const singleAvailMap: Map<string, { propertyId: string; roomTypeId: string; list: Array<{ dateStr: string; qty: number }> }> = new Map();
+                    availValues.forEach(a => {
+                        if (a.date_from && a.date_to) {
+                            alreadyAvailRanges.push(a);
+                        } else if (a.date) {
+                            const mapKey = `${a.property_id}:::${a.room_type_id}`;
+                            if (!singleAvailMap.has(mapKey)) {
+                                singleAvailMap.set(mapKey, { propertyId: a.property_id, roomTypeId: a.room_type_id, list: [] });
+                            }
+                            singleAvailMap.get(mapKey)!.list.push({ dateStr: a.date, qty: a.availability });
+                        } else {
+                            alreadyAvailRanges.push(a);
+                        }
+                    });
+                    const compressedAvail = [...alreadyAvailRanges];
+                    singleAvailMap.forEach(({ propertyId, roomTypeId, list }) => {
+                        list.sort((x, y) => (x.dateStr < y.dateStr ? -1 : 1));
+                        compressedAvail.push(...compressAvailabilityRanges(list, propertyId, roomTypeId));
+                    });
 
-                await throttleAriCall(channexPropertyId);
-                console.log(`[ChannexSync] Executing Delta Batch Availability (${compressedAvail.length} items compressed from ${availValues.length}) in 1 API call...`);
-                const availRes = await channexClient.pushAvailability({ values: compressedAvail }, customApiKey, env);
-                availabilityTaskId = availRes?.data?.[0]?.id || availRes?.data?.id;
-                if (availabilityTaskId) taskIds.push(availabilityTaskId);
+                    await throttleAriCall(channexPropertyId);
+                    console.log(`[ChannexSync] Executing Delta Batch Availability (${compressedAvail.length} items compressed from ${availValues.length}) in 1 API call...`);
+                    const availRes = await channexClient.pushAvailability({ values: compressedAvail }, customApiKey, env);
+                    availabilityTaskId = availRes?.data?.[0]?.id || availRes?.data?.id;
+                    if (availabilityTaskId) taskIds.push(availabilityTaskId);
+                }
+            } catch (availErr: any) {
+                console.error(`[ChannexSync] Availability push error for Hotel [${hotelCode}]:`, availErr?.message);
+                return {
+                    success: false,
+                    taskIds,
+                    restrictionsTaskId,
+                    availabilityTaskId,
+                    latencyMs: Date.now() - startTime,
+                    message: availErr?.message || "Gagal mengirim ketersediaan kamar ke Channex."
+                };
             }
         }
 
@@ -1710,6 +1767,8 @@ export class ChannexSyncService {
                 }
             } else if (rp.channexRatePlanId) {
                 planTargets.push({ roomTypeId: rp.roomTypeId, channexRateId: rp.channexRatePlanId });
+            } else if (rp.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rp.id)) {
+                planTargets.push({ roomTypeId: rp.roomTypeId, channexRateId: rp.id });
             }
 
             for (const target of planTargets) {
@@ -1794,6 +1853,34 @@ export class ChannexSyncService {
                         restrictionValues.push(overrideRestObj);
                     }
                 });
+            }
+        // If no rate plans were resolved from Firestore, query live rate plans from Channex to ensure all rate plans are included with max_stay
+        if (restrictionValues.length === 0 && channexPropertyId && customApiKey) {
+            try {
+                const liveRatesRes = await channexClient.getRatePlans(channexPropertyId, customApiKey, env);
+                const liveRates = liveRatesRes?.data || [];
+                for (const lr of liveRates) {
+                    const rId = lr.id;
+                    const baseMaxStay = 0;
+                    const minStay = 1;
+                    const basePrice = hotelCurrency === "IDR" ? 500000 : 100;
+                    const formattedBaseRate = formatRateForChannex(basePrice, hotelCurrency);
+                    restrictionValues.push({
+                        property_id: channexPropertyId,
+                        rate_plan_id: rId,
+                        date_from: startDateStr,
+                        date_to: endDateStr,
+                        rate: formattedBaseRate,
+                        min_stay_arrival: minStay,
+                        min_stay_through: minStay,
+                        max_stay: baseMaxStay,
+                        stop_sell: false,
+                        closed_to_arrival: false,
+                        closed_to_departure: false
+                    });
+                }
+            } catch (err: any) {
+                console.warn("[fullPropertySync] Fallback live rate plans query failed:", err?.message);
             }
         }
 

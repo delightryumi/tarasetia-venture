@@ -130,6 +130,9 @@ export function formatRateForChannex(rate: number, currencyCode?: string): strin
     const config = getCurrencyConfig(currencyCode);
     const num = Number(rate) || 0;
     if (config.decimals === 0) {
+        if (num % 1 !== 0) {
+            return num.toFixed(2);
+        }
         return Math.round(num).toString();
     }
     return num.toFixed(config.decimals);

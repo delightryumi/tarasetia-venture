@@ -209,7 +209,7 @@ export const RateParityMatrixDesktopView: React.FC<RateParityMatrixDesktopViewPr
                                                     {rp.name || "Standard Rate"}
                                                 </div>
                                                 <div className={styles.planMeta}>
-                                                    Code: {rp.code || rp.id?.slice(0, 8)} • Meal: {rp.mealPlan || "RO"}
+                                                    Code: {rp.code || rp.id} • Meal: {rp.mealPlan || "RO"}
                                                 </div>
                                             </td>
                                             <td className={styles.tdBaseNet}>

@@ -218,7 +218,7 @@ export const ChannelCredentialsTab: React.FC<ChannelCredentialsTabProps> = ({
             id: "property_guid",
             label: "Property GUID",
             desc: channexPropertyId && channexPropertyId.trim().length >= 32
-                ? `Tertaut ke UUID: ${channexPropertyId.slice(0, 8)}...`
+                ? `Tertaut ke UUID: ${channexPropertyId}`
                 : "Belum tertaut. Klik tombol Auto-Register untuk membuat otomatis.",
             passed: !!channexPropertyId && channexPropertyId.trim().length >= 32,
             badge: channexPropertyId && channexPropertyId.trim().length >= 32 ? "Tertaut" : "Belum Tertaut"
@@ -236,7 +236,7 @@ export const ChannelCredentialsTab: React.FC<ChannelCredentialsTabProps> = ({
             id: "webhook_registered",
             label: "Pendaftaran Webhook Callback",
             desc: webhookRegistrationStatus?.isRegistered
-                ? `Aktif di Channex (ID: ${webhookRegistrationStatus.webhookId ? webhookRegistrationStatus.webhookId.slice(0, 8) + '...' : 'Registered'})`
+                ? `Aktif di Channex (ID: ${webhookRegistrationStatus.webhookId || 'Registered'})`
                 : "Belum terdaftar. Klik tombol 1-Click Register Webhook.",
             passed: !!webhookRegistrationStatus?.isRegistered,
             badge: webhookRegistrationStatus?.isRegistered ? "Terdaftar" : "Belum Terdaftar"

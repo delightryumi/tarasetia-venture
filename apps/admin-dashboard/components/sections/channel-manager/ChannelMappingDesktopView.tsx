@@ -457,7 +457,7 @@ export const ChannelMappingDesktopView: React.FC<ChannelMappingDesktopViewProps>
                                             <div className={styles.mappingIdentity}>
                                                 <div className={styles.mappingItemName} title={rt.name}>{rt.name}</div>
                                                 <div className={styles.mappingItemMeta}>
-                                                    ID: {rt.id?.slice(0, 8)} • Allotment: {rt.totalRooms || 1} Kamar
+                                                    ID: {rt.channexRoomTypeId || rt.id} • Allotment: {rt.totalRooms || 1} Kamar
                                                 </div>
                                             </div>
 
@@ -550,7 +550,7 @@ export const ChannelMappingDesktopView: React.FC<ChannelMappingDesktopViewProps>
                                             <div className={styles.mappingIdentity}>
                                                 <div className={styles.mappingItemName} title={rp.name}>{rp.name}</div>
                                                 <div className={styles.mappingItemMeta}>
-                                                    Code: {rp.code || rp.id?.slice(0, 8)} • Meal: {rp.mealPlan || "RO"}
+                                                    Code: {rp.code || rp.id} • Meal: {rp.mealPlan || "RO"}
                                                 </div>
                                             </div>
 

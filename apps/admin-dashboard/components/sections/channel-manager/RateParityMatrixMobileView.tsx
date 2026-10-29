@@ -146,7 +146,7 @@ export const RateParityMatrixMobileView: React.FC<RateParityMatrixMobileViewProp
                                             {rp.name || "Standard Rate"}
                                         </div>
                                         <div className={styles.planMeta}>
-                                            Code: {rp.code || rp.id?.slice(0, 8)} • Meal: {rp.mealPlan || "RO"}
+                                            Code: {rp.code || rp.id} • Meal: {rp.mealPlan || "RO"}
                                         </div>
                                     </div>
                                     <div className={styles.baseNetBadge}>

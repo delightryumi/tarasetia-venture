@@ -275,7 +275,7 @@ export const ChannelWebhooksDesktopView: React.FC<ChannelWebhooksViewProps> = ({
                       </td>
                       <td>
                         <span className={styles.monoText}>
-                          {evt.task_id ? `${evt.task_id.slice(0, 14)}...` : evt.id.slice(0, 10)}
+                          {evt.task_id || evt.id}
                         </span>
                       </td>
                       <td>

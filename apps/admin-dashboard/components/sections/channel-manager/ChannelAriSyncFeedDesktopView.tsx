@@ -290,7 +290,7 @@ export const ChannelAriSyncFeedDesktopView: React.FC<ChannelAriSyncFeedViewProps
                                                         ) : (
                                                             <Copy size={9} />
                                                         )}
-                                                        <span>{log.taskId.length > 16 ? `${log.taskId.slice(0, 14)}...` : log.taskId}</span>
+                                                        <span>{log.taskId}</span>
                                                     </span>
                                                 ) : (
                                                     <span style={{ fontSize: 10, color: "#a1a1aa", fontStyle: "italic" }}>
