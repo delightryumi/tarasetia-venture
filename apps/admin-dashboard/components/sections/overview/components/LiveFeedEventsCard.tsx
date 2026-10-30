@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { resolveBookingIdentifiers, resolveChannelName, getChannelLogo } from "@/lib/channelHelper";
 import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
+import { useCurrency } from "@/hooks/useCurrency";
 import styles from "./LiveFeedEventsCard.module.css";
 
 interface BookingEntry {
@@ -80,6 +81,7 @@ const formatEventDate = (checkInDate?: string, timestamp?: string): string => {
 };
 
 export function LiveFeedEventsCard({ bookings = [], onSelectBooking }: LiveFeedEventsCardProps) {
+  const { formatCurrency } = useCurrency();
   const [channelFilter, setChannelFilter] = useState<string>("ALL");
   const [eventFilter, setEventFilter] = useState<string>("ALL");
 
@@ -237,7 +239,7 @@ export function LiveFeedEventsCard({ bookings = [], onSelectBooking }: LiveFeedE
                       color: isCancelled ? "#94a3b8" : "#0f172a"
                     }}
                   >
-                    IDR {amount.toLocaleString("id-ID")}
+                    {formatCurrency(amount)}
                   </span>
 
                   <img

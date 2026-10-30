@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { DoorOpen, AlertTriangle, Check, X, ArrowRightLeft } from "lucide-react";
@@ -32,8 +33,13 @@ export const GridPhysicalRoomRows = React.memo(function GridPhysicalRoomRows({
     onUpdatePhysicalRooms,
     onMoveBookingRoom
 }: GridPhysicalRoomRowsProps) {
+    const router = useRouter();
     const [roomsInputText, setRoomsInputText] = useState<string>(() => (rt.physicalRooms || []).join(", "));
     const [savingRooms, setSavingRooms] = useState<boolean>(false);
+
+    const handleVacantClick = (dateStr: string, roomNumber: string) => {
+        router.push(`/forecast/add?date=${dateStr}&roomTypeId=${encodeURIComponent(rt.roomTypeId)}&roomNumber=${encodeURIComponent(roomNumber)}&module=front-office&from=rate-inventory`);
+    };
 
     // Selected cell modal state for viewing & moving guest room
     const [activeMoveModal, setActiveMoveModal] = useState<{
@@ -174,25 +180,27 @@ export const GridPhysicalRoomRows = React.memo(function GridPhysicalRoomRows({
                                 isUnassigned ? styles.roomLabelCellUnassigned : ""
                             ].filter(Boolean).join(" ")}
                         >
-                            <div className={styles.roomLabelLeft}>
-                                <span
-                                    className={[
-                                        styles.roomNumBadge,
-                                        isUnassigned ? styles.roomNumBadgeDanger : ""
-                                    ].filter(Boolean).join(" ")}
-                                >
-                                    {isUnassigned ? (
-                                        <AlertTriangle size={11} />
-                                    ) : (
-                                        <DoorOpen size={11} />
-                                    )}
-                                    <span>{isUnassigned ? "UNASSIGNED" : `Room ${pRow.roomNumber}`}</span>
-                                </span>
-                                {isUnassigned && (
-                                    <span className={styles.roomSubLabel}>
-                                        Pending Allocation
+                            <div className={styles.roomLabelInner}>
+                                <div className={styles.roomLabelLeft}>
+                                    <span
+                                        className={[
+                                            styles.roomNumBadge,
+                                            isUnassigned ? styles.roomNumBadgeDanger : ""
+                                        ].filter(Boolean).join(" ")}
+                                    >
+                                        {isUnassigned ? (
+                                            <AlertTriangle size={11} />
+                                        ) : (
+                                            <DoorOpen size={11} />
+                                        )}
+                                        <span>{isUnassigned ? "UNASSIGNED" : `Room ${pRow.roomNumber}`}</span>
                                     </span>
-                                )}
+                                    {isUnassigned && (
+                                        <span className={styles.roomSubLabel}>
+                                            Pending Allocation
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </td>
 
@@ -218,8 +226,15 @@ export const GridPhysicalRoomRows = React.memo(function GridPhysicalRoomRows({
 
                                 if (!isOccupied) {
                                     cells.push(
-                                        <td key={dateStr} className={cellClasses} title={`Room ${pRow.roomNumber} · Vacant on ${dateStr}`}>
-                                            <span className={styles.emptySlotPill}>Vacant</span>
+                                        <td key={dateStr} className={cellClasses} title={`Room ${pRow.roomNumber} · Vacant on ${dateStr} (Klik untuk tambah reservasi)`}>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleVacantClick(dateStr, pRow.roomNumber)}
+                                                className={styles.emptySlotPill}
+                                                title={`Tambah Reservasi Kamar ${pRow.roomNumber} - ${dateStr}`}
+                                            >
+                                                Vacant
+                                            </button>
                                         </td>
                                     );
                                     i++;
@@ -316,7 +331,7 @@ export const GridPhysicalRoomRows = React.memo(function GridPhysicalRoomRows({
                             return cells;
                         })()}
 
-                        <td />
+                        <td className={styles.spacerCell} />
                     </tr>
                 );
             })}

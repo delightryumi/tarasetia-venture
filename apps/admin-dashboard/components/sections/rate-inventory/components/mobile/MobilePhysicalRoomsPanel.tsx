@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { DoorOpen, Settings2, Check, ArrowRightLeft, AlertTriangle, X } from "lucide-react";
 import { RoomTypeInventoryRow, PhysicalRoomOccupant } from "../../RateInventoryTypes";
@@ -25,9 +26,14 @@ export function MobilePhysicalRoomsPanel({
     onUpdatePhysicalRooms,
     onMoveBookingRoom
 }: MobilePhysicalRoomsPanelProps) {
+    const router = useRouter();
     const [isEditingRooms, setIsEditingRooms] = useState<boolean>(false);
     const [roomsInput, setRoomsInput] = useState<string>(() => (rt.physicalRooms || []).join(", "));
     const [savingRooms, setSavingRooms] = useState<boolean>(false);
+
+    const handleVacantClick = (dateStr: string, roomNumber: string) => {
+        router.push(`/forecast/add?date=${dateStr}&roomTypeId=${encodeURIComponent(rt.roomTypeId)}&roomNumber=${encodeURIComponent(roomNumber)}&module=front-office&from=rate-inventory`);
+    };
 
     const [activeSheet, setActiveSheet] = useState<{
         roomNumber: string;
@@ -158,16 +164,19 @@ export function MobilePhysicalRoomsPanel({
 
                     if (!isOccupied) {
                         return (
-                            <div
+                            <button
                                 key={pRow.roomNumber}
+                                type="button"
+                                onClick={() => handleVacantClick(selectedDate, pRow.roomNumber)}
                                 className={`${s.roomSlotCard} ${s.slotEmpty}`}
+                                title={`Kamar ${pRow.roomNumber} · Vacant (Klik untuk tambah reservasi)`}
                             >
                                 <div className={s.slotTopRow}>
                                     <span className={s.roomNumText}>Room {pRow.roomNumber}</span>
                                     <span className={`${s.slotStatusTag} ${s.tagEmpty}`}>Vacant</span>
                                 </div>
-                                <span className={s.emptySubText}>Available</span>
-                            </div>
+                                <span className={s.emptySubText}>+ Tambah Reservasi</span>
+                            </button>
                         );
                     }
 

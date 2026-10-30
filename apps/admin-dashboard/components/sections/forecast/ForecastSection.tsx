@@ -431,6 +431,22 @@ export const ForecastSection: React.FC = () => {
                         user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
+
+                // Dispatch cancellation to Channex CRS if linked
+                const targetChannexId = bookingToCancel.channexBookingId || bookingToCancel.channexId;
+                if (targetChannexId || bookingToCancel.bookingId) {
+                    fetch("/api/channex/cancel-booking", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: hotelId,
+                            bookingId: bookingToCancel.bookingId || bookingToCancel.id,
+                            channexBookingId: targetChannexId,
+                            reason: bookingToCancel.cancellationReason || "Cancelled by Front Desk",
+                            cancelledDates: dates
+                        })
+                    }).catch(err => console.warn("[Cancel Channex Booking Warning]:", err));
+                }
             }
 
             toast.success("Transaction cancelled successfully");

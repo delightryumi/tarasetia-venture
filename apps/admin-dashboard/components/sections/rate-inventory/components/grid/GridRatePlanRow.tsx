@@ -437,42 +437,44 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
             {/* Primary Row: Rate Plan Identity + First Metric */}
             <tr className={styles.ratePlanRow}>
                 <td className={styles.ratePlanTitleCell}>
-                    <div className={styles.ratePlanHeaderRow}>
-                        <span className={styles.ratePlanName} title={rp.ratePlanName}>
-                            {rp.ratePlanName}
-                        </span>
-                        {rp.isDerived && (
-                            <span className={styles.derivedPill} title="Derived Rate Plan">
-                                Derived
+                    <div className={styles.ratePlanTitleInner}>
+                        <div className={styles.ratePlanHeaderRow}>
+                            <span className={styles.ratePlanName} title={rp.ratePlanName}>
+                                {rp.ratePlanName}
                             </span>
-                        )}
-                        {isChannelSpecific && isRateSeparated && (
-                            <span className={styles.channelSeparatedBadge} title="Custom OTA Rate">
-                                OTA
-                            </span>
-                        )}
-                    </div>
+                            {rp.isDerived && (
+                                <span className={styles.derivedPill} title="Derived Rate Plan">
+                                    Derived
+                                </span>
+                            )}
+                            {isChannelSpecific && isRateSeparated && (
+                                <span className={styles.channelSeparatedBadge} title="Custom OTA Rate">
+                                    OTA
+                                </span>
+                            )}
+                        </div>
 
-                    <div className={styles.ratePlanMetaRow}>
-                        {isBreakfast ? (
-                            <span className={`${styles.mealBadge} ${styles.mealBadgeBreakfast}`} title="Breakfast Included (BB)">
-                                <Utensils size={11} />
-                                <span>BB</span>
+                        <div className={styles.ratePlanMetaRow}>
+                            {isBreakfast ? (
+                                <span className={`${styles.mealBadge} ${styles.mealBadgeBreakfast}`} title="Breakfast Included (BB)">
+                                    <Utensils size={11} />
+                                    <span>BB</span>
+                                </span>
+                            ) : (
+                                <span className={`${styles.mealBadge} ${styles.mealBadgeRoomOnly}`} title="Room Only (RO)">
+                                    <Bed size={11} />
+                                    <span>RO</span>
+                                </span>
+                            )}
+                            <span className={styles.baseRateLabel} title={`Base Rate: ${currConfig.code} ${formatCurrency(Number(rp.baseRate || 0))}`}>
+                                Base: {currConfig.code} {formatCurrency(Number(rp.baseRate || 0))}
                             </span>
-                        ) : (
-                            <span className={`${styles.mealBadge} ${styles.mealBadgeRoomOnly}`} title="Room Only (RO)">
-                                <Bed size={11} />
-                                <span>RO</span>
-                            </span>
-                        )}
-                        <span className={styles.baseRateLabel} title={`Base Rate: ${currConfig.code} ${formatCurrency(Number(rp.baseRate || 0))}`}>
-                            Base: {currConfig.code} {formatCurrency(Number(rp.baseRate || 0))}
-                        </span>
-                        {hasMultipleMetrics && (
-                            <span className={`${styles.metricBadge} ${styles.firstMetricBadge}`}>
-                                {METRIC_LABELS[firstMetric]}
-                            </span>
-                        )}
+                            {hasMultipleMetrics && (
+                                <span className={`${styles.metricBadge} ${styles.firstMetricBadge}`}>
+                                    {METRIC_LABELS[firstMetric]}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </td>
 
@@ -486,11 +488,13 @@ export const GridRatePlanRow = React.memo(function GridRatePlanRow({
             {hasMultipleMetrics && remainingMetrics.map(metricId => (
                 <tr key={`${rp.ratePlanId}_${metricId}`} className={styles.subMetricRow}>
                     <td className={styles.subMetricTitleCell}>
-                        <div className={styles.subMetricLabelGroup}>
-                            <span className={styles.subMetricBranch}>↳</span>
-                            <span className={styles.subMetricName}>
-                                {METRIC_LABELS[metricId]}
-                            </span>
+                        <div className={styles.subMetricTitleInner}>
+                            <div className={styles.subMetricLabelGroup}>
+                                <span className={styles.subMetricBranch}>↳</span>
+                                <span className={styles.subMetricName}>
+                                    {METRIC_LABELS[metricId]}
+                                </span>
+                            </div>
                         </div>
                     </td>
 

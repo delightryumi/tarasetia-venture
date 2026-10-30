@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import { clearStorageSafe } from '@/lib/utils';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface RestoCount {
@@ -168,7 +169,7 @@ export default function SuperadminPage() {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    clearStorageSafe();
     toast.success('Berhasil keluar!');
     let dashboardUrl = '';
     

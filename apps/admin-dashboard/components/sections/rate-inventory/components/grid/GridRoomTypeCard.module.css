@@ -32,16 +32,13 @@
     max-width: 285px;
     position: sticky;
     left: 0;
-    z-index: 12;
+    z-index: 16;
     background-color: #f7e6ea !important;
     border-right: 1px solid #ecccd3 !important;
     border-bottom: 1px solid #ecccd3 !important;
     border-left: 3.5px solid #72263d !important;
-    padding: 6px 10px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 0;
+    vertical-align: middle;
     box-sizing: border-box;
 }
 
@@ -62,6 +59,17 @@
     background-color: #310f1a !important;
     border-bottom-color: #4a1523 !important;
     border-left: 3.5px solid #e07a93 !important;
+}
+
+.roomTypeTitleInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    height: 100%;
+    width: 100%;
+    padding: 6px 10px;
+    box-sizing: border-box;
 }
 
 .roomTypeLeft {

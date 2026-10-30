@@ -20,15 +20,17 @@ export const GridTotalAvailableRow = React.memo(function GridTotalAvailableRow({
     return (
         <tr className={styles.row}>
             <td className={styles.colTitle}>
-                <div className={styles.titleLabel}>
-                    <span>Available Inventory</span>
-                    <button
-                        type="button"
-                        className={styles.infoBtn}
-                        title={`Total Available Inventory (Property Capacity: ${totalPhysicalRooms} Rooms)`}
-                    >
-                        <Info size={13} />
-                    </button>
+                <div className={styles.colTitleInner}>
+                    <div className={styles.titleLabel}>
+                        <span>Available Inventory</span>
+                        <button
+                            type="button"
+                            className={styles.infoBtn}
+                            title={`Total Available Inventory (Property Capacity: ${totalPhysicalRooms} Rooms)`}
+                        >
+                            <Info size={13} />
+                        </button>
+                    </div>
                 </div>
             </td>
 

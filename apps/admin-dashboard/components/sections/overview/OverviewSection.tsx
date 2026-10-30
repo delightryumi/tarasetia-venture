@@ -16,6 +16,7 @@ import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc } 
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { resolveBookingIdentifiers } from "@/lib/channelHelper";
 import { logAuditEvent } from "@/lib/auditLogger";
+import { useCurrency } from "@/hooks/useCurrency";
 
 // Modular Imports
 import styles from "./OverviewStyles.module.css";
@@ -59,6 +60,7 @@ export function OverviewSection() {
     const canCancel = isSuperadmin || user?.permissions?.fo_cancel === true;
     const canVoid = isSuperadmin || user?.permissions?.fo_void === true;
     const { branding, pos } = useSettings();
+    const { formatCurrency } = useCurrency();
     
     const todayStr = React.useMemo(() => {
         const d = new Date();
@@ -325,6 +327,22 @@ export function OverviewSection() {
                         user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
+
+                // Dispatch cancellation to Channex CRS if linked (handleStatusUpdate)
+                const targetChannexId = booking.channexBookingId || booking.channexId;
+                if (targetChannexId || booking.bookingId) {
+                    fetch("/api/channex/cancel-booking", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: hotelId,
+                            bookingId: booking.bookingId || booking.id,
+                            channexBookingId: targetChannexId,
+                            reason: booking.cancellationReason || "Cancelled by Front Desk",
+                            cancelledDates: dates
+                        })
+                    }).catch(err => console.warn("[Cancel Channex Booking Warning]:", err));
+                }
             }
         } catch (error) {
             console.error("Status Update Failed", error);
@@ -476,6 +494,22 @@ export function OverviewSection() {
                         user: user?.email ? `${user.displayName || user.name || user.email.split("@")[0]} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
+
+                // Dispatch cancellation to Channex CRS if linked (executeCancel)
+                const targetChannexId = bookingToCancel.channexBookingId || bookingToCancel.channexId;
+                if (targetChannexId || bookingToCancel.bookingId) {
+                    fetch("/api/channex/cancel-booking", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: hotelId,
+                            bookingId: bookingToCancel.bookingId || bookingToCancel.id,
+                            channexBookingId: targetChannexId,
+                            reason: bookingToCancel.cancellationReason || "Cancelled by Front Desk",
+                            cancelledDates: dates
+                        })
+                    }).catch(err => console.warn("[Cancel Channex Booking Warning]:", err));
+                }
             }
 
             logAuditEvent({
@@ -808,14 +842,14 @@ export function OverviewSection() {
             pdfDoc.setFontSize(6.5);
             pdfDoc.setTextColor(255, 255, 255);
             pdfDoc.text(`TOTAL TRANSAKSI: ${latestBookings.length}`, 18, 37);
-            pdfDoc.text(`PAY AT HOTEL: Rp ${subtotalPayHotel.toLocaleString("id-ID")} (${payHotelBookings.length})`, 68, 37);
-            pdfDoc.text(`TRANSFER & OTA: Rp ${subtotalTransfer.toLocaleString("id-ID")} (${transferBookings.length})`, 140, 37);
-            pdfDoc.text(`GRAND TOTAL: Rp ${totalRevenue.toLocaleString("id-ID")}`, 220, 37);
+            pdfDoc.text(`PAY AT HOTEL: ${formatCurrency(subtotalPayHotel)} (${payHotelBookings.length})`, 68, 37);
+            pdfDoc.text(`TRANSFER & OTA: ${formatCurrency(subtotalTransfer)} (${transferBookings.length})`, 140, 37);
+            pdfDoc.text(`GRAND TOTAL: ${formatCurrency(totalRevenue)}`, 220, 37);
 
             // Format Table Row helper
             const buildTableRows = (list: any[]) => {
                 if (list.length === 0) {
-                    return [["-", "-", "-", "Tidak ada transaksi", "-", "-", "-", "-", "-", "-", "-", "Rp 0", "-", "-"]];
+                    return [["-", "-", "-", "Tidak ada transaksi", "-", "-", "-", "-", "-", "-", "-", formatCurrency(0), "-", "-"]];
                 }
                 return list.map((b: any, index: number) => {
                     const entryTime = b.timestamp 
@@ -843,7 +877,7 @@ export function OverviewSection() {
                     }
 
                     const paymentStatus = (b.paymentStatus || "Pending").toUpperCase();
-                    const amountFormatted = `Rp ${Number(b.amount || 0).toLocaleString("id-ID")}`;
+                    const amountFormatted = formatCurrency(Number(b.amount || 0));
                     const staff = b.staffName || b.createdBy || b.inputBy || (user?.displayName || "System");
                     const resStatus = (b.status || "CONFIRMED").toUpperCase();
 
@@ -918,7 +952,7 @@ export function OverviewSection() {
                 },
                 foot: [[
                     "", "", "", "SUBTOTAL PAY AT HOTEL", "", "", "", "", "", "", "",
-                    `Rp ${subtotalPayHotel.toLocaleString("id-ID")}`, "", ""
+                    formatCurrency(subtotalPayHotel), "", ""
                 ]],
                 footStyles: {
                     fillColor: [235, 240, 245],
@@ -972,7 +1006,7 @@ export function OverviewSection() {
                 },
                 foot: [[
                     "", "", "", "SUBTOTAL TRANSFER & OTA", "", "", "", "", "", "", "",
-                    `Rp ${subtotalTransfer.toLocaleString("id-ID")}`, "", ""
+                    formatCurrency(subtotalTransfer), "", ""
                 ]],
                 footStyles: {
                     fillColor: [235, 245, 240],
@@ -1018,7 +1052,7 @@ export function OverviewSection() {
             pdfDoc.setFont("helvetica", "bold");
             pdfDoc.setFontSize(7.5);
             pdfDoc.setTextColor(24, 29, 38);
-            pdfDoc.text(`RINGKASAN TOTAL:  Pay at Hotel = Rp ${subtotalPayHotel.toLocaleString("id-ID")}  |  Transfer & OTA = Rp ${subtotalTransfer.toLocaleString("id-ID")}  |  GRAND TOTAL REVENUE = Rp ${totalRevenue.toLocaleString("id-ID")}`, 18, sigY + 5.5);
+            pdfDoc.text(`RINGKASAN TOTAL:  Pay at Hotel = ${formatCurrency(subtotalPayHotel)}  |  Transfer & OTA = ${formatCurrency(subtotalTransfer)}  |  GRAND TOTAL REVENUE = ${formatCurrency(totalRevenue)}`, 18, sigY + 5.5);
 
             // Signature columns
             const signTop = sigY + 12;

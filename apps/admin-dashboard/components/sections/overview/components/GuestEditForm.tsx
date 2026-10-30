@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import styles from "../OverviewStyles.module.css";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface GuestEditFormProps {
     formData: any;
@@ -24,6 +25,7 @@ const CHANNELS = [
 ];
 
 export function GuestEditForm({ formData, setFormData, roomTypes, guest }: GuestEditFormProps) {
+    const { formatCurrency } = useCurrency();
     const checkInDate = formData.checkIn ? new Date(formData.checkIn) : null;
     const checkOutDate = formData.checkOut ? new Date(formData.checkOut) : null;
     const calculatedNights = (checkInDate && checkOutDate && checkOutDate > checkInDate)
@@ -284,25 +286,25 @@ export function GuestEditForm({ formData, setFormData, roomTypes, guest }: Guest
                     <div>
                         <span className={styles.guestSubtext} style={{ fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>Total Tagihan ({calculatedNights} Malam)</span>
                         <div style={{ fontSize: '13px', fontWeight: 800, marginTop: '2px', color: 'var(--f-body)' }}>
-                            Rp {totalAmount.toLocaleString('id-ID')}
+                            {formatCurrency(totalAmount)}
                         </div>
                         <span style={{ fontSize: '9px', color: 'var(--f-muted)' }}>
-                            @ Rp {avgRatePerNight.toLocaleString('id-ID')}/mlm
+                            @ {formatCurrency(avgRatePerNight)}/mlm
                         </span>
                     </div>
                     <div>
                         <span className={styles.guestSubtext} style={{ fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>Total Terbayar</span>
                         <div style={{ fontSize: '13px', fontWeight: 800, marginTop: '2px', color: 'var(--f-sage, #5a734e)' }}>
-                            Rp {totalPaid.toLocaleString('id-ID')}
+                            {formatCurrency(totalPaid)}
                         </div>
                         <span style={{ fontSize: '9px', color: 'var(--f-muted)' }}>
-                            Cash: {paidCash.toLocaleString('id-ID')} | EDC: {paidEdc.toLocaleString('id-ID')} | QRIS: {paidQris.toLocaleString('id-ID')} | TF: {paidTransfer.toLocaleString('id-ID')} | OTA: {paidOta.toLocaleString('id-ID')}
+                            Cash: {formatCurrency(paidCash)} | EDC: {formatCurrency(paidEdc)} | QRIS: {formatCurrency(paidQris)} | TF: {formatCurrency(paidTransfer)} | OTA: {formatCurrency(paidOta)}
                         </span>
                     </div>
                     <div>
                         <span className={styles.guestSubtext} style={{ fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--f-muted)' }}>Sisa Tagihan</span>
                         <div style={{ fontSize: '13px', fontWeight: 800, marginTop: '2px', color: isLunas ? '#16a34a' : '#ea580c' }}>
-                            Rp {Math.max(0, balance).toLocaleString('id-ID')}
+                            {formatCurrency(Math.max(0, balance))}
                         </div>
                         <span style={{ fontSize: '9px', fontWeight: 700, color: isLunas ? '#16a34a' : '#ea580c' }}>
                             {isLunas ? "✓ LUNAS (100%)" : "BELUM LUNAS"}

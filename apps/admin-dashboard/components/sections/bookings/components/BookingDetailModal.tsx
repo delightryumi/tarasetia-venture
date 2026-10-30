@@ -14,7 +14,6 @@ import {
     WarningCircle,
     Printer,
     IdentificationCard,
-    CloudArrowUp,
     ArrowsLeftRight
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -42,8 +41,6 @@ export function BookingDetailModal({
     const router = useRouter();
     const { activeHotelCode, user } = useAuth();
     const [copied, setCopied] = useState(false);
-    const [pushingCrs, setPushingCrs] = useState(false);
-    const [crsBookingId, setCrsBookingId] = useState<string | null>((booking as any)?.channexBookingId || null);
     const { formatCurrency } = useCurrency();
 
     // Room Assignment / Move Room states
@@ -54,10 +51,9 @@ export function BookingDetailModal({
     const [localRoomNumber, setLocalRoomNumber] = useState<string>(booking?.roomNumber || "AUTO");
     const [localRoomType, setLocalRoomType] = useState<string>(booking?.roomType || "Standard Room");
 
-    // Sync crsBookingId & local room states when booking prop changes
+    // Sync local room states when booking prop changes
     useEffect(() => {
         if (booking) {
-            setCrsBookingId((booking as any).channexBookingId || null);
             setLocalRoomNumber(booking.roomNumber || "AUTO");
             setLocalRoomType(booking.roomType || "Standard Room");
             setSelectedTargetRoomNum(booking.roomNumber && booking.roomNumber !== "OVERBOOK" ? booking.roomNumber : "");
@@ -242,49 +238,6 @@ export function BookingDetailModal({
         setCopiedKey(label || val);
         toast.success(`${label || "Kode"} disalin: ${val}`);
         setTimeout(() => setCopiedKey(null), 2000);
-    };
-
-    const handlePushToChannexCrs = async () => {
-        const hotelCode = typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") || "" : "";
-        if (!hotelCode) {
-            toast.error("Hotel Code tidak ditemukan.");
-            return;
-        }
-        setPushingCrs(true);
-        try {
-            const res = await fetch("/api/channex/push-booking", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    hotelCode,
-                    bookingData: {
-                        bookingId: booking.bookingId,
-                        reservationId: booking.reservationId || booking.voucherCode,
-                        guestName: booking.guestName,
-                        email: booking.email,
-                        phone: booking.phone,
-                        checkInDate: booking.checkInDate,
-                        checkOutDate: booking.checkOutDate,
-                        roomTypeId: booking.roomTypeId,
-                        roomTypeName: booking.roomType,
-                        totalAmount: booking.totalAmount || booking.amount || 0,
-                        channel: booking.channel || "Walk-In / Direct",
-                        notes: booking.note || ""
-                    }
-                })
-            });
-            const data = await res.json();
-            if (data.success && data.channexBookingId) {
-                setCrsBookingId(data.channexBookingId);
-                toast.success(`Berhasil didaftarkan ke Channex CRS! ID: ${data.channexBookingId}`);
-            } else {
-                toast.error(data.error || "Gagal sinkronisasi ke Channex CRS");
-            }
-        } catch (err: any) {
-            toast.error(`Koneksi error: ${err.message}`);
-        } finally {
-            setPushingCrs(false);
-        }
     };
 
     const getSafeDisplay = (val: any, fallback = "-"): string => {
@@ -829,25 +782,6 @@ export function BookingDetailModal({
                             <Printer size={18} weight="bold" />
                             <span>Invoice</span>
                         </button>
-
-                        {/* Push to Channex CRS Button for Direct / Walk-In Bookings */}
-                        {!booking.isOTA && (
-                            <button
-                                type="button"
-                                className={`${s.actionButton} ${s.btnSecondary}`}
-                                onClick={handlePushToChannexCrs}
-                                disabled={pushingCrs || Boolean(crsBookingId)}
-                                style={{
-                                    color: crsBookingId ? "#047857" : "#4338ca",
-                                    borderColor: crsBookingId ? "#a7f3d0" : "#c7d2fe",
-                                    backgroundColor: crsBookingId ? "#ecfdf5" : "#eef2ff"
-                                }}
-                                title="Daftarkan reservasi offline/walk-in ke kalender Channex CRS"
-                            >
-                                <CloudArrowUp size={18} weight="bold" />
-                                <span>{pushingCrs ? "Mendaftarkan CRS..." : crsBookingId ? "Tersinkron CRS" : "Push ke Channex CRS"}</span>
-                            </button>
-                        )}
                     </div>
 
                     <button 

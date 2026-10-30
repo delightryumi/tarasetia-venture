@@ -16,6 +16,7 @@ import { resolveBookingIdentifiers, resolveChannelName, getChannelLogo } from "@
 import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
 import styles from "./AuditLedger.module.css";
 import { toast } from "sonner";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface AuditLedgerProps {
     bookings: any[];
@@ -96,6 +97,7 @@ export function AuditLedger({
     onExportExcel,
     activeHotelName
 }: AuditLedgerProps) {
+    const { formatCurrency } = useCurrency();
     const [searchQuery, setSearchQuery] = useState("");
     const [sortAsc, setSortAsc] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -500,11 +502,11 @@ export function AuditLedger({
                                                     color: isCancelled ? "#94a3b8" : "#0f172a"
                                                 }}
                                             >
-                                                Rp {totalAmt.toLocaleString("id-ID")}
+                                                {formatCurrency(totalAmt)}
                                             </span>
                                             {!isOther && Boolean(booking.totalStayNights && booking.totalStayNights > 1 && booking.totalAmount && Number(booking.totalAmount) > totalAmt) && (
                                                 <span style={{ fontSize: "10px", color: "var(--f-muted, #64748b)", display: "block", marginTop: "2px" }}>
-                                                    Total {booking.totalStayNights} mlm: Rp {Number(booking.totalAmount).toLocaleString("id-ID")}
+                                                    Total {booking.totalStayNights} mlm: {formatCurrency(Number(booking.totalAmount))}
                                                 </span>
                                             )}
                                         </td>

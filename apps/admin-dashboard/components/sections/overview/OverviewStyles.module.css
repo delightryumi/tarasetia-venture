@@ -916,7 +916,7 @@
   right: 0;
   bottom: 0;
   width: 100%;
-  max-width: 600px;
+  max-width: 680px;
   height: 100vh;
   background-color: var(--f-surface);
   border-left: 1px solid var(--f-hairline);

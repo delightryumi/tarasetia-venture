@@ -151,11 +151,22 @@
     border: none !important;
     background-color: #dcfce7 !important;
     box-shadow: none !important;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.15s ease;
+    font-family: inherit;
+}
+
+.slotEmpty:active {
+    transform: scale(0.98);
 }
 
 :global(.dark) .slotEmpty {
     border: none !important;
     background-color: #86efac !important;
+}
+
+:global(.dark) .slotEmpty:active {
+    transform: scale(0.98);
 }
 
 .slotOccupied {

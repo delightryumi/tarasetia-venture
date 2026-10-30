@@ -5,9 +5,11 @@ import { motion } from "framer-motion";
 import { BedDouble, Globe, Search, X } from "lucide-react";
 import { RoomStatusBadge, GuestStatusBadge } from "./StatusPickers";
 import { resolveBookingIdentifiers, getChannelLogo } from "@/lib/channelHelper";
+import { useCurrency } from "@/hooks/useCurrency";
 import styles from "./StatCard.module.css";
 
 export function StatCard({ icon, icon3d, label, count, accent, items = [], onItemClick, onStatusUpdate }: any) {
+    const { formatCurrency } = useCurrency();
     const [searchQuery, setSearchQuery] = useState("");
 
     const filteredItems = useMemo(() => {
@@ -222,7 +224,7 @@ export function StatCard({ icon, icon3d, label, count, accent, items = [], onIte
                                                 textDecoration: isCancelled ? 'line-through' : 'none'
                                             }}
                                         >
-                                            Rp {Number(item.amount).toLocaleString('id-ID')}
+                                            {formatCurrency(Number(item.amount))}
                                         </p>
                                         <span 
                                             className={`${styles.paymentBadge} ${

@@ -35,7 +35,8 @@ export const useLogin = () => {
                 resolvedEmail, 
                 password, 
                 hotelCode.trim(), 
-                requires2Fa ? twoFactorCode.trim() : undefined
+                requires2Fa ? twoFactorCode.trim() : undefined,
+                trustDevice
             );
 
             if (result.requires2FaSetup) {
@@ -160,7 +161,8 @@ export const useLogin = () => {
                 resolvedEmail, 
                 password, 
                 hotelCode.trim(), 
-                twoFactorCode.trim()
+                twoFactorCode.trim(),
+                trustDevice
             );
             if (!res.success) {
                 setError(res.error || "Gagal masuk setelah setup.");

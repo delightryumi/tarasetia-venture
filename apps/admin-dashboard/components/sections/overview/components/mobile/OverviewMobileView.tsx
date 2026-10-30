@@ -8,6 +8,7 @@ import {
 import s from "./OverviewMobileView.module.css";
 import { resolveBookingIdentifiers } from "@/lib/channelHelper";
 import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface OverviewMobileViewProps {
     hotelName?: string;
@@ -56,6 +57,7 @@ export function OverviewMobileView({
     onExportExcel,
     onExportPDF
 }: OverviewMobileViewProps) {
+    const { formatCurrency } = useCurrency();
     // Active KPI tab to show guests: "checkin" | "checkout" | "cancel" | "all"
     const [activeListTab, setActiveListTab] = useState<"checkin" | "checkout" | "cancel" | "all">("checkin");
     const [searchQuery, setSearchQuery] = useState("");
@@ -285,7 +287,7 @@ export function OverviewMobileView({
 
                                 <div className={s.cardBottomRow}>
                                     <span className={s.priceTag}>
-                                        Rp {amount.toLocaleString("id-ID")}
+                                        {formatCurrency(amount)}
                                     </span>
                                     <span className={`${s.statusPill3D} ${getStatusClass(status)}`}>
                                         {status.replace("_", " ")}

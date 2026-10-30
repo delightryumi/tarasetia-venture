@@ -56,11 +56,11 @@ function subscribeToHotelCurrency(hotelCode: string, callback: (curr: string) =>
       if (snap.exists()) {
         const data = snap.data();
         hotelCurrency = (
-          data.currency ||
           data.channelManager?.currency ||
+          data.cm?.currency ||
+          data.currency ||
           data.baseCurrency ||
           data.settings?.currency ||
-          data.cm?.currency ||
           DEFAULT_CURRENCY
         ).toUpperCase().trim();
       }

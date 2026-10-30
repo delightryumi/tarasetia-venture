@@ -99,59 +99,61 @@ export const GridRoomTypeCard = React.memo(function GridRoomTypeCard({
                     styles.roomTypeTitleCell,
                     isPureInventory ? styles.roomTypeTitleCellInventory : ""
                 ].filter(Boolean).join(" ")}>
-                    <div className={styles.roomTypeLeft}>
-                        {safeVisibleFeatures.availability && (
-                            <button
-                                type="button"
-                                className={styles.expandRoomsBtn}
-                                onClick={() => setShowPhysicalRooms(prev => !prev)}
-                                title={showPhysicalRooms ? "Hide room inventory" : "Show room inventory"}
-                            >
-                                {showPhysicalRooms ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                            </button>
-                        )}
-                        <div className={styles.roomIconBox}>
-                            <Bed size={15} />
+                    <div className={styles.roomTypeTitleInner}>
+                        <div className={styles.roomTypeLeft}>
+                            {safeVisibleFeatures.availability && (
+                                <button
+                                    type="button"
+                                    className={styles.expandRoomsBtn}
+                                    onClick={() => setShowPhysicalRooms(prev => !prev)}
+                                    title={showPhysicalRooms ? "Hide room inventory" : "Show room inventory"}
+                                >
+                                    {showPhysicalRooms ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                </button>
+                            )}
+                            <div className={styles.roomIconBox}>
+                                <Bed size={15} />
+                            </div>
+                            <span className={styles.roomTypeNameText} title={`Room Type: ${rt.roomTypeName} (ID: ${rt.roomTypeId})`}>
+                                {rt.roomTypeName}
+                            </span>
+                            <span className={styles.roomCountPill} title={`Total ${rt.totalPhysicalRooms} Rooms`}>
+                                {rt.totalPhysicalRooms}
+                            </span>
                         </div>
-                        <span className={styles.roomTypeNameText} title={`Room Type: ${rt.roomTypeName} (ID: ${rt.roomTypeId})`}>
-                            {rt.roomTypeName}
-                        </span>
-                        <span className={styles.roomCountPill} title={`Total ${rt.totalPhysicalRooms} Rooms`}>
-                            {rt.totalPhysicalRooms}
-                        </span>
-                    </div>
 
-                    <div className={styles.rightActions}>
-                        {safeVisibleFeatures.availability && onUpdatePhysicalRooms && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowPhysicalRooms(true);
-                                    setIsEditingRooms(prev => !prev);
-                                }}
-                                className={styles.btnSyncRoom}
-                                title={`Configure rooms for ${rt.roomTypeName}`}
-                            >
-                                <Settings2 size={13} />
-                            </button>
-                        )}
+                        <div className={styles.rightActions}>
+                            {safeVisibleFeatures.availability && onUpdatePhysicalRooms && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowPhysicalRooms(true);
+                                        setIsEditingRooms(prev => !prev);
+                                    }}
+                                    className={styles.btnSyncRoom}
+                                    title={`Configure rooms for ${rt.roomTypeName}`}
+                                >
+                                    <Settings2 size={13} />
+                                </button>
+                            )}
 
-                        {onSyncRoom && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    onSyncRoom(rt.roomTypeId).catch(err => console.error("Error syncing room:", err));
-                                }}
-                                disabled={syncingRoomTypeId === rt.roomTypeId}
-                                className={styles.btnSyncRoom}
-                                title={`Sync ${rt.roomTypeName} inventory to connected OTAs`}
-                            >
-                                <RefreshCw
-                                    size={13}
-                                    className={syncingRoomTypeId === rt.roomTypeId ? styles.spinIcon : ""}
-                                />
-                            </button>
-                        )}
+                            {onSyncRoom && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onSyncRoom(rt.roomTypeId).catch(err => console.error("Error syncing room:", err));
+                                    }}
+                                    disabled={syncingRoomTypeId === rt.roomTypeId}
+                                    className={styles.btnSyncRoom}
+                                    title={`Sync ${rt.roomTypeName} inventory to connected OTAs`}
+                                >
+                                    <RefreshCw
+                                        size={13}
+                                        className={syncingRoomTypeId === rt.roomTypeId ? styles.spinIcon : ""}
+                                    />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </td>
 

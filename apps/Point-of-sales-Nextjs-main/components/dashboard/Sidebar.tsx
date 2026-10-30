@@ -7,6 +7,7 @@ import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
 import { useRBAC } from '@/hooks/useRBAC';
 
 import { useSidebarScroll } from '@/hooks/useSidebarScroll';
+import { clearStorageSafe } from '@/lib/utils';
 
 // Modular Sub-components
 import { DockNavItem } from './sidebar/DockNavItem';
@@ -80,7 +81,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, storeName }: Si
   });
 
   const handleLogout = () => {
-    localStorage.clear();
+    clearStorageSafe();
     window.location.href = `${dashboardUrl}?logout=true`;
   };
 

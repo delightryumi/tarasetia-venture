@@ -88,44 +88,19 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
 
     const [roomTypes, setRoomTypes] = React.useState<any[]>([]);
 
-    // Lock condition: OTA / Channex bookings cannot be edited manually
-    const isChannexLocked = React.useMemo(() => {
+    // Channex link detection (used for two-way sync notification)
+    const isChannexLinked = React.useMemo(() => {
         if (!guest) return false;
-        if (guest.isOTA === true) return true;
-        if (guest.channexBookingId || guest.channexId) return true;
+        if (guest.isOTA === true || guest.channexBookingId || guest.channexId) return true;
         const channel = (guest.channel || guest.source || "").toLowerCase().trim();
-        const manualAllowed = [
-            "walk-in",
-            "walkin",
-            "walk in",
-            "nexura sales",
-            "nexura",
-            "direct",
-            "manual",
-            "internal"
-        ];
-        if (manualAllowed.includes(channel)) {
-            return false;
-        }
         const otaKeywords = ["traveloka", "booking.com", "agoda", "tiket", "expedia", "airbnb", "trip", "mg", "channex"];
-        if (otaKeywords.some(k => channel.includes(k))) {
-            return true;
-        }
-        if (channel && !manualAllowed.includes(channel)) {
-            return true;
-        }
-        return false;
+        return otaKeywords.some(k => channel.includes(k));
     }, [guest]);
 
     // Sync edit mode when edit/view is toggled externally
     React.useEffect(() => {
-        if (initialEditing && isChannexLocked) {
-            toast.warning("Reservasi OTA / Channel Manager terkunci otomatis. Data tidak dapat dimodifikasi manual.");
-            setIsEditMode(false);
-        } else {
-            setIsEditMode(initialEditing);
-        }
-    }, [initialEditing, guest, isChannexLocked]);
+        setIsEditMode(initialEditing);
+    }, [initialEditing, guest]);
 
     // Populate and sync form data when selected guest changes
     React.useEffect(() => {
@@ -370,10 +345,6 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
     };
 
     const handleSave = async () => {
-        if (isChannexLocked) {
-            toast.error("Reservasi dari Channel Manager (OTA) tidak dapat diubah manual untuk menjaga integritas data.");
-            return;
-        }
         try {
             const hotelId = activeHotelCode || localStorage.getItem("active_hotel_code") || "";
             if (!hotelId) {
@@ -614,9 +585,36 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                         user: user?.email ? `${user.displayName || user.name || "Operator"} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Update Booking Channex Sync Warning]:", err));
+
+                // Dispatch Two-Way Modification to Channex CRS if linked
+                const targetChannexId = guest.channexBookingId || guest.channexId;
+                if (targetChannexId || guest.bookingId) {
+                    fetch("/api/channex/modify-booking", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: hotelId,
+                            bookingId: guest.bookingId || guest.id,
+                            channexBookingId: targetChannexId,
+                            modificationData: {
+                                checkInDate: formData.checkIn,
+                                checkOutDate: formData.checkOut,
+                                roomTypeId: formData.roomTypeId,
+                                roomType: formData.roomType,
+                                totalAmount: Number(formData.totalAmount || 0),
+                                guestName: formData.guestName,
+                                phone: formData.phone,
+                                email: formData.email,
+                                note: formData.note,
+                                pax: formData.pax || 2
+                            },
+                            touchedDates: allTouchedDates
+                        })
+                    }).catch(err => console.warn("[Modify Booking Channex Push Warning]:", err));
+                }
             }
 
-            toast.success("Transaction updated successfully");
+            toast.success("Transaction updated & rescheduled successfully");
             if (onSave) onSave();
             onClose();
         } catch (error) {
@@ -666,6 +664,22 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                         user: user?.email ? `${user.displayName || user.name || "Operator"} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Void Channex Sync Warning]:", err));
+
+                // Cancel in Channex CRS if linked
+                const targetChannexId = guest.channexBookingId || guest.channexId;
+                if (targetChannexId || guest.bookingId) {
+                    fetch("/api/channex/cancel-booking", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: hotelId,
+                            bookingId: guest.bookingId || guest.id,
+                            channexBookingId: targetChannexId,
+                            reason: "Voided by Front Desk",
+                            cancelledDates: dates
+                        })
+                    }).catch(err => console.warn("[Void Channex Cancel Warning]:", err));
+                }
             }
 
             logAuditEvent({
@@ -753,6 +767,22 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                         user: user?.email ? `${user.displayName || user.name || "Operator"} (${user.email})` : (user?.displayName || user?.name || "Operator")
                     })
                 }).catch(err => console.warn("[Cancel Channex Sync Warning]:", err));
+
+                // Cancel in Channex CRS if linked
+                const targetChannexId = guest.channexBookingId || guest.channexId;
+                if (targetChannexId || guest.bookingId) {
+                    fetch("/api/channex/cancel-booking", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            hotelCode: hotelId,
+                            bookingId: guest.bookingId || guest.id,
+                            channexBookingId: targetChannexId,
+                            reason: guest.cancellationReason || "Cancelled by Front Desk",
+                            cancelledDates: dates
+                        })
+                    }).catch(err => console.warn("[Cancel Channex Booking Warning]:", err));
+                }
             }
 
             logAuditEvent({
@@ -798,27 +828,27 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
         >
             <div className={styles.card} style={{ height: '100%', minHeight: '500px', display: 'flex', flexDirection: 'column', padding: 0, border: 'none', borderRadius: 0, overflow: 'hidden' }}>
                 {/* Header ala Channex */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)', padding: '16px 20px', backgroundColor: 'var(--f-surface-soft, #f8fafc)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <button onClick={onClose} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px' }} title="Close">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--f-hairline)', padding: '14px 20px', backgroundColor: 'var(--f-surface-soft, #f8fafc)', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                        <button onClick={onClose} className={styles.btnIcon} style={{ width: '32px', height: '32px', borderRadius: '6px', flexShrink: 0 }} title="Close">
                             <X size={16} />
                         </button>
-                        <div>
-                            <h2 className={styles.headerTitle} style={{ fontSize: '15px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ minWidth: 0 }}>
+                            <h2 className={styles.headerTitle} style={{ fontSize: '14px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 <span>
                                     {guest.type === 'other_income' 
                                         ? (isEditMode ? "Edit Pendapatan Lain" : `Other Income Voucher ${resolveBookingIdentifiers(guest).reservationId}`)
                                         : (isEditMode ? "Modify Reservation" : `Booking ${resolveBookingIdentifiers(guest).reservationId}`)}
                                 </span>
                             </h2>
-                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
+                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {guest.type === 'other_income'
                                     ? (isEditMode ? "Sesuaikan rincian, nominal & metode pembayaran" : "Voucher Transaksi Pendapatan Kasir")
                                     : (isEditMode ? "Adjust room type, rate & settlement details" : "Channex Channel Manager Integrated Folio")}
                             </span>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                         {!isEditMode && (
                             <button
                                 type="button"
@@ -831,19 +861,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                         router.push(`/digital-checkin?autoOpen=true${gParam}${bParam}`);
                                     }
                                 }}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '6px 14px',
-                                    borderRadius: '4px',
-                                    backgroundColor: '#fff',
-                                    border: '1px solid #d9d9d9',
-                                    fontSize: '12px',
-                                    fontWeight: 500,
-                                    color: '#262626',
-                                    cursor: 'pointer'
-                                }}
+                                className={`${footerStyles.btnAction} ${footerStyles.btnGrc}`}
                                 title="Print Registration / Folio"
                             >
                                 <Printer size={13} />
@@ -854,19 +872,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                             <button
                                 type="button"
                                 onClick={() => setShowPaymentModal(true)}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    backgroundColor: '#f0f9ff',
-                                    border: '1px solid #bae6fd',
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    color: '#0284c7',
-                                    cursor: 'pointer'
-                                }}
+                                className={`${footerStyles.btnAction} ${footerStyles.btnPayment}`}
                                 title="Modify folio payment method & billing channel"
                             >
                                 <CreditCard size={13} />
@@ -874,58 +880,24 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                             </button>
                         )}
                         {!isEditMode && (
-                            isChannexLocked ? (
-                                <div
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        padding: '6px 12px',
-                                        borderRadius: '6px',
-                                        backgroundColor: '#f1f5f9',
-                                        border: '1px solid #cbd5e1',
-                                        fontSize: '11px',
-                                        fontWeight: 600,
-                                        color: '#64748b',
-                                        cursor: 'not-allowed'
-                                    }}
-                                    title="Reservation locked by OTA Channel Manager. Date and room modifications must be handled via OTA extranet."
-                                >
-                                    <Lock size={12} />
-                                    <span>Locked (OTA)</span>
-                                </div>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (guest.type === 'other_income') {
-                                            const targetDate = guest.effectiveDate || guest.checkInDate || guest.date || new Date().toISOString().split('T')[0];
-                                            const bId = guest.bookingId || "";
-                                            const ts = guest.timestamp || "";
-                                            router.push(`/forecast/add?date=${targetDate}&bookingId=${encodeURIComponent(bId)}&timestamp=${encodeURIComponent(ts)}&module=front-office&mode=edit&from=forecast`);
-                                        } else {
-                                            setIsEditMode(true);
-                                        }
-                                    }}
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        padding: '6px 14px',
-                                        borderRadius: '6px',
-                                        backgroundColor: '#0284c7',
-                                        border: '1px solid #0284c7',
-                                        fontSize: '11px',
-                                        fontWeight: 700,
-                                        color: '#fff',
-                                        cursor: 'pointer'
-                                    }}
-                                    title="Edit Details"
-                                >
-                                    <Edit3 size={13} />
-                                    <span>{guest.type === 'other_income' ? "Edit Transaksi" : "Edit Folio"}</span>
-                                </button>
-                            )
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (guest.type === 'other_income') {
+                                        const targetDate = guest.effectiveDate || guest.checkInDate || guest.date || new Date().toISOString().split('T')[0];
+                                        const bId = guest.bookingId || "";
+                                        const ts = guest.timestamp || "";
+                                        router.push(`/forecast/add?date=${targetDate}&bookingId=${encodeURIComponent(bId)}&timestamp=${encodeURIComponent(ts)}&module=front-office&mode=edit&from=forecast`);
+                                    } else {
+                                        setIsEditMode(true);
+                                    }
+                                }}
+                                className={`${footerStyles.btnAction} ${footerStyles.btnModify}`}
+                                title="Reschedule stay dates, adjust room allocation, or edit guest details (Two-way Channex synced)"
+                            >
+                                <Edit3 size={13} />
+                                <span>{guest.type === 'other_income' ? "Edit Transaksi" : "Reschedule / Modify"}</span>
+                            </button>
                         )}
                     </div>
                 </div>
@@ -1007,26 +979,15 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                     <CreditCard size={13} />
                                     <span>Modify Payment</span>
                                 </button>
-                                {!isChannexLocked ? (
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setIsEditMode(true)} 
-                                        className={`${footerStyles.btnAction} ${footerStyles.btnModify}`}
-                                        title="Edit room and folio charges"
-                                    >
-                                        <Edit3 size={13} />
-                                        <span>Edit Folio</span>
-                                    </button>
-                                ) : (
-                                    <button 
-                                        disabled 
-                                        className={`${footerStyles.btnAction} ${footerStyles.btnReadOnly}`} 
-                                        title="OTA reservation locked from Channel Manager (ReadOnly)"
-                                    >
-                                        <Lock size={12} />
-                                        <span>Locked (OTA)</span>
-                                    </button>
-                                )}
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsEditMode(true)} 
+                                    className={`${footerStyles.btnAction} ${footerStyles.btnModify}`}
+                                    title="Reschedule stay dates, adjust room allocation, or edit folio details"
+                                >
+                                    <Edit3 size={13} />
+                                    <span>Reschedule / Modify</span>
+                                </button>
                                 {guest.status !== "CANCELLED" && guest.status !== "CANCEL" && guest.status !== "VOID" && guest.status !== "VOIDED" && (
                                     <button 
                                         type="button" 
@@ -1041,7 +1002,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                         style={{ opacity: !canCancel ? 0.6 : 1, cursor: !canCancel ? 'not-allowed' : undefined }}
                                         title={!canCancel ? "No cancellation permission" : "Cancel this reservation"}
                                     >
-                                        Cancel Reservation
+                                        <X size={13} />
+                                        <span>Cancel</span>
                                     </button>
                                 )}
                                 <button 
@@ -1058,7 +1020,7 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                                     title={!canVoid ? "No void permission" : "Void this reservation transaction"}
                                 >
                                     <Trash2 size={13} />
-                                    <span>Void Transaction</span>
+                                    <span>Void</span>
                                 </button>
                             </div>
                         </div>

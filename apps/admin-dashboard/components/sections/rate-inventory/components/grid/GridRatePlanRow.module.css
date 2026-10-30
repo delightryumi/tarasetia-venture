@@ -25,24 +25,33 @@
     max-width: 285px;
     position: sticky;
     left: 0;
-    z-index: 10;
-    background-color: inherit;
+    z-index: 14;
+    background-color: #ffffff;
     border-right: 1px solid #cbd5e1;
     border-bottom: 1px solid #e2e8f0;
-    padding: 5px 8px;
-    height: 48px;
+    padding: 0;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+:global(.dark) .ratePlanTitleCell {
+    background-color: #1f2937;
+    border-right-color: #4b5563;
+    border-bottom-color: #374151;
+}
+
+.ratePlanTitleInner {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
     gap: 3px;
+    min-height: 48px;
+    height: 100%;
+    width: 100%;
+    padding: 5px 8px;
     box-sizing: border-box;
     overflow: hidden;
-}
-
-:global(.dark) .ratePlanTitleCell {
-    border-right-color: #4b5563;
-    border-bottom-color: #374151;
 }
 
 .ratePlanHeaderRow {
@@ -235,26 +244,35 @@
 }
 
 .subMetricTitleCell {
-    width: 230px;
-    min-width: 230px;
-    max-width: 230px;
+    width: 285px;
+    min-width: 285px;
+    max-width: 285px;
     position: sticky;
     left: 0;
-    z-index: 10;
-    background-color: inherit;
+    z-index: 14;
+    background-color: #ffffff;
     border-right: 1px solid #cbd5e1;
     border-bottom: 1px solid #e2e8f0;
-    padding: 4px 10px 4px 20px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 0;
+    vertical-align: middle;
     box-sizing: border-box;
 }
 
 :global(.dark) .subMetricTitleCell {
+    background-color: #1f2937;
     border-right-color: #4b5563;
     border-bottom-color: #374151;
+}
+
+.subMetricTitleInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 38px;
+    height: 100%;
+    width: 100%;
+    padding: 4px 10px 4px 20px;
+    box-sizing: border-box;
 }
 
 .subMetricLabelGroup {

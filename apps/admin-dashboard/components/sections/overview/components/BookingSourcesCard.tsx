@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { resolveChannelName, getChannelLogo } from "@/lib/channelHelper";
 import { EmptyStateExecutive } from "@/components/shared/EmptyStateExecutive";
+import { useCurrency } from "@/hooks/useCurrency";
 import styles from "./BookingSourcesCard.module.css";
 
 interface BookingEntry {
@@ -80,6 +81,7 @@ export function BookingSourcesCard({
   endDate,
   onDetailsClick
 }: BookingSourcesCardProps) {
+  const { formatCurrency } = useCurrency();
   const [hoveredChannel, setHoveredChannel] = useState<string | null>(null);
 
   // Aggregate channel statistics from real booking data
@@ -256,7 +258,7 @@ export function BookingSourcesCard({
                   <div className={styles.sourceRight}>
                     <span className={styles.bookingCount}>{item.bookings}</span>
                     <span className={styles.revenueAmount}>
-                      IDR {item.revenue.toLocaleString("id-ID")}
+                      {formatCurrency(item.revenue)}
                     </span>
                     <span className={styles.sharePercent}>{item.share}%</span>
                   </div>

@@ -19,12 +19,14 @@
     max-width: 285px;
     position: sticky;
     left: 0;
-    z-index: 30;
+    top: 0;
+    z-index: 35;
     background-color: #f8fafc;
     border-right: 1px solid #cbd5e1;
     border-bottom: 1px solid #cbd5e1;
     box-sizing: border-box;
     padding: 0;
+    vertical-align: middle;
 }
 
 :global(.dark) .colTitle {

@@ -25,34 +25,42 @@
     max-width: 285px;
     position: sticky;
     left: 0;
-    z-index: 11;
-    background-color: #f8fafc;
+    z-index: 15;
+    background-color: #f8fafc !important;
     border-right: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
     border-left: 3.5px solid #94a3b8;
-    padding: 5px 10px 5px 18px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 0;
+    vertical-align: middle;
     box-sizing: border-box;
 }
 
 :global(.dark) .roomLabelCell {
-    background-color: #18181b;
+    background-color: #18181b !important;
     border-right-color: #27272a;
     border-bottom-color: #27272a;
     border-left-color: #52525b;
 }
 
 .roomLabelCellUnassigned {
-    background-color: #fef2f2;
+    background-color: #fef2f2 !important;
     border-left-color: #dc2626;
 }
 
 :global(.dark) .roomLabelCellUnassigned {
-    background-color: #2d1215;
+    background-color: #2d1215 !important;
     border-left-color: #ef4444;
+}
+
+.roomLabelInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 38px;
+    height: 100%;
+    width: 100%;
+    padding: 5px 10px 5px 18px;
+    box-sizing: border-box;
 }
 
 .roomLabelLeft {
@@ -166,12 +174,29 @@
     user-select: none;
     box-sizing: border-box;
     box-shadow: none !important;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    font-family: inherit;
+}
+
+.emptySlotPill:hover {
+    background-color: #bbf7d0 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06) !important;
+}
+
+.emptySlotPill:active {
+    transform: translateY(0);
 }
 
 :global(.dark) .emptySlotPill {
     color: #000000 !important;
     background-color: #86efac !important;
     border: none !important;
+}
+
+:global(.dark) .emptySlotPill:hover {
+    background-color: #4ade80 !important;
 }
 
 .emptySlotDash {
@@ -371,6 +396,11 @@
     overflow-wrap: break-word;
     white-space: normal;
     max-width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 :global(.dark) .guestFullName {
@@ -383,6 +413,19 @@
 
 :global(.dark) .conflictPillBtn .guestFullName {
     color: #ffffff !important;
+}
+
+.spacerCell {
+    width: 38px;
+    min-width: 38px;
+    max-width: 38px;
+    background-color: transparent;
+    border-bottom: 1px solid #e4e4e7;
+    box-sizing: border-box;
+}
+
+:global(.dark) .spacerCell {
+    border-bottom-color: #27272a;
 }
 
 /* Inline Editor Row for Managing Physical Room Numbers */

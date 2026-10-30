@@ -4,6 +4,7 @@ import React from "react";
 import { X, User, Calendar, Home, CreditCard, PlusCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { getChannelLogo } from "@/lib/channelHelper";
+import { useCurrency } from "@/hooks/useCurrency";
 import styles from "./OverviewStyles.module.css";
 
 interface GuestListDrawerProps {
@@ -16,6 +17,7 @@ interface GuestListDrawerProps {
 }
 
 export function GuestListDrawer({ isOpen, onClose, date, roomType, bookings, onAdd }: GuestListDrawerProps) {
+    const { formatCurrency } = useCurrency();
     if (!isOpen) return null;
 
     return (
@@ -77,7 +79,7 @@ export function GuestListDrawer({ isOpen, onClose, date, roomType, bookings, onA
                                     <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         <CreditCard size={8} /> Payment
                                     </p>
-                                    <p className={styles.guestAmount} style={{ margin: '2px 0 0 0', fontSize: '10px' }}>Rp {Number(booking.amount).toLocaleString('id-ID')}</p>
+                                    <p className={styles.guestAmount} style={{ margin: '2px 0 0 0', fontSize: '10px' }}>{formatCurrency(Number(booking.amount))}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <p className={styles.guestSubtext} style={{ fontSize: '8px', color: 'var(--f-light-muted)', margin: 0 }}>Status</p>

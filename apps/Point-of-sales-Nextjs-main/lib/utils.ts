@@ -40,3 +40,20 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
 
   return pagination;
 };
+
+export function clearStorageSafe() {
+  if (typeof window === 'undefined') return;
+  try {
+    const preservePrefix = 'tara_trusted_device_';
+    const preserveKeys = ['tara_device_id'];
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && !k.startsWith(preservePrefix) && !preserveKeys.includes(k)) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {}
+}
+

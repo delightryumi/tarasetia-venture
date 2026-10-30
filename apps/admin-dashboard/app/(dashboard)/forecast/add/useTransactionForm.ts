@@ -180,6 +180,8 @@ export const useTransactionForm = () => {
         const fromParam = searchParams.get("from");
         let redirectPath = fromParam === "forecast"
             ? `/forecast?module=${moduleParam}`
+            : fromParam === "rate-inventory"
+            ? `/rate-inventory?module=${moduleParam}`
             : `/overview?module=${moduleParam}`;
 
         if (moduleParam === "purchasing") {
@@ -197,6 +199,13 @@ export const useTransactionForm = () => {
     const isEditMode = searchParams.get("mode") === "edit";
     const editBookingId = searchParams.get("bookingId");
     const editTimestamp = searchParams.get("timestamp");
+
+    // Pre-selection params from Rate Inventory / Tape Chart
+    const targetRoomTypeId = searchParams.get("roomTypeId") || searchParams.get("roomType") || "";
+    const targetRoomNumber = searchParams.get("roomNumber") || searchParams.get("roomNo") || "";
+    const fromRateInventory = searchParams.get("from") === "rate-inventory";
+    const hasPreselectedRoom = Boolean(targetRoomTypeId || targetRoomNumber || fromRateInventory);
+
     const [originalEntry, setOriginalEntry] = useState<any>(null);
     const [isLoadingEdit, setIsLoadingEdit] = useState<boolean>(isEditMode);
 
@@ -208,7 +217,7 @@ export const useTransactionForm = () => {
     const [ariOverrides, setAriOverrides] = useState<Record<string, any>>({});
     const [saving, setSaving] = useState(false);
     const searchMod = searchParams.get("module");
-    const [step, setStep] = useState<"select" | "form">("select");
+    const [step, setStep] = useState<"select" | "form">(hasPreselectedRoom ? "form" : "select");
     const [revenueType, setRevenueType] = useState<"room" | "other">("room");
     const [queue, setQueue] = useState<any[]>([]);
     
@@ -226,7 +235,14 @@ export const useTransactionForm = () => {
     const [form, setForm] = useState({
         ...INITIAL_FORM,
         checkIn: initialCheckIn,
-        checkOut: initialCheckOut
+        checkOut: initialCheckOut,
+        rooms: [
+            {
+                ...INITIAL_FORM.rooms[0],
+                roomTypeId: targetRoomTypeId,
+                roomNumber: targetRoomNumber
+            }
+        ]
     });
 
     // Auto-populate staffName with logged-in user's name so it's always recorded
@@ -305,10 +321,28 @@ export const useTransactionForm = () => {
                 if (types.length > 0 && !isEditMode) {
                     setForm(prev => {
                         const newRooms = [...prev.rooms];
-                        if (newRooms[0] && !newRooms[0].roomTypeId) {
-                            newRooms[0] = { ...newRooms[0], roomTypeId: types[0].id };
+                        const matchedType = targetRoomTypeId
+                            ? types.find((t: any) => t.id === targetRoomTypeId || (t.code && t.code.toLowerCase() === targetRoomTypeId.toLowerCase()) || (t.name && t.name.toLowerCase() === targetRoomTypeId.toLowerCase()))
+                            : null;
+                        const activeType = matchedType || (newRooms[0]?.roomTypeId ? types.find((t: any) => t.id === newRooms[0].roomTypeId) : null) || types[0];
+
+                        if (newRooms[0]) {
+                            const defaultPrice = (activeType.basePrice || activeType.price || 650000).toString();
+                            const currentP = newRooms[0].price && newRooms[0].price !== "0" ? newRooms[0].price : defaultPrice;
+                            newRooms[0] = {
+                                ...newRooms[0],
+                                roomTypeId: activeType.id,
+                                roomNumber: targetRoomNumber || newRooms[0].roomNumber || "",
+                                price: currentP,
+                                nightRates: Array(nights).fill(currentP)
+                            };
                         }
-                        return { ...prev, rooms: newRooms };
+                        return {
+                            ...prev,
+                            rooms: newRooms,
+                            incomeType: activeType.name || "ROOM",
+                            nightRates: Array(nights).fill(newRooms[0]?.price || "")
+                        };
                     });
                 }
 
@@ -967,6 +1001,26 @@ export const useTransactionForm = () => {
                     return null;
                 }
 
+                // Check internal form duplicate room numbers
+                const currentNumClean = String(rm.roomNumber).trim().toUpperCase();
+                for (let prevIdx = 0; prevIdx < rIdx; prevIdx++) {
+                    const prevRm = form.rooms[prevIdx];
+                    const prevNumClean = String(prevRm?.roomNumber || "").trim().toUpperCase();
+                    const prevType = prevRm?.roomTypeId || form.rooms[0]?.roomTypeId;
+                    const curType = rm.roomTypeId || form.rooms[0]?.roomTypeId;
+                    if (prevNumClean && currentNumClean && prevNumClean === currentNumClean && prevType === curType) {
+                        toast.error(`Nomor kamar "${rm.roomNumber}" dipilih ganda pada Kamar #${prevIdx + 1} dan Kamar #${rIdx + 1}! Mohon pilih nomor kamar yang berbeda.`);
+                        return null;
+                    }
+                }
+
+                // Check if this room number is already occupied in existing database bookings on these dates
+                const availableForThisRoom = getAvailableRoomNumbers(rm.roomTypeId, rIdx);
+                if (!availableForThisRoom.map(n => String(n).trim().toUpperCase()).includes(currentNumClean)) {
+                    toast.error(`Kamar nomor "${rm.roomNumber}" (${roomLabel}) sudah terisi oleh tamu lain pada tanggal tersebut! Mohon pilih kamar fisik yang masih kosong.`);
+                    return null;
+                }
+
                 if (!form.isCompliment) {
                     const basePrice = Number(rm.price);
                     if (rm.price === "" || rm.price === undefined || isNaN(basePrice) || basePrice <= 0) {
@@ -1478,6 +1532,39 @@ export const useTransactionForm = () => {
                     } catch (e) {
                         console.warn("[Channex Sync Trigger Warning]:", e);
                     }
+
+                    // Push modification/reschedule to Channex CRS if linked
+                    const targetChannexId = originalEntry.channexBookingId;
+                    if (targetChannexId || originalEntry.bookingId) {
+                        try {
+                            const firstTx = finalEntries[0] || originalEntry;
+                            await fetch("/api/channex/modify-booking", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    hotelCode: hotelId,
+                                    bookingId: originalEntry.bookingId,
+                                    channexBookingId: targetChannexId,
+                                    modificationData: {
+                                        checkInDate: form.checkIn,
+                                        checkOutDate: form.checkOut,
+                                        roomTypeId: form.rooms[0]?.roomTypeId || firstTx.roomTypeId,
+                                        roomType: form.rooms[0]?.roomTypeName || firstTx.roomType,
+                                        ratePlanId: form.rooms[0]?.ratePlanId || firstTx.ratePlanId,
+                                        ratePlanName: form.rooms[0]?.ratePlanName || firstTx.ratePlanName,
+                                        totalAmount: Number(form.totalAmount) || firstTx.totalAmount,
+                                        guestName: form.guestName || firstTx.guestName,
+                                        phone: form.phone || firstTx.phone,
+                                        email: form.email || firstTx.email,
+                                        note: form.note || firstTx.note
+                                    },
+                                    touchedDates: sortedDates
+                                })
+                            });
+                        } catch (mErr) {
+                            console.warn("[Channex Modify Push Warning]:", mErr);
+                        }
+                    }
                 }
 
                 toast.success("Perubahan transaksi berhasil disimpan.");
@@ -1519,10 +1606,62 @@ export const useTransactionForm = () => {
                 }
             }
 
-            // Trigger background ARI sync to Channex for all affected stay dates if room transaction
+            // Auto-push Walk-in / Direct CRS bookings to Channex CRS (Two-Way Sync)
             const hotelIdForSync = activeHotelCode || (typeof window !== "undefined" ? localStorage.getItem("active_hotel_code") : null) || (user as any)?.hotelId || "";
             const affectedDates = Object.keys(entriesByDate).sort();
             const hasRoomTx = finalEntries.some(e => e.type === "accommodation");
+            if (hasRoomTx && hotelIdForSync) {
+                const roomEntries = finalEntries.filter(e => e.type === "accommodation");
+                // Group by bookingId to push each reservation once
+                const bookingsMap = new Map<string, any[]>();
+                roomEntries.forEach(entry => {
+                    const bId = entry.bookingId || "UNKNOWN";
+                    if (!bookingsMap.has(bId)) {
+                        bookingsMap.set(bId, []);
+                    }
+                    bookingsMap.get(bId)!.push(entry);
+                });
+
+                for (const [bId, entries] of bookingsMap.entries()) {
+                    const firstEntry = entries[0];
+                    const ch = (firstEntry.channel || firstEntry.source || "").toLowerCase();
+                    const isOta = ["booking.com", "agoda", "tiket.com", "tiket", "traveloka", "expedia", "airbnb"].some(o => ch.includes(o));
+                    
+                    if (!isOta && !firstEntry.channexBookingId) {
+                        try {
+                            const totalAmt = entries.reduce((sum, e) => sum + (Number(e.amount) || 0), 0) || Number(firstEntry.totalAmount) || 0;
+                            const roomNumbers = Array.from(new Set(entries.map(e => e.roomNumber).filter(Boolean))).join(", ");
+                            await fetch("/api/channex/push-booking", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    hotelCode: hotelIdForSync,
+                                    bookingData: {
+                                        bookingId: bId,
+                                        reservationId: bId,
+                                        guestName: firstEntry.guestName,
+                                        checkInDate: firstEntry.checkInDate,
+                                        checkOutDate: firstEntry.checkOutDate,
+                                        roomTypeId: firstEntry.roomTypeId,
+                                        roomTypeName: firstEntry.roomType,
+                                        ratePlanId: firstEntry.ratePlanId,
+                                        ratePlanName: firstEntry.ratePlanName,
+                                        totalAmount: totalAmt,
+                                        channel: firstEntry.channel || "Walk-In",
+                                        notes: firstEntry.note || `Walk-in via My Tara Front Desk (Room: ${roomNumbers || "N/A"})`,
+                                        email: firstEntry.email,
+                                        phone: firstEntry.phone
+                                    }
+                                })
+                            });
+                        } catch (pErr) {
+                            console.warn("[Channex Auto-Push Walk-in Warning]:", pErr);
+                        }
+                    }
+                }
+            }
+
+            // Trigger background ARI sync to Channex for all affected stay dates if room transaction
             if (hasRoomTx && affectedDates.length > 0 && hotelIdForSync) {
                 try {
                     await fetch("/api/channex/sync-ari", {
@@ -1581,7 +1720,7 @@ export const useTransactionForm = () => {
         toast.info(`Paket ${plan.name} terpilih: Rp ${appliedRate.toLocaleString("id-ID")} / malam`);
     };
 
-    const getAvailableRoomNumbers = useCallback((roomTypeId: string) => {
+    const getAvailableRoomNumbers = useCallback((roomTypeId: string, excludeRoomIndex?: number) => {
         const type = roomTypes.find(rt => rt.id === roomTypeId);
         if (!type) return [];
         const allPhysicalRooms = (type.physicalRooms || []).map((r: any) => {
@@ -1615,6 +1754,12 @@ export const useTransactionForm = () => {
             const dateStr = d.toISOString().split('T')[0];
             
             occupancy.forEach(e => {
+                // If in edit mode, don't count the original reservation being edited as occupying the room
+                if (isEditMode && originalEntry) {
+                    if (originalEntry.bookingId && e.bookingId && e.bookingId === originalEntry.bookingId) return;
+                    if (originalEntry.timestamp && String(e.timestamp) === String(originalEntry.timestamp)) return;
+                }
+
                 const statusUpper = e.status?.toUpperCase();
                 const paymentStatusUpper = e.paymentStatus?.toUpperCase();
                 const isCancelled = statusUpper === 'CANCELLED' || 
@@ -1667,10 +1812,21 @@ export const useTransactionForm = () => {
                     occupiedRooms.add(item.roomNumber.toString().toUpperCase().trim());
                 }
             });
+
+            // Also treat sibling rooms in the current form as occupied so Room 2 cannot pick Room 1's room
+            if (form.rooms && form.rooms.length > 1) {
+                form.rooms.forEach((siblingRm, sIdx) => {
+                    if (excludeRoomIndex !== undefined && sIdx === excludeRoomIndex) return;
+                    const sibType = siblingRm.roomTypeId || form.rooms[0]?.roomTypeId;
+                    if (sibType === type.id && siblingRm.roomNumber) {
+                        occupiedRooms.add(siblingRm.roomNumber.toString().toUpperCase().trim());
+                    }
+                });
+            }
         }
 
         return allPhysicalRooms.filter((r: string) => !occupiedRooms.has(r.toString().toUpperCase().trim()));
-    }, [form.checkIn, form.checkOut, roomTypes, occupancy, queue]);
+    }, [form.checkIn, form.checkOut, form.rooms, roomTypes, occupancy, queue, isEditMode, originalEntry]);
 
     const updateForm = (field: string, value: any) => {
         let finalValue = value;
@@ -1868,7 +2024,8 @@ export const useTransactionForm = () => {
         commitTransactions,
         isEditMode,
         isLoadingEdit,
-        originalEntry
+        originalEntry,
+        hasPreselectedRoom
     };
 };
 

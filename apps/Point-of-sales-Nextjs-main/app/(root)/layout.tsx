@@ -18,6 +18,7 @@ import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav';
 import { BillingSuspendedModal } from '@/components/dashboard/BillingSuspendedModal';
 import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
 import { OrientationController } from '@/components/orientation/OrientationController';
+import { clearStorageSafe } from '@/lib/utils';
 import { PosSplashLoader } from '@/components/loader/PosSplashLoader';
 import { useRBAC } from '@/hooks/useRBAC';
 import { toast } from 'react-toastify';
@@ -561,7 +562,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    clearStorageSafe();
     document.cookie = '__session=; path=/; max-age=0; SameSite=Lax';
     window.location.href = `${sanitizeDashboardUrl(getDashboardUrl())}?logout=true`;
   };

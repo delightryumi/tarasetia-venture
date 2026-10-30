@@ -8,6 +8,7 @@ import { LogOut, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRBAC } from '@/hooks/useRBAC';
 import { ModeToggle } from '@/components/darkmode/darkmode';
+import { clearStorageSafe } from '@/lib/utils';
 
 function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
   const pathname = usePathname();
@@ -73,7 +74,7 @@ function Navbar({ isCollapsed = false }: { isCollapsed?: boolean }) {
   });
 
   const handleLogout = () => {
-    localStorage.clear();
+    clearStorageSafe();
     let dashboardUrl = '';
     
     if (typeof window !== 'undefined') {

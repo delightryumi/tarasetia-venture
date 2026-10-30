@@ -44,7 +44,8 @@ function AddTransactionContent() {
         removeRoom,
         availableChannels,
         isEditMode,
-        isLoadingEdit
+        isLoadingEdit,
+        hasPreselectedRoom
     } = useTransactionForm();
 
     React.useEffect(() => {
@@ -91,7 +92,7 @@ function AddTransactionContent() {
                             updateRoomNightField={updateRoomNightField}
                             copyNightToAll={copyNightToAll}
                             onCancel={() => {
-                                if (isEditMode) {
+                                if (isEditMode || hasPreselectedRoom) {
                                     handleCancel();
                                 } else {
                                     setStep('select');
@@ -143,7 +144,7 @@ function AddTransactionContent() {
                 saving={saving}
                 onCommit={commitTransactions}
                 onBack={() => {
-                    if (isEditMode) {
+                    if (isEditMode || hasPreselectedRoom) {
                         handleCancel();
                     } else if (step === 'form') {
                         setStep('select');

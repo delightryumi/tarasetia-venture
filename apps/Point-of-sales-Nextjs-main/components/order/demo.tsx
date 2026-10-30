@@ -23,13 +23,14 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { AlertDialogDeletetransaction } from './components/dialogDelete';
 import { toast } from 'react-toastify';
 import { localDb as dexieDb } from '@/lib/dexie';
+import { clearStorageSafe } from '@/lib/utils';
 
 export function Orders() {
   const router = useRouter();
   const [dialogAddOpen, setDialogAddOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.clear();
+    clearStorageSafe();
     let dashboardUrl = '';
     
     if (typeof window !== 'undefined') {

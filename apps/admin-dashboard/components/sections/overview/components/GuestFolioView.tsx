@@ -27,6 +27,7 @@ import { isUserSuperadmin } from "@/lib/permissionCheck";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { resolveBookingIdentifiers } from "@/lib/channelHelper";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface GuestFolioViewProps {
     guest: any;
@@ -109,6 +110,7 @@ const formatTimelineDateParts = (d: Date) => {
 
 export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
     const { user, activeHotelName } = useAuth();
+    const { formatCurrency, currencyCode } = useCurrency();
     const router = useRouter();
     const [clientIp, setClientIp] = useState<string>("192.168.1.104");
     const [activeTab, setActiveTab] = useState<"info" | "revisions" | "timeline">("info");
@@ -692,7 +694,7 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                         {formatChannexDate(checkIn)} - {formatChannexDate(checkOut)}
                                     </span>
                                     <span style={{ fontSize: '12px', fontWeight: 700, color: '#262626' }}>
-                                        IDR {totalAmount.toLocaleString('en-US')}
+                                        {formatCurrency(totalAmount)}
                                     </span>
                                     {roomAccordionOpen ? <ChevronUp size={14} color="#8c8c8c" /> : <ChevronDown size={14} color="#8c8c8c" />}
                                 </div>
@@ -732,7 +734,7 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                                         <td style={{ padding: '6px 0', color: '#595959' }}>{day.date}</td>
                                                         <td style={{ padding: '6px 0', color: '#595959' }}>{displayRatePlan}</td>
                                                         <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 600, color: '#262626' }}>
-                                                            IDR {day.price.toLocaleString('en-US')}
+                                                            {formatCurrency(day.price)}
                                                         </td>
                                                     </tr>
                                                 );
@@ -743,7 +745,7 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: '#595959', borderTop: '1px solid #f0f0f0', paddingTop: '8px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <span>Subtotal Kamar:</span>
-                                            <span style={{ fontWeight: 700, color: '#262626' }}>IDR {totalAmount.toLocaleString('en-US')}</span>
+                                            <span style={{ fontWeight: 700, color: '#262626' }}>{formatCurrency(totalAmount)}</span>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <span>Tamu Terdaftar:</span>
@@ -780,7 +782,7 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#8c8c8c' }}>Total Tagihan Menginap:</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>IDR {totalAmount.toLocaleString('en-US')}</span>
+                                    <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '13px' }}>{formatCurrency(totalAmount)}</span>
                                     {guest.revenueRecordingMode && (
                                         <span style={{
                                             fontSize: '9px',
@@ -820,24 +822,24 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                         <div style={{ background: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                                             <div style={{ color: '#64748b', fontSize: '10px' }}>OTA Retail Gross</div>
                                             <div style={{ fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
-                                                IDR {(Number(guest.grossAmount || guest.amount || totalAmount)).toLocaleString('en-US')}
+                                                {formatCurrency(Number(guest.grossAmount || guest.amount || totalAmount))}
                                             </div>
                                         </div>
                                         <div style={{ background: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                                             <div style={{ color: '#64748b', fontSize: '10px' }}>OTA Commission ({guest.otaCommissionPercent || 15}%)</div>
                                             <div style={{ fontWeight: 700, color: '#dc2626', marginTop: '2px' }}>
-                                                - IDR {(Number(guest.otaCommissionAmount || Math.round((guest.grossAmount || totalAmount) * ((guest.otaCommissionPercent || 15) / 100)))).toLocaleString('en-US')}
+                                                - {formatCurrency(Number(guest.otaCommissionAmount || Math.round((guest.grossAmount || totalAmount) * ((guest.otaCommissionPercent || 15) / 100))))}
                                             </div>
                                         </div>
                                         <div style={{ background: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                                             <div style={{ color: '#64748b', fontSize: '10px' }}>Net Hotel Payout</div>
                                             <div style={{ fontWeight: 700, color: '#16a34a', marginTop: '2px' }}>
-                                                IDR {(Number(guest.netToHotel || (totalAmount - (guest.otaCommissionAmount || 0)))).toLocaleString('en-US')}
+                                                {formatCurrency(Number(guest.netToHotel || (totalAmount - (guest.otaCommissionAmount || 0))))}
                                             </div>
                                         </div>
                                     </div>
                                     <div style={{ fontSize: '10px', color: '#64748b', marginTop: '8px', lineHeight: '1.4' }}>
-                                        Accounting entry is booked at <b>IDR {totalAmount.toLocaleString('en-US')}</b> following the hotel CM <b>{String(guest.revenueRecordingMode || "NET").toUpperCase()}</b> policy. Staff without superadmin privileges only see this nominal.
+                                        Accounting entry is booked at <b>{formatCurrency(totalAmount)}</b> following the hotel CM <b>{String(guest.revenueRecordingMode || "NET").toUpperCase()}</b> policy. Staff without superadmin privileges only see this nominal.
                                     </div>
                                 </div>
                             )}
@@ -1173,7 +1175,7 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                                 </span>
                                             </div>
                                             <span style={{ fontWeight: 600, fontSize: '13px', color: '#262626' }}>
-                                                IDR {totalAmount.toLocaleString('en-US')}
+                                                {formatCurrency(totalAmount)}
                                             </span>
                                         </div>
                                         <p style={{ margin: '4px 0 14px 22px', fontSize: '12px', color: '#8c8c8c' }}>
@@ -1186,15 +1188,15 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                                     <span style={{ width: '130px', color: '#8c8c8c' }}>Price Breakdown:</span>
                                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                         {daysList.map((dayItem, idx) => (
-                                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#595959' }}>
+                                                             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#595959' }}>
                                                                 <span>{formatLongDate(dayItem.date)}</span>
                                                                 <span style={{ color: '#8c8c8c' }}>{guest.roomType || 'Deluxe Cottage'} - {guest.ratePlanName || 'With Breakfast'}</span>
-                                                                <span style={{ fontWeight: 500, color: '#262626' }}>IDR {dayItem.price.toLocaleString('en-US')}</span>
+                                                                <span style={{ fontWeight: 500, color: '#262626' }}>{formatCurrency(dayItem.price)}</span>
                                                             </div>
                                                         ))}
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #d9d9d9', paddingTop: '6px', marginTop: '4px', fontWeight: 600, fontSize: '12px' }}>
                                                             <span>Subtotal</span>
-                                                            <span>IDR {totalAmount.toLocaleString('en-US')}</span>
+                                                            <span>{formatCurrency(totalAmount)}</span>
                                                         </div>
                                                     </div>
                                                 </div>

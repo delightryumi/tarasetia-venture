@@ -8,6 +8,7 @@ import { NAVBAR_ITEMS } from '@/constant/navbarMenu';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useRBAC } from '@/hooks/useRBAC';
+import { clearStorageSafe } from '@/lib/utils';
 
 export function NavbarSheet() {
   const pathname = usePathname();
@@ -73,7 +74,7 @@ export function NavbarSheet() {
   });
 
   const handleLogout = () => {
-    localStorage.clear();
+    clearStorageSafe();
     let dashboardUrl = '';
     
     if (typeof window !== 'undefined') {

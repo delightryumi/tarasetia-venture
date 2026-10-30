@@ -6,7 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, onSnapshot, getDocs } from "firebase/firestore";
 import { detectClientCity } from "@/lib/clientGeo";
 import { toast } from "sonner";
-import { isDeviceTrusted } from "@/lib/trustedDevice";
+import { isDeviceTrusted, setDeviceTrusted } from "@/lib/trustedDevice";
 
 const SUPERADMIN_PERMISSIONS_FALLBACK = [
     "module_pos", "module_front_office", "module_innalytics", "module_housekeeping", 
@@ -48,7 +48,7 @@ interface AuthContextType {
     activeHotelName: string;
     hotelsList: any[];
     setActiveHotelCode: (code: string) => void;
-    loginWithFirestore: (email: string, password: string, hotelCode?: string, twoFactorCode?: string) => Promise<LoginResult>;
+    loginWithFirestore: (email: string, password: string, hotelCode?: string, twoFactorCode?: string, trustDevice?: boolean) => Promise<LoginResult>;
     signOutUser: () => Promise<void>;
 }
 
@@ -546,7 +546,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => unsubscribe();
     }, []);
 
-    const loginWithFirestore = async (email: string, password: string, hotelCodeInput?: string, twoFactorCode?: string): Promise<LoginResult> => {
+    const loginWithFirestore = async (
+        email: string, 
+        password: string, 
+        hotelCodeInput?: string, 
+        twoFactorCode?: string,
+        trustDevice?: boolean
+    ): Promise<LoginResult> => {
         try {
             const isSuperadminEmail = email.toLowerCase() === "superadmin@setara.co.id";
             let code = hotelCodeInput?.trim() || "";
@@ -613,6 +619,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     const valData = await valRes.json();
                     if (!valRes.ok || !valData.valid) {
                         return { success: false, error: valData.error || "Kode verifikasi 2FA tidak valid." };
+                    }
+                    if (trustDevice) {
+                        setDeviceTrusted(email, 30);
                     }
                 }
             } else {

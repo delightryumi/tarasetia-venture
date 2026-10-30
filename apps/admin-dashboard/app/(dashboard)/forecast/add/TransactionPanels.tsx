@@ -162,7 +162,7 @@ interface TransactionEntryFormProps {
     onCancel: () => void;
     onSubmit: () => void;
     onCommit?: () => void;
-    getAvailableRoomNumbers: (roomTypeId: string) => string[];
+    getAvailableRoomNumbers: (roomTypeId: string, excludeRoomIndex?: number) => string[];
     totalGross?: number;
     handleCancel?: () => void;
     saving?: boolean;
@@ -464,7 +464,7 @@ export function TransactionEntryForm({
                                                         ? rm.nightRates[nightIdx] 
                                                         : (rm.price ?? ""));
 
-                                                const availableNumbers = getAvailableRoomNumbers(currentRoomTypeId);
+                                                const availableNumbers = getAvailableRoomNumbers(currentRoomTypeId, roomIdx);
                                                 const rtObj = roomTypes.find(t => t.id === currentRoomTypeId);
                                                 const filteredRatePlans = ratePlans.filter((rp: any) => {
                                                     if (!currentRoomTypeId) return true;
@@ -531,7 +531,9 @@ export function TransactionEntryForm({
                                                                     </option>
                                                                 ))}
                                                                 {currentRoomNumber && !availableNumbers.includes(currentRoomNumber) && (
-                                                                    <option value={currentRoomNumber}>{currentRoomNumber}</option>
+                                                                    <option value={currentRoomNumber} style={{ color: '#dc2626', fontWeight: 600 }}>
+                                                                        ⚠️ {currentRoomNumber} (Terisi / Double)
+                                                                    </option>
                                                                 )}
                                                             </select>
                                                         </td>
