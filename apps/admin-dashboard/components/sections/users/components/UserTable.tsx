@@ -14,6 +14,7 @@ interface UserTableProps {
     onDelete: (id: string, name: string) => void;
     onChangePasswordClick: (user: UserProfile) => void;
     onAssignHotelClick: (user: UserProfile) => void;
+    onReset2FaClick?: (user: UserProfile) => void;
     onViewLogsClick?: (user: UserProfile) => void;
     onToggleStatus?: (userId: string, newStatus: "active" | "inactive") => Promise<void>;
     authUser?: any;
@@ -26,6 +27,7 @@ export const UserTable: React.FC<UserTableProps> = ({
     onDelete,
     onChangePasswordClick,
     onAssignHotelClick,
+    onReset2FaClick,
     onViewLogsClick,
     onToggleStatus,
     authUser,
@@ -237,10 +239,31 @@ export const UserTable: React.FC<UserTableProps> = ({
 
                                         {/* Column 5: Multi-Factor Authentication */}
                                         <td className={styles.td}>
-                                            <span className={styles.mfaEnabled}>
-                                                <span className={`${styles.mfaDot} ${styles.mfaDotEnabled}`} />
-                                                Enabled
-                                            </span>
+                                            {user.twoFactorEnabled ? (
+                                                <span className={styles.mfaEnabled} title="2FA Google/Apple Authenticator Aktif">
+                                                    <span className={`${styles.mfaDot} ${styles.mfaDotEnabled}`} />
+                                                    Active (2FA)
+                                                </span>
+                                            ) : (
+                                                <span 
+                                                    style={{
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                        gap: "5px",
+                                                        padding: "2px 8px",
+                                                        borderRadius: "6px",
+                                                        fontSize: "11.5px",
+                                                        fontWeight: 500,
+                                                        background: "#f1f5f9",
+                                                        color: "#64748b",
+                                                        border: "1px solid #e2e8f0"
+                                                    }}
+                                                    title="Belum scan QR code / registrasi saat login"
+                                                >
+                                                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#94a3b8" }} />
+                                                    Pending Setup
+                                                </span>
+                                            )}
                                         </td>
 
                                         {/* Column 6: Action */}
@@ -356,10 +379,17 @@ export const UserTable: React.FC<UserTableProps> = ({
                                         {outletCount} Properties
                                     </span>
                                 )}
-                                <span className={styles.mfaEnabled} style={{ marginLeft: "auto", fontSize: "11px" }}>
-                                    <span className={`${styles.mfaDot} ${styles.mfaDotEnabled}`} />
-                                    MFA Active
-                                </span>
+                                {user.twoFactorEnabled ? (
+                                    <span className={styles.mfaEnabled} style={{ marginLeft: "auto", fontSize: "11px" }}>
+                                        <span className={`${styles.mfaDot} ${styles.mfaDotEnabled}`} />
+                                        2FA Aktif
+                                    </span>
+                                ) : (
+                                    <span style={{ marginLeft: "auto", fontSize: "11px", color: "#64748b", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#94a3b8" }} />
+                                        2FA Pending
+                                    </span>
+                                )}
                             </div>
 
                             {/* Card Footer: Status Toggle */}
@@ -536,15 +566,20 @@ export const UserTable: React.FC<UserTableProps> = ({
 
                             <button
                                 type="button"
+                                disabled={isMenuUserLockedFromCurrentViewer}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setOpenMenuId(null);
                                     setMenuPosition(null);
+                                    if (onReset2FaClick) {
+                                        onReset2FaClick(activeMenuUser);
+                                    }
                                 }}
-                                className={styles.dropdownItem}
+                                className={`${styles.dropdownItem} ${isMenuUserLockedFromCurrentViewer ? styles.dropdownItemDisabled : ""}`}
+                                title="Reset kunci Google/Apple Authenticator jika user terkunci atau ganti perangkat"
                             >
-                                <ShieldCheck size={14} />
-                                <span>Multi-Factor Auth</span>
+                                <ShieldAlert size={14} className="text-amber-600" />
+                                <span>Reset 2FA Authenticator</span>
                             </button>
                         </div>
                     </>,

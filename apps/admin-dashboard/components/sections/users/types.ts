@@ -5,6 +5,8 @@ export interface UserProfile {
     email: string;
     name: string;
     role: string;
+    status?: string;
+    twoFactorEnabled?: boolean;
     hotelCode?: string;
     allowedOutlets?: string[];
     permissions?: Record<string, boolean>;

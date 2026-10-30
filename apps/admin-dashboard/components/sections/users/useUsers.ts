@@ -385,6 +385,7 @@ export const useUsers = (menuItems: any[]) => {
         users,
         loading,
         activeModules,
+        fetchUsers,
         handleSaveUser,
         handleDeleteUser,
         togglePermission,

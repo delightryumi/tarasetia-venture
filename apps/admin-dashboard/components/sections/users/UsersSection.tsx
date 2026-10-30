@@ -197,7 +197,7 @@ export const UsersSection: React.FC = () => {
     const canManageSecurity = isSuper || hasPermission(authUser, 'sec_policies', 'module_security');
 
     const { 
-        users, loading, activeModules,
+        users, loading, activeModules, fetchUsers,
         handleSaveUser, handleDeleteUser, togglePermission, toggleModulePermission,
         handleChangePassword
     } = useUsers([]);
@@ -232,6 +232,10 @@ export const UsersSection: React.FC = () => {
     // Password Change State
     const [passwordChangeTarget, setPasswordChangeTarget] = useState<UserProfile | null>(null);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+    // 2FA Reset Confirmation State
+    const [reset2FaTarget, setReset2FaTarget] = useState<UserProfile | null>(null);
+    const [isResetting2Fa, setIsResetting2Fa] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -423,6 +427,40 @@ export const UsersSection: React.FC = () => {
             toast.success(`Status akun berhasil diubah menjadi ${newStatus === "active" ? "Aktif" : "Nonaktif"}.`);
         } catch (err: any) {
             toast.error("Gagal memperbarui status akun: " + (err.message || ""));
+        }
+    };
+
+    const confirmReset2Fa = async () => {
+        if (!reset2FaTarget) return;
+        setIsResetting2Fa(true);
+        try {
+            const token = await auth.currentUser?.getIdToken();
+            const res = await fetch("/api/auth/2fa/reset", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    targetEmail: reset2FaTarget.email,
+                    hotelCode: reset2FaTarget.hotelCode || activeHotelCode
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.error || "Gagal mereset 2FA authenticator.");
+            }
+
+            toast.success("2FA Berhasil Direset", {
+                description: `2FA Authenticator untuk ${reset2FaTarget.name || reset2FaTarget.email} telah dinonaktifkan. Pengguna akan diminta mendaftarkan perangkat autentikator baru saat login berikutnya.`
+            });
+            await fetchUsers();
+            setReset2FaTarget(null);
+        } catch (err: any) {
+            toast.error(err.message || "Gagal mereset 2FA.");
+        } finally {
+            setIsResetting2Fa(false);
         }
     };
 
@@ -671,6 +709,7 @@ export const UsersSection: React.FC = () => {
                                 onDelete={onDelete}
                                 onChangePasswordClick={openChangePassword}
                                 onAssignHotelClick={openAssignHotelDrawer}
+                                onReset2FaClick={(u) => setReset2FaTarget(u)}
                                 onViewLogsClick={() => setActiveTab("activity")}
                                 onToggleStatus={handleToggleUserStatus}
                                 authUser={authUser}
@@ -822,6 +861,19 @@ export const UsersSection: React.FC = () => {
                 isLoading={isDeleting}
                 onConfirm={confirmDelete}
                 onCancel={() => setDeleteTarget(null)}
+            />
+
+            {/* ─── Reset 2FA Confirmation Modal ─── */}
+            <ConfirmModal
+                isOpen={!!reset2FaTarget}
+                variant="warning"
+                title="Reset 2FA Authenticator"
+                message={`Apakah Anda yakin ingin mereset 2FA untuk ${reset2FaTarget?.name || reset2FaTarget?.email}? Perangkat autentikator lama (Google Authenticator / Apple Passwords) akan dinonaktifkan, dan pengguna harus melakukan scan ulang QR saat login berikutnya.`}
+                confirmLabel="Reset 2FA"
+                cancelLabel="Batal"
+                isLoading={isResetting2Fa}
+                onConfirm={confirmReset2Fa}
+                onCancel={() => setReset2FaTarget(null)}
             />
         </div>
     );

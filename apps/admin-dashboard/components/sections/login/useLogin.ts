@@ -75,9 +75,15 @@ export const useLogin = () => {
             if (resolvedEmail === "superadmin" || resolvedEmail === "admin") {
                 resolvedEmail = `${resolvedEmail}@setara.co.id`;
             }
+            const idToken = await auth.currentUser?.getIdToken();
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
+            if (idToken) {
+                headers["Authorization"] = `Bearer ${idToken}`;
+            }
+
             const res = await fetch("/api/auth/2fa/setup", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers,
                 body: JSON.stringify({
                     email: resolvedEmail,
                     hotelCode: hotelCode.trim() || "0",
@@ -110,9 +116,15 @@ export const useLogin = () => {
             if (resolvedEmail === "superadmin" || resolvedEmail === "admin") {
                 resolvedEmail = `${resolvedEmail}@setara.co.id`;
             }
+            const idToken = await auth.currentUser?.getIdToken();
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
+            if (idToken) {
+                headers["Authorization"] = `Bearer ${idToken}`;
+            }
+
             const res = await fetch("/api/auth/2fa/enable", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers,
                 body: JSON.stringify({
                     email: resolvedEmail,
                     hotelCode: hotelCode.trim() || "0",
@@ -163,6 +175,7 @@ export const useLogin = () => {
     const cancel2Fa = async () => {
         if (typeof window !== "undefined") {
             sessionStorage.removeItem("tara_2fa_pending");
+            localStorage.removeItem("tara_2fa_pending");
         }
         try {
             await fbSignOut(auth);

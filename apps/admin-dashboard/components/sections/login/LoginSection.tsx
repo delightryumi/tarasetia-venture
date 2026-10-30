@@ -319,8 +319,8 @@ export const LoginSection = () => {
                                     </h1>
                                     <p className={styles.cardSubtitle}>
                                         {language === 'EN' 
-                                            ? "Scan the QR code with Google Authenticator once to protect your account." 
-                                            : "Scan kode QR dengan Google Authenticator satu kali saja untuk mengamankan akun."}
+                                            ? "Scan the QR code with iPhone Camera (Apple Passwords), Google Authenticator, or Microsoft Authenticator." 
+                                            : "Scan kode QR dengan Kamera iPhone (Apple Passwords), Google Authenticator, atau Microsoft Authenticator."}
                                     </p>
                                 </div>
 
@@ -330,29 +330,34 @@ export const LoginSection = () => {
                                     </div>
                                 )}
 
-                                {setupQrUrl && (
+                                {setupQrUrl ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
-                                        <div style={{ padding: '8px', background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                        <div style={{ padding: '10px', background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
                                             <img 
                                                 src={setupQrUrl} 
-                                                alt="Google Authenticator QR Code" 
-                                                style={{ width: '150px', height: '150px', display: 'block' }}
+                                                alt="Authenticator QR Code (Apple / Google)" 
+                                                style={{ width: '160px', height: '160px', display: 'block' }}
                                             />
                                         </div>
-                                        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b' }}>
+                                        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b', flexWrap: 'wrap', justifyContent: 'center' }}>
                                             <span>{language === 'EN' ? "Key:" : "Kode rahasia:"}</span>
-                                            <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 600, color: '#1e293b' }}>
+                                            <code style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px', fontFamily: 'monospace', fontWeight: 600, color: '#1e293b', letterSpacing: '0.05em' }}>
                                                 {setupSecret}
                                             </code>
                                             <button 
                                                 type="button" 
                                                 onClick={handleCopySecret}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '2px', display: 'inline-flex', alignItems: 'center' }}
-                                                title="Salin kode"
+                                                title="Salin kode rahasia"
                                             >
                                                 {copiedSecret ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
                                             </button>
                                         </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '160px', gap: '8px', color: '#64748b' }}>
+                                        <Loader2 size={24} className="animate-spin text-blue-600" />
+                                        <span style={{ fontSize: '12px' }}>{language === 'EN' ? "Generating secure QR code..." : "Menyiapkan kode QR aman..."}</span>
                                     </div>
                                 )}
 
@@ -430,8 +435,8 @@ export const LoginSection = () => {
                                 </h1>
                                 <p className={styles.cardSubtitle}>
                                     {language === 'EN' 
-                                        ? "Enter the 6-digit verification code from Google Authenticator." 
-                                        : "Masukkan 6 digit kode verifikasi dari Google Authenticator."}
+                                        ? "Enter the 6-digit verification code from your Authenticator (Apple Passwords / Google / Microsoft)." 
+                                        : "Masukkan 6 digit kode verifikasi dari Authenticator (Apple Passwords / Google / Microsoft)."}
                                 </p>
                             </div>
 
