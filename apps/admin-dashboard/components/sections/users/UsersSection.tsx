@@ -25,7 +25,7 @@ import { BlockedUsersTab } from "./components/BlockedUsersTab";
 import { SecurityPreferencesTab } from "./components/SecurityPreferencesTab";
 import { useAuth } from "@/context/AuthContext";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { UserDrawer } from "./components/UserDrawer";
 import { ConfirmModal } from "./components/ConfirmModal";
