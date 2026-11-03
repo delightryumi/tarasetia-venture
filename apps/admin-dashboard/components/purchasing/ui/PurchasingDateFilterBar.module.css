@@ -1,0 +1,336 @@
+/* ==========================================================================
+   PurchasingDateFilterBar.module.css
+   Universal Date Filter Bar for Purchasing (SR, PR, DML)
+   Light/Dark mode compliant with luxury editorial hospitality standards.
+   ========================================================================== */
+
+.filterCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+:global(.dark) .filterCard {
+  background: #0f172a;
+  border-color: #1e293b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ── Mode Segmented Switch ── */
+.modeTabs {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+:global(.dark) .modeTabs {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.modeTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+:global(.dark) .modeTab {
+  color: #94a3b8;
+}
+
+.modeTab:hover {
+  color: #0f172a;
+}
+
+:global(.dark) .modeTab:hover {
+  color: #f8fafc;
+}
+
+.modeTabActive {
+  background: #ffffff;
+  color: #1e4d3a !important;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+:global(.dark) .modeTabActive {
+  background: #0f172a;
+  color: #34d399 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Actions on Top Row ── */
+.topActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.recordBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  font-family: var(--p-font-mono, monospace);
+}
+
+:global(.dark) .recordBadge {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.generatePdfBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px;
+  background: #1e4d3a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(30, 77, 58, 0.25);
+  white-space: nowrap;
+}
+
+.generatePdfBtn:hover {
+  background: #163a2c;
+  box-shadow: 0 4px 10px rgba(30, 77, 58, 0.35);
+  transform: translateY(-1px);
+}
+
+:global(.dark) .generatePdfBtn {
+  background: #285f47;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .generatePdfBtn:hover {
+  background: #347a5b;
+}
+
+/* ── Input Controls Row ── */
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+:global(.dark) .controlsRow {
+  border-top-color: #1e293b;
+}
+
+.controlsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.controlLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+:global(.dark) .controlLabel {
+  color: #94a3b8;
+}
+
+.dateInput {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-family: var(--p-font-mono, monospace);
+  font-weight: 600;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+:global(.dark) .dateInput {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.dateInput:focus {
+  border-color: #1e4d3a;
+  background: #ffffff;
+}
+
+:global(.dark) .dateInput:focus {
+  border-color: #34d399;
+  background: #0f172a;
+}
+
+.rangeSeparator {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+:global(.dark) .rangeSeparator {
+  color: #94a3b8;
+}
+
+.quickBtn {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+:global(.dark) .quickBtn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+.quickBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+:global(.dark) .quickBtn:hover {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.allNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+}
+
+:global(.dark) .allNotice {
+  color: #94a3b8;
+}
+
+.periodSummary {
+  font-size: 11.5px;
+  color: #475569;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+:global(.dark) .periodSummary {
+  color: #94a3b8;
+}
+
+.periodHighlight {
+  color: #1e4d3a;
+  font-weight: 700;
+}
+
+:global(.dark) .periodHighlight {
+  color: #34d399;
+}
+
+/* ── Mobile View Overrides ── */
+@media (max-width: 768px) {
+  .topRow, .controlsRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modeTabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .modeTab {
+    flex: 1;
+    justify-content: center;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .topActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .generatePdfBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .controlsGroup {
+    width: 100%;
+  }
+
+  .dateInput {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .periodSummary {
+    margin-left: 0;
+    width: 100%;
+    text-align: right;
+  }
+}
+

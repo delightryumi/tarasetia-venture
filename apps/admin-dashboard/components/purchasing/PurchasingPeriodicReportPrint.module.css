@@ -1,0 +1,352 @@
+/* ==========================================================================
+   PurchasingPeriodicReportPrint.module.css
+   Executive Print / Export to PDF layout for Purchasing Periodic Reports (SR, PR, DML)
+   Engineered for clean, well-spaced A4 Landscape rendering (Save as PDF).
+   ========================================================================== */
+
+.printArea {
+  display: none;
+  box-sizing: border-box;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm 12mm 12mm 12mm;
+  }
+
+  .printArea {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 8mm 16mm 12mm 16mm !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    overflow: visible !important;
+  }
+
+  .printArea * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 2.5px solid #0f172a;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 52%;
+}
+
+.logo {
+  max-height: 48px;
+  max-width: 190px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
+
+.companyName {
+  font-size: 16px;
+  font-weight: 850;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.companyAddr {
+  font-size: 10px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.headerRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 3px;
+  max-width: 48%;
+}
+
+.docBadge {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 3px 9px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 3px;
+}
+
+.docTitle {
+  font-size: 18px;
+  font-weight: 850;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.periodLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e4d3a;
+  margin-top: 2px;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.printMeta {
+  font-size: 9.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* ── KPI Summary Grid ── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.kpiCard {
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #1e4d3a;
+  border-radius: 6px;
+  background: #f8fafc;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpiLabel {
+  font-size: 9px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+}
+
+.kpiValue {
+  font-size: 15px;
+  font-weight: 850;
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  margin: 2px 0 1px;
+}
+
+.kpiSub {
+  font-size: 9.5px;
+  color: #64748b;
+}
+
+/* ── Tabular Report ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+  font-size: 10.5px;
+  page-break-inside: auto;
+}
+
+.table thead {
+  display: table-header-group;
+}
+
+.table tbody {
+  display: table-row-group;
+}
+
+.table tbody tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.table thead th {
+  padding: 8px 10px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border: 1px solid #0f172a;
+  text-align: left;
+}
+
+.table thead th.thCenter {
+  text-align: center;
+}
+
+.table thead th.thRight {
+  text-align: right;
+}
+
+.table tbody td {
+  padding: 7px 10px;
+  font-size: 10.5px;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  vertical-align: middle;
+}
+
+.table tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.docNum {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.dateCell {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.deptCell {
+  font-weight: 600;
+  color: #334155;
+}
+
+.userCell {
+  font-size: 10px;
+  color: #475569;
+}
+
+.itemsList {
+  font-size: 9.5px;
+  color: #334155;
+  line-height: 1.35;
+}
+
+.statusPill {
+  display: inline-block;
+  padding: 2.5px 7px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.statusApproved {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.statusSubmitted {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.statusDraft {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.amountCell {
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.grandTotalRow td {
+  font-weight: 850 !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  border-top: 2.5px solid #0f172a !important;
+  padding: 9px 10px !important;
+  font-size: 11.5px !important;
+  color: #0f172a !important;
+}
+
+/* ── Signatures Row ── */
+.signatureRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.signBlock {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px 14px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 95px;
+}
+
+.signTitle {
+  font-size: 9.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 5px;
+}
+
+.signLine {
+  margin-top: auto;
+  border-bottom: 1.5px solid #0f172a;
+  width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 4px;
+}
+
+.signDate {
+  font-size: 9px;
+  color: #64748b;
+}

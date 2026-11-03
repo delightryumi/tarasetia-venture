@@ -494,21 +494,12 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
       .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
   };
 
-  const isOtherRoomMatcher = (t: TransactionEntry) => {
-    const cat = (t.category || t.department || "").toLowerCase();
-    const desc = (t.description || "").toLowerCase();
-    return (
-      cat.includes("extra_bed") ||
-      cat.includes("other_room") ||
-      desc.includes("extra bed") ||
-      desc.includes("late checkout") ||
-      desc.includes("early checkin")
-    );
-  };
-
-  const roomOtherToday = filterNonAccRev("today", isOtherRoomMatcher);
-  const roomOtherMtd = filterNonAccRev("mtd", isOtherRoomMatcher);
-  const roomOtherYtd = filterNonAccRev("ytd", isOtherRoomMatcher);
+  // User Policy: Whatever is in Forecast FO's Other Revenue stays in DSR as Other Revenue (Minor Operating).
+  // Therefore, Extra Bed, Late Checkout, Early Checkin, etc. remain in Other Revenue / Minor Operating,
+  // and are not shifted into Room Revenue.
+  const roomOtherToday = 0;
+  const roomOtherMtd = 0;
+  const roomOtherYtd = 0;
 
   const getRoomOtherBudVal = (b: BudgetMonthData) => {
     return (
@@ -843,20 +834,8 @@ export function computeDSRReport(input: DSREngineInput): DSRReportResult {
           cat.includes("smoking") ||
           cat.includes("tour") ||
           cat.includes("food") ||
-          cat.includes("bev") ||
-          cat.includes("extra_bed") ||
-          desc.includes("extra bed");
-        return (
-          cat.includes("misc") ||
-          cat.includes("other") ||
-          cat.includes("sewa") ||
-          cat.includes("rental") ||
-          desc.includes("misc") ||
-          desc.includes("other") ||
-          desc.includes("sewa") ||
-          desc.includes("rental") ||
-          (!isSpecific && (t.type === "other_income" || cat.includes("income")))
-        );
+          cat.includes("bev");
+        return !isSpecific;
       }
       return cat.includes(keyword) || desc.includes(keyword);
     };

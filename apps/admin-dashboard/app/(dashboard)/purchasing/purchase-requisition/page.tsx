@@ -12,6 +12,13 @@ import { useAuth } from '@/context/AuthContext';
 import s from './PurchaseRequisition.module.css';
 import { pushCostToPnL, removeCostFromPnL } from '@/lib/purchasing/pnlHelper';
 import { formatRupiah } from '@/lib/purchasing/utils';
+import { 
+  DateFilterMode, 
+  isDocMatchingDateFilter, 
+  formatPeriodLabel, 
+  getTodayStr, 
+  getCurrentMonthStr 
+} from '@/lib/purchasing/dateHelper';
 
 // Subcomponents
 import PurchaseRequisitionTable from './components/PurchaseRequisitionTable';
@@ -19,6 +26,8 @@ import PurchaseRequisitionDetail from './components/PurchaseRequisitionDetail';
 import PurchaseRequisitionForm from './components/PurchaseRequisitionForm';
 import PurchaseRequisitionPrint from './components/PurchaseRequisitionPrint';
 import DeleteConfirmModal from '@/components/purchasing/ui/DeleteConfirmModal';
+import PurchasingDateFilterBar from '@/components/purchasing/ui/PurchasingDateFilterBar';
+import PurchasingPeriodicReportPrint from '@/components/purchasing/PurchasingPeriodicReportPrint';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -43,10 +52,17 @@ export default function PurchaseRequisitionPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedPrForForm, setSelectedPrForForm] = useState<any>(null);
 
-  // Filters
-  const [dateFilter, setDateFilter] = useState(() => getTodayStr());
+  // Date Filters
+  const [dateMode, setDateMode] = useState<DateFilterMode>('daily');
+  const [singleDate, setSingleDate] = useState(() => getTodayStr());
+  const [selectedMonth, setSelectedMonth] = useState(() => getCurrentMonthStr());
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [statusFilter, setStatusFilter] = useState<'pending' | 'received' | null>(null);
   const [activeKpiFilter, setActiveKpiFilter] = useState<'all' | 'pending' | 'received' | 'value' | null>(null);
+
+  // Print Mode ('single' for voucher detail, 'report' for periodic report)
+  const [printMode, setPrintMode] = useState<'single' | 'report'>('report');
 
   // Delete modal states
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -56,38 +72,36 @@ export default function PurchaseRequisitionPage() {
     let result = prs.filter(pr => {
       if (statusFilter === 'pending' && !(pr.status === 'draft' || pr.status === 'submitted')) return false;
       if (statusFilter === 'received' && !(pr.status === 'received' || pr.status === 'approved')) return false;
-      if (!dateFilter) return true;
-      const dateObj = pr.created_at?.toDate ? pr.created_at.toDate() : new Date(pr.created_at);
-      const dateString = dateObj.toISOString().split('T')[0];
-      return dateString === dateFilter;
+      return isDocMatchingDateFilter(pr, dateMode, singleDate, selectedMonth, startDate, endDate);
     });
 
     if (activeKpiFilter === 'value') {
       result = [...result].sort((a, b) => (Number(b.total_estimated) || 0) - (Number(a.total_estimated) || 0));
     }
     return result;
-  }, [prs, dateFilter, statusFilter, activeKpiFilter]);
+  }, [prs, dateMode, singleDate, selectedMonth, startDate, endDate, statusFilter, activeKpiFilter]);
 
   const handleKpiClick = (type: 'all' | 'pending' | 'received' | 'value') => {
     if (activeKpiFilter === type) {
       setActiveKpiFilter(null);
       setStatusFilter(null);
-      setDateFilter(getTodayStr());
+      setDateMode('daily');
+      setSingleDate(getTodayStr());
       return;
     }
     setActiveKpiFilter(type);
     if (type === 'all') {
       setStatusFilter(null);
-      setDateFilter('');
+      setDateMode('all');
     } else if (type === 'pending') {
       setStatusFilter('pending');
-      setDateFilter('');
+      setDateMode('all');
     } else if (type === 'received') {
       setStatusFilter('received');
-      setDateFilter('');
+      setDateMode('all');
     } else if (type === 'value') {
       setStatusFilter(null);
-      setDateFilter('');
+      setDateMode('all');
     }
   };
 
@@ -255,10 +269,18 @@ export default function PurchaseRequisitionPage() {
     }
   };
 
-  const handlePrint = () => {
+  const handlePrintSingle = () => {
+    setPrintMode('single');
     setTimeout(() => {
       window.print();
-    }, 100);
+    }, 120);
+  };
+
+  const handlePrintReport = () => {
+    setPrintMode('report');
+    setTimeout(() => {
+      window.print();
+    }, 120);
   };
 
   // FULL PAGE DOCUMENT VIEW (not a popup)
@@ -406,48 +428,48 @@ export default function PurchaseRequisitionPage() {
           </div>
         </div>
 
-        {/* Filter Bar */}
-        <div className={s.filterBar}>
-          <div className={s.filterGroup}>
-            <span className={s.filterLabel}>Requisition Date</span>
-            <input 
-              type="date" 
-              className={s.filterInput} 
-              value={dateFilter} 
-              onChange={e => {
-                setDateFilter(e.target.value);
-                setActiveKpiFilter(null);
-              }} 
-            />
-          </div>
-          <div className={s.filterActions}>
-            <button 
-              type="button" 
-              className={s.filterTodayBtn}
-              onClick={() => {
-                setDateFilter(getTodayStr());
-                setActiveKpiFilter(null);
-              }}
-            >
-              Today
-            </button>
-            {dateFilter && (
-              <button 
-                type="button" 
-                className={s.filterClearBtn}
-                onClick={() => setDateFilter('')}
-              >
-                Clear Filter
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Unified Purchasing Date Filter Bar */}
+        <PurchasingDateFilterBar
+          mode={dateMode}
+          onModeChange={mode => {
+            setDateMode(mode);
+            setActiveKpiFilter(null);
+          }}
+          singleDate={singleDate}
+          onSingleDateChange={d => {
+            setSingleDate(d);
+            setActiveKpiFilter(null);
+          }}
+          selectedMonth={selectedMonth}
+          onSelectedMonthChange={m => {
+            setSelectedMonth(m);
+            setActiveKpiFilter(null);
+          }}
+          startDate={startDate}
+          onStartDateChange={d => {
+            setStartDate(d);
+            setActiveKpiFilter(null);
+          }}
+          endDate={endDate}
+          onEndDateChange={d => {
+            setEndDate(d);
+            setActiveKpiFilter(null);
+          }}
+          filteredCount={filteredPrs.length}
+          totalCount={prs.length}
+          onExportPdf={handlePrintReport}
+          onReset={() => {
+            setStartDate('');
+            setEndDate('');
+            setActiveKpiFilter(null);
+          }}
+        />
 
         {/* Active Filter Banner */}
         {activeKpiFilter && (
           <div className={s.activeFilterBanner}>
             <div className={s.activeFilterText}>
-              <span>⚡ Filter Aktif:</span>
+              <span>⚡ Filter Status Aktif:</span>
               <strong>
                 {activeKpiFilter === 'all' && `Menampilkan Seluruh Requisition (${filteredPrs.length} records)`}
                 {activeKpiFilter === 'pending' && `Status: Menunggu Persetujuan (${filteredPrs.length} records)`}
@@ -461,7 +483,8 @@ export default function PurchaseRequisitionPage() {
               onClick={() => {
                 setActiveKpiFilter(null);
                 setStatusFilter(null);
-                setDateFilter(getTodayStr());
+                setDateMode('daily');
+                setSingleDate(getTodayStr());
               }}
             >
               Reset Filter
@@ -487,7 +510,7 @@ export default function PurchaseRequisitionPage() {
             onApprove={() => handleApprove(selectedPr.id)}
             onReceive={() => handleReceive(selectedPr)}
             onDelete={() => handleDeleteClick(selectedPr.id)}
-            onPrint={handlePrint}
+            onPrint={handlePrintSingle}
             onUpdatePaymentStatus={handleUpdatePaymentStatus}
           />
         </div>
@@ -500,8 +523,18 @@ export default function PurchaseRequisitionPage() {
         />
       </div>
 
-      {/* Printable Template (hidden on screen) */}
-      {selectedPr && <PurchaseRequisitionPrint selectedPr={selectedPr} />}
+      {/* Printable Single Requisition Voucher */}
+      {printMode === 'single' && selectedPr && <PurchaseRequisitionPrint selectedPr={selectedPr} />}
+
+      {/* Printable Periodic Report List */}
+      {printMode === 'report' && (
+        <PurchasingPeriodicReportPrint 
+          type="PR"
+          periodLabel={formatPeriodLabel(dateMode, singleDate, selectedMonth, startDate, endDate)}
+          records={filteredPrs}
+          totalValue={filteredPrs.reduce((acc, p) => acc + (Number(p.total_estimated) || 0), 0)}
+        />
+      )}
     </motion.div>
   );
 }
