@@ -122,7 +122,7 @@ function HrdPageContent() {
   return (
     <div className={styles.page}>
       {/* Header section synchronized with sidebar selection */}
-      <div className={styles.pageHeader}>
+      <div className={`${styles.pageHeader} no-print`}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
           <span
             style={{

@@ -619,6 +619,7 @@ input[type="date"].dateInput {
         overflow: visible !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+    transform: none !important;
     }
 
     /* Hide standard dashboard chrome, sidebar, topbar, mobile nav, fixed floating elements & footer */
@@ -869,8 +870,8 @@ input[type="number"] {
    ════════════════════════════════════════════ */
 @media print {
   @page {
-    size: A4 portrait;
-    margin: 0;
+    size: auto;
+    margin: auto;
   }
 
   html, body {
@@ -879,5 +880,6 @@ input[type="number"] {
     background: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    transform: none !important;
   }
 }

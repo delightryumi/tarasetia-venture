@@ -124,7 +124,10 @@ export function StaffLogModal({ staffName, logs, shifts, onClose }: Props) {
                       </div>
                     </td>
                     <td style={{ color: log.overtimeMinutes > 0 ? "#d97706" : "inherit" }}>
-                      {log.overtimeMinutes > 0 ? `${(log.overtimeMinutes / 60).toFixed(1)} jam` : "—"}
+                      {(() => {
+                        const otH = typeof log.overtimeHours === "number" ? log.overtimeHours : Math.floor((log.overtimeMinutes || 0) / 60);
+                        return otH > 0 ? `${otH} jam` : "—";
+                      })()}
                     </td>
                   </tr>
                 );

@@ -91,8 +91,8 @@ export default function PurchasingPeriodicReportPrint({
           __html: `
             @media print {
               @page {
-                size: A4 landscape !important;
-                margin: 10mm 12mm 12mm 12mm !important;
+                size: A4 landscape;
+                margin: 12mm 15mm 15mm 15mm;
               }
               html, body {
                 margin: 0 !important;

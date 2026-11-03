@@ -273,11 +273,16 @@ export async function POST(request: Request) {
         }
       }
 
+      // Pembulatan jam lembur per hari transaksi (Floor: hanya jam penuh, menit sisa diabaikan)
+      const overtimeHours = Math.floor(overtimeMinutes / 60);
+
       await targetLogRef.update({
         clockOut: { time: now, selfieUrl, gps },
         durationMinutes,
         overtimeMinutes,
-        overtimeApproved: overtimeMinutes > 0 ? null : false,
+        overtimeHours,
+        // Jika jam lembur bulat > 0 maka masuk antrean persetujuan, jika 0 maka otomatis false (tidak ada jam lembur)
+        overtimeApproved: overtimeHours > 0 ? null : false,
       });
     }
 
@@ -325,6 +330,7 @@ const ALLOWED_OVERRIDE_FIELDS = new Set([
   "durationMinutes",
   "lateMinutes",
   "overtimeMinutes",
+  "overtimeHours",
   "overtimeApproved",
   "shiftName",
   "shiftId",

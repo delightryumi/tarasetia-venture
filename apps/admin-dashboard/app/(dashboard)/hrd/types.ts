@@ -54,6 +54,7 @@ export interface AttendanceLog {
   durationMinutes: number;
   status: AttendanceStatus;
   overtimeMinutes: number;
+  overtimeHours?: number; // Jam lembur bulat (floor per hari)
   overtimeApproved: boolean | null;  // null = belum diproses
   correctedBy?: string;   // admin uid jika dikoreksi manual
   correctionNote?: string;

@@ -1,0 +1,336 @@
+/* ==========================================================================
+   PayrollFilterBar.module.css
+   Modern, editorial filter bar for Payroll (Monthly & Custom Date)
+   Supports Light & Dark mode.
+   ========================================================================== */
+
+.filterCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--s-surface-card, #ffffff);
+  border: 1px solid var(--s-border, #e2e8f0);
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s ease;
+}
+
+:global(.dark) .filterCard {
+  background: #0f172a;
+  border-color: #1e293b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ── Mode Segmented Switch ── */
+.modeTabs {
+  display: inline-flex;
+  align-items: center;
+  background: var(--s-surface-subtle, #f1f5f9);
+  border: 1px solid var(--s-border, #e2e8f0);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+:global(.dark) .modeTabs {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.modeTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--s-muted, #64748b);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+:global(.dark) .modeTab {
+  color: #94a3b8;
+}
+
+.modeTab:hover {
+  color: var(--s-ink, #0f172a);
+}
+
+:global(.dark) .modeTab:hover {
+  color: #f8fafc;
+}
+
+.modeTabActive {
+  background: #ffffff;
+  color: #1e4d3a !important;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+:global(.dark) .modeTabActive {
+  background: #0f172a;
+  color: #34d399 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Actions ── */
+.topActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btnCalculate {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px;
+  background: #1e4d3a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(30, 77, 58, 0.25);
+  white-space: nowrap;
+}
+
+.btnCalculate:hover:not(:disabled) {
+  background: #163a2c;
+  transform: translateY(-1px);
+}
+
+.btnCalculate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:global(.dark) .btnCalculate {
+  background: #285f47;
+}
+
+:global(.dark) .btnCalculate:hover:not(:disabled) {
+  background: #347a5b;
+}
+
+.btnExportPdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px;
+  background: #ffffff;
+  color: #1e4d3a;
+  border: 1.5px solid #1e4d3a;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btnExportPdf:hover {
+  background: rgba(30, 77, 58, 0.06);
+  transform: translateY(-1px);
+}
+
+:global(.dark) .btnExportPdf {
+  background: #0f172a;
+  border-color: #34d399;
+  color: #34d399;
+}
+
+:global(.dark) .btnExportPdf:hover {
+  background: rgba(52, 211, 153, 0.1);
+}
+
+/* ── Controls Row ── */
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--s-border, #e2e8f0);
+}
+
+:global(.dark) .controlsRow {
+  border-top-color: #1e293b;
+}
+
+.controlsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.controlLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--s-muted, #64748b);
+  white-space: nowrap;
+}
+
+:global(.dark) .controlLabel {
+  color: #94a3b8;
+}
+
+.dateInput {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-family: var(--p-font-mono, monospace);
+  font-weight: 600;
+  color: var(--s-ink, #0f172a);
+  background: var(--s-surface-subtle, #f8fafc);
+  border: 1px solid var(--s-border, #cbd5e1);
+  border-radius: 7px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:global(.dark) .dateInput {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.dateInput:focus {
+  border-color: #1e4d3a;
+  background: #ffffff;
+}
+
+:global(.dark) .dateInput:focus {
+  border-color: #34d399;
+  background: #0f172a;
+}
+
+.rangeSeparator {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--s-muted, #64748b);
+}
+
+:global(.dark) .rangeSeparator {
+  color: #94a3b8;
+}
+
+.quickBtn {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: var(--s-surface-subtle, #f1f5f9);
+  border: 1px solid var(--s-border, #e2e8f0);
+  border-radius: 7px;
+  color: var(--s-ink, #334155);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+:global(.dark) .quickBtn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+.quickBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+:global(.dark) .quickBtn:hover {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.periodSummary {
+  font-size: 12px;
+  color: var(--s-muted, #475569);
+  font-weight: 600;
+  margin-left: auto;
+}
+
+:global(.dark) .periodSummary {
+  color: #94a3b8;
+}
+
+.periodHighlight {
+  color: #1e4d3a;
+  font-weight: 700;
+}
+
+:global(.dark) .periodHighlight {
+  color: #34d399;
+}
+
+/* ── Mobile Layout ── */
+@media (max-width: 768px) {
+  .topRow, .controlsRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modeTabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .modeTab {
+    flex: 1;
+    justify-content: center;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .topActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btnCalculate, .btnExportPdf {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .controlsGroup {
+    width: 100%;
+  }
+
+  .dateInput {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .periodSummary {
+    margin-left: 0;
+    width: 100%;
+    text-align: right;
+  }
+}
+

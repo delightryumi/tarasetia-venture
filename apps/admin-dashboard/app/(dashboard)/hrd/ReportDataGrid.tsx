@@ -148,7 +148,10 @@ export function ReportDataGrid({ filteredLogs, staffs, shifts, periodLabel, onDe
                       {log.durationMinutes > 0 ? (log.durationMinutes / 60).toFixed(1) : "—"}
                     </td>
                     <td style={{ fontWeight: log.overtimeMinutes > 0 ? 600 : 400, color: log.overtimeMinutes > 0 ? "#d97706" : undefined }}>
-                      {log.overtimeMinutes > 0 ? (log.overtimeMinutes / 60).toFixed(1) : "—"}
+                      {(() => {
+                        const otH = typeof log.overtimeHours === "number" ? log.overtimeHours : Math.floor((log.overtimeMinutes || 0) / 60);
+                        return otH > 0 ? `${otH} jam` : "—";
+                      })()}
                     </td>
                     <td style={{ fontSize: 12, color: "var(--s-muted)", minWidth: 150, maxWidth: 280, whiteSpace: "normal", wordBreak: "break-word" }}>
                       {log.lateReason || "—"}

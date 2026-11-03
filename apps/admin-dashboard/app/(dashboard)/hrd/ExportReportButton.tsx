@@ -26,6 +26,7 @@ export function ExportReportButton({ periodLabel, filteredLogs, staffs, hotelCod
           const staff = staffs.find((s) => s.id === l.staffId);
           const inTime = l.clockIn?.time ? new Date(l.clockIn.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—";
           const outTime = l.clockOut?.time ? new Date(l.clockOut.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—";
+          const otHours = typeof l.overtimeHours === "number" ? l.overtimeHours : Math.floor((l.overtimeMinutes || 0) / 60);
           return [
             l.date,
             l.staffName,
@@ -35,7 +36,7 @@ export function ExportReportButton({ periodLabel, filteredLogs, staffs, hotelCod
             inTime,
             outTime,
             l.durationMinutes > 0 ? (l.durationMinutes / 60).toFixed(1) : "—",
-            l.overtimeMinutes > 0 ? (l.overtimeMinutes / 60).toFixed(1) : "—",
+            otHours > 0 ? otHours : "—",
             l.lateReason || "—",
           ];
         }),
@@ -66,6 +67,7 @@ export function ExportReportButton({ periodLabel, filteredLogs, staffs, hotelCod
         const staff = staffs.find((s) => s.id === l.staffId);
         const inTime = l.clockIn?.time ? new Date(l.clockIn.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—";
         const outTime = l.clockOut?.time ? new Date(l.clockOut.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—";
+        const otHours = typeof l.overtimeHours === "number" ? l.overtimeHours : Math.floor((l.overtimeMinutes || 0) / 60);
         return `<tr>
           <td>${l.date}</td>
           <td>${l.staffName}</td>
@@ -75,7 +77,7 @@ export function ExportReportButton({ periodLabel, filteredLogs, staffs, hotelCod
           <td>${inTime}</td>
           <td>${outTime}</td>
           <td>${l.durationMinutes > 0 ? (l.durationMinutes / 60).toFixed(1) : "—"}</td>
-          <td>${l.overtimeMinutes > 0 ? (l.overtimeMinutes / 60).toFixed(1) : "—"}</td>
+          <td>${otHours > 0 ? `${otHours} jam` : "—"}</td>
           <td>${l.lateReason || "—"}</td>
         </tr>`;
       })

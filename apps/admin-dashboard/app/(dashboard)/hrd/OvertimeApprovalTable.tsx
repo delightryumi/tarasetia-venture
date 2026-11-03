@@ -29,7 +29,7 @@ export function OvertimeApprovalTable({ hotelCode }: Props) {
     const unsub = onSnapshot(q, (snap) => {
       const list = snap.docs
         .map((d) => ({ id: d.id, ...d.data() } as AttendanceLog))
-        .filter((l) => l.overtimeMinutes > 0);
+        .filter((l) => (typeof l.overtimeHours === "number" ? l.overtimeHours : Math.floor((l.overtimeMinutes || 0) / 60)) > 0);
       list.sort((a, b) => b.date.localeCompare(a.date));
       setLogs(list);
       setLoading(false);
@@ -39,6 +39,7 @@ export function OvertimeApprovalTable({ hotelCode }: Props) {
 
   const handleApprove = async (log: AttendanceLog, approved: boolean) => {
     setProcessing(log.id);
+    const otH = typeof log.overtimeHours === "number" ? log.overtimeHours : Math.floor((log.overtimeMinutes || 0) / 60);
     try {
       await fetch("/api/attendance", {
         method: "PATCH",
@@ -48,8 +49,8 @@ export function OvertimeApprovalTable({ hotelCode }: Props) {
           yyyyMM,
           logId: log.id,
           correctedBy: (user as any)?.name || user?.email || "HRD",
-          correctionNote: approved ? "Lembur disetujui" : "Lembur tidak disetujui",
-          overrides: { overtimeApproved: approved },
+          correctionNote: approved ? `Lembur disetujui (${otH} jam)` : "Lembur tidak disetujui",
+          overrides: { overtimeApproved: approved, overtimeHours: otH },
         }),
       });
     } catch {
@@ -91,8 +92,8 @@ export function OvertimeApprovalTable({ hotelCode }: Props) {
             </thead>
             <tbody>
               {logs.map((log) => {
-                const otH = Math.floor(log.overtimeMinutes / 60);
-                const otM = log.overtimeMinutes % 60;
+                const otH = typeof log.overtimeHours === "number" ? log.overtimeHours : Math.floor((log.overtimeMinutes || 0) / 60);
+                const otM = (log.overtimeMinutes || 0) % 60;
                 const cout = log.clockOut?.time
                   ? new Date(log.clockOut.time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
                   : "—";
@@ -105,8 +106,13 @@ export function OvertimeApprovalTable({ hotelCode }: Props) {
                     <td style={{ fontSize: 12 }}>{dateLabel}</td>
                     <td>
                       <span style={{ fontWeight: 600, color: "#d97706" }}>
-                        {otH > 0 ? `${otH}j ` : ""}{otM}m
+                        {otH} Jam
                       </span>
+                      {otM > 0 && (
+                        <span style={{ fontSize: 11, color: "var(--s-muted)", marginLeft: 6 }}>
+                          (aktual: {Math.floor(log.overtimeMinutes / 60)}j {otM}m)
+                        </span>
+                      )}
                     </td>
                     <td style={{ fontSize: 12 }}>{cout}</td>
                     <td>
