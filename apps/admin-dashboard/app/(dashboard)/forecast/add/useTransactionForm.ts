@@ -362,9 +362,54 @@ export const useTransactionForm = () => {
                     where("date", "<=", maxDateStr)
                 ));
                 const allBookings = bSnap.docs.flatMap(d => d.data().entries || []);
-                const uniqueBookings = allBookings.filter((e: any, idx: number, self: any[]) => 
-                    self.findIndex(t => t.timestamp === e.timestamp) === idx
-                );
+                
+                // Group & Deduplicate accommodation entries across daily documents so multi-night stays aren't counted twice
+                const bookingGroups = new Map<string, any[]>();
+                allBookings.forEach((e: any) => {
+                    const isPOS = e.guestName?.startsWith('POS Order #') || Array.isArray(e.posItems) || !!e.revenueType;
+                    if (isPOS) return;
+                    const isPelunasan = e.isHidden || e.isPelunasan || e.type === 'pelunasan_ar' || e.type === 'pelunasan_reversal' || e.guestName?.startsWith('Koreksi Tanggal Pelunasan') || e.guestName?.startsWith('Pelunasan Piutang');
+                    if (isPelunasan) return;
+
+                    let key: string;
+                    const bId = e.bookingId && e.bookingId !== '-' ? String(e.bookingId).trim() : null;
+                    const rNum = String(e.roomNumber || e.roomIndex || '').trim();
+                    const rType = String(e.roomTypeId || e.roomType || '').trim();
+                    const guest = String(e.guestName || '').trim().toLowerCase();
+                    const cIn = e.checkInDate || e.checkIn || '';
+                    const cOut = e.checkOutDate || e.checkOut || '';
+
+                    if (bId) {
+                        key = `b_${bId}_${rNum}_${rType}`;
+                    } else if (guest && cIn) {
+                        key = `g_${guest}_${rNum}_${rType}_${cIn}_${cOut}`;
+                    } else {
+                        key = `t_${e.timestamp || Math.random()}`;
+                    }
+
+                    if (!bookingGroups.has(key)) {
+                        bookingGroups.set(key, []);
+                    }
+                    bookingGroups.get(key)!.push(e);
+                });
+
+                const uniqueBookings: any[] = [];
+                bookingGroups.forEach((groupEntries) => {
+                    const isCancelled = groupEntries.some(e => {
+                        const s = (e.status || '').toUpperCase();
+                        const ps = (e.paymentStatus || '').toUpperCase();
+                        return s === 'CANCELLED' || s === 'CANCEL' || ps === 'CANCELLED' || ps === 'CANCEL' || s === 'VOID' || s === 'VOIDED' || e.isHidden;
+                    });
+
+                    groupEntries.sort((a, b) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime());
+                    const rep = { ...groupEntries[groupEntries.length - 1] };
+                    if (isCancelled) {
+                        rep.status = 'CANCELLED';
+                        rep.paymentStatus = 'CANCELLED';
+                    }
+                    uniqueBookings.push(rep);
+                });
+
                 setOccupancy(uniqueBookings);
 
                 // Fetch ARI Overrides bounded to the same window for Stop Sell validation
@@ -826,8 +871,10 @@ export const useTransactionForm = () => {
         return false;
     }, [ariOverrides, ratePlans, roomTypes]);
 
-    const isAvailable = useCallback(() => {
-        if (revenueType !== "room" || !form.checkIn || !form.checkOut) return true;
+    const checkAvailability = useCallback(() => {
+        if (revenueType !== "room" || !form.checkIn || !form.checkOut) {
+            return { available: true };
+        }
 
         const startD = new Date(form.checkIn);
         const endD = new Date(form.checkOut);
@@ -840,6 +887,8 @@ export const useTransactionForm = () => {
             }
         });
 
+        const allActiveBookings = [...occupancy, ...queue];
+
         // Loop through each night of the stay
         for (let d = new Date(startD); d < endD; d.setDate(d.getDate() + 1)) {
             const dateStr = d.toISOString().split('T')[0];
@@ -847,7 +896,11 @@ export const useTransactionForm = () => {
             // 1. Check Stop Sell for each room
             for (const rm of form.rooms) {
                 if (rm.roomTypeId && checkStopSell(rm.roomTypeId, rm.ratePlanId || selectedRatePlanId, dateStr)) {
-                    return false;
+                    const rtName = roomTypes.find(t => t.id === rm.roomTypeId)?.name || "Kamar";
+                    return {
+                        available: false,
+                        reason: `Kamar "${rtName}" berstatus STOP SELL pada tanggal ${dateStr}. Tidak dapat melakukan pemesanan untuk tanggal ini!`
+                    };
                 }
             }
             
@@ -855,8 +908,13 @@ export const useTransactionForm = () => {
                 const type = roomTypes.find(rt => rt.id === typeId);
                 if (!type) continue;
 
-                // Count existing bookings for this room type on this date
-                const occupied = occupancy.filter(e => {
+                // Existing bookings for this room type on this date
+                const matchingBookings = allActiveBookings.filter(e => {
+                    if (isEditMode && originalEntry) {
+                        if (originalEntry.bookingId && e.bookingId && e.bookingId === originalEntry.bookingId) return false;
+                        if (originalEntry.timestamp && String(e.timestamp) === String(originalEntry.timestamp)) return false;
+                    }
+
                     const statusUpper = e.status?.toUpperCase();
                     const paymentStatusUpper = e.paymentStatus?.toUpperCase();
                     const isCancelled = statusUpper === 'CANCELLED' || 
@@ -877,14 +935,31 @@ export const useTransactionForm = () => {
                         return e.effectiveDate === dateStr;
                     }
                     return false;
-                }).reduce((acc, curr) => acc + (Number(curr.roomCount) || 1), 0);
+                });
 
+                const occupied = matchingBookings.reduce((acc, curr) => acc + (Number(curr.roomCount) || 1), 0);
                 const totalAllotment = parseInt(type.roomCount) || parseInt(type.totalRooms) || parseInt(type.allotment) || parseInt(type.count_of_rooms) || (type.physicalRooms && type.physicalRooms.length > 0 ? type.physicalRooms.length : 0) || 4;
-                if (occupied + count > totalAllotment) return false;
+                
+                if (occupied + count > totalAllotment) {
+                    const guestSummary = matchingBookings.map(b => {
+                        const rN = b.roomNumber ? `Kamar ${b.roomNumber}` : '';
+                        const gN = b.guestName || 'Tamu';
+                        return rN ? `${rN} (${gN})` : gN;
+                    }).join(', ');
+
+                    return {
+                        available: false,
+                        reason: `Kamar "${type.name}" tidak mencukupi pada tanggal ${dateStr}! Terisi ${occupied}/${totalAllotment} unit${guestSummary ? ` [${guestSummary}]` : ''}. Sisa kamar hanya ${Math.max(0, totalAllotment - occupied)}, tidak cukup untuk menambah ${count} kamar lagi.`
+                    };
+                }
             }
         }
-        return true;
-    }, [form.checkIn, form.checkOut, form.rooms, occupancy, roomTypes, revenueType, checkStopSell, selectedRatePlanId]);
+        return { available: true };
+    }, [form.checkIn, form.checkOut, form.rooms, occupancy, queue, roomTypes, revenueType, checkStopSell, selectedRatePlanId, isEditMode, originalEntry]);
+
+    const isAvailable = useCallback(() => {
+        return checkAvailability().available;
+    }, [checkAvailability]);
 
     const addRoom = () => {
         setForm(prev => {
@@ -1017,7 +1092,36 @@ export const useTransactionForm = () => {
                 // Check if this room number is already occupied in existing database bookings on these dates
                 const availableForThisRoom = getAvailableRoomNumbers(rm.roomTypeId, rIdx);
                 if (!availableForThisRoom.map(n => String(n).trim().toUpperCase()).includes(currentNumClean)) {
-                    toast.error(`Kamar nomor "${rm.roomNumber}" (${roomLabel}) sudah terisi oleh tamu lain pada tanggal tersebut! Mohon pilih kamar fisik yang masih kosong.`);
+                    const allActiveBookings = [...occupancy, ...queue];
+                    const conflictGuest = allActiveBookings.find(e => {
+                        if (isEditMode && originalEntry) {
+                            if (originalEntry.bookingId && e.bookingId && e.bookingId === originalEntry.bookingId) return false;
+                            if (originalEntry.timestamp && String(e.timestamp) === String(originalEntry.timestamp)) return false;
+                        }
+                        const sUpper = (e.status || '').toUpperCase();
+                        const psUpper = (e.paymentStatus || '').toUpperCase();
+                        const isCancelled = sUpper === 'CANCELLED' || sUpper === 'CANCEL' || psUpper === 'CANCELLED' || psUpper === 'CANCEL' || sUpper === 'VOID' || sUpper === 'VOIDED' || e.isHidden;
+                        if (e.type !== 'accommodation' || isCancelled) return false;
+                        if (String(e.roomNumber || '').trim().toUpperCase() !== currentNumClean) return false;
+
+                        const startD = new Date(form.checkIn);
+                        const endD = new Date(form.checkOut);
+                        for (let d = new Date(startD); d < endD; d.setDate(d.getDate() + 1)) {
+                            const dateStr = d.toISOString().split('T')[0];
+                            if (e.checkInDate && e.checkOutDate) {
+                                if (dateStr >= e.checkInDate && dateStr < e.checkOutDate) return true;
+                            } else if (e.effectiveDate === dateStr) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+
+                    if (conflictGuest) {
+                        toast.error(`Kamar nomor "${rm.roomNumber}" (${roomLabel}) sudah ditempati oleh tamu "${conflictGuest.guestName || 'Tamu'}" (${conflictGuest.checkInDate || ''} s/d ${conflictGuest.checkOutDate || ''}, ${conflictGuest.channel || 'Direct'})! Mohon pilih nomor kamar yang masih kosong.`);
+                    } else {
+                        toast.error(`Kamar nomor "${rm.roomNumber}" (${roomLabel}) sudah terisi oleh tamu lain pada tanggal tersebut! Mohon pilih kamar fisik yang masih kosong.`);
+                    }
                     return null;
                 }
 
@@ -1104,9 +1208,12 @@ export const useTransactionForm = () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const isFutureOrToday = checkInDate >= today;
-        if (isRoom && !isAvailable() && isFutureOrToday) {
-            toast.error("Requested room types are sold out or closed for these dates");
-            return null;
+        if (isRoom && isFutureOrToday) {
+            const availCheck = checkAvailability();
+            if (!availCheck.available) {
+                toast.error(availCheck.reason || "Kamar yang dipilih sudah penuh atau ditutup pada tanggal tersebut!");
+                return null;
+            }
         }
 
         let transactionEntries: any[] = [];
@@ -1395,7 +1502,7 @@ export const useTransactionForm = () => {
         }
 
         return transactionEntries;
-    }, [form, revenueType, balance, isAvailable, nights, roomTypes, totalGross, ratePlans, selectedRatePlanId]);
+    }, [form, revenueType, balance, checkAvailability, isAvailable, nights, roomTypes, totalGross, ratePlans, selectedRatePlanId]);
 
     const addToQueue = () => {
         const entries = prepareEntries();
@@ -2014,6 +2121,7 @@ export const useTransactionForm = () => {
         addRoom,
         removeRoom,
         updateRoom,
+        checkAvailability,
         isAvailable,
         getAvailableRoomNumbers,
         router,
