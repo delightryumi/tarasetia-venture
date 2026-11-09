@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useCurrency } from '@/hooks/useCurrency';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { encodeReceiptData } from '@/lib/receiptPayload';
 import QRCode from 'qrcode';
@@ -542,13 +542,43 @@ export default function ThermalReceipt({
 
       // Realtime listener from Firestore so all cashier workstations get synced
       const receiptRef = doc(db, 'hotels', code, 'settings', 'pos_receipt');
+      const landingRef = doc(db, 'hotels', code, 'settings', 'landingPage');
+      const hotelDocRef = doc(db, 'hotels', code);
+
+      const fetchFallbackLogoOnce = async () => {
+        try {
+          const landingSnap = await getDoc(landingRef);
+          if (landingSnap.exists()) {
+            const data = landingSnap.data();
+            const fallbackLogo = data.lightLogo || data.logoUrl || data.darkLogo;
+            if (fallbackLogo) {
+              setLogoUrl((prev) => prev || fallbackLogo);
+              return;
+            }
+          }
+          const hotelSnap = await getDoc(hotelDocRef);
+          if (hotelSnap.exists()) {
+            const data = hotelSnap.data();
+            if (data.logoUrl) {
+              setLogoUrl((prev) => prev || data.logoUrl);
+            }
+          }
+        } catch {
+          // Ignore fallback read errors
+        }
+      };
+
       const unsubFirestore = onSnapshot(receiptRef, (snap) => {
         if (snap.exists()) {
           const cloudConfig = snap.data();
           setCustomConfig(cloudConfig);
           if (cloudConfig.logoUrl) {
             setLogoUrl(cloudConfig.logoUrl);
+          } else {
+            fetchFallbackLogoOnce();
           }
+        } else {
+          fetchFallbackLogoOnce();
         }
       }, (err) => {
         console.warn('ThermalReceipt Firestore sync note:', err);

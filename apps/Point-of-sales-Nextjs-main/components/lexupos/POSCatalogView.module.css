@@ -304,7 +304,7 @@
   overflow-y: auto;
   flex: 1;
   padding-right: 4px;
-  padding-bottom: 24px;
+  padding-bottom: 48px;
   align-content: flex-start;
 }
 
@@ -348,9 +348,8 @@
   cursor: pointer;
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
   position: relative;
-  overflow: hidden;
   user-select: none;
-  min-height: 210px;
+  min-height: 236px;
   box-sizing: border-box;
 }
 
@@ -377,7 +376,7 @@
 /* Guaranteed explicit height prevents any aspect-ratio collapsing */
 .productImgBox {
   width: 100%;
-  height: 120px;
+  height: 114px;
   border-radius: 7px;
   overflow: hidden;
   background: #f4f4f5;
@@ -430,11 +429,12 @@
   flex-direction: column;
   justify-content: space-between;
   flex: 1;
-  min-height: 58px;
+  min-height: 74px;
+  gap: 4px;
 }
 
 .productName {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #18181b;
   line-height: 1.35;
@@ -443,7 +443,8 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin: 0 0 6px 0;
+  margin: 0;
+  word-break: break-word;
 }
 
 :global(.dark) .productName {
@@ -452,10 +453,12 @@
 
 .productPriceRow {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   margin-top: auto;
   padding-top: 4px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .productPrice {
@@ -463,6 +466,15 @@
   font-weight: 700;
   color: #18181b;
   letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.productStockText {
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 2px;
+  display: block;
 }
 
 :global(.dark) .productPrice {
@@ -522,6 +534,7 @@
 
 .productTable {
   width: 100%;
+  min-width: 580px;
   border-collapse: collapse;
   text-align: left;
   font-size: 12.5px;
@@ -616,6 +629,7 @@
   color: #18181b;
   font-size: 12.5px;
   line-height: 1.35;
+  word-break: break-word;
 }
 
 :global(.dark) .tableProductName {

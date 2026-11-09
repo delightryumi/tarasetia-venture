@@ -379,8 +379,39 @@
 /* Forgot Password Row (Aligned to Right) */
 .forgotPassRow {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     margin-top: clamp(8px, 1.2vh, 12px);
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.registerPromptBtn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #1e3a2f;
+    font-weight: 700;
+    font-size: clamp(11.5px, 1.25vh, 12.5px);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.registerPromptBtn:hover {
+    color: #052e16;
+    text-decoration: underline;
+}
+
+:global(.dark) .registerPromptBtn {
+    color: #34d399;
+}
+
+:global(.dark) .registerPromptBtn:hover {
+    color: #6ee7b7;
 }
 
 .forgotPassLink {

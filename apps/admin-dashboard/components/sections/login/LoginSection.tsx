@@ -25,6 +25,7 @@ import {
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { CloudflareTurnstile } from "@/components/shared/CloudflareTurnstile";
+import { RegisterModal } from "./RegisterModal";
 import styles from "./login.module.css";
 
 export const LoginSection = () => {
@@ -119,6 +120,7 @@ export const LoginSection = () => {
     }, [language]);
     const [showLangMenu, setShowLangMenu] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
+    const [showRegisterModal, setShowRegisterModal] = useState(false);
 
     const [inactivityNotice, setInactivityNotice] = useState("");
 
@@ -666,8 +668,16 @@ export const LoginSection = () => {
                                     )}
                                 </button>
 
-                                {/* Forgot Password Link on Right */}
+                                {/* Links Row: Register Free & Forgot Password */}
                                 <div className={styles.forgotPassRow}>
+                                    <button
+                                        type="button"
+                                        className={styles.registerPromptBtn}
+                                        onClick={() => setShowRegisterModal(true)}
+                                    >
+                                        <span>Register Free</span>
+                                    </button>
+
                                     <button 
                                         type="button" 
                                         className={styles.forgotPassLink}
@@ -910,6 +920,16 @@ export const LoginSection = () => {
                     </div>
                 </div>
             )}
+
+            {/* Public Partner Self-Registration Modal (Free 6 Months POS) */}
+            <RegisterModal
+                isOpen={showRegisterModal}
+                onClose={() => setShowRegisterModal(false)}
+                onSuccessPrefill={(newHotelCode, newEmail) => {
+                    setHotelCode(newHotelCode);
+                    setEmail(newEmail);
+                }}
+            />
 
         </div>
     );

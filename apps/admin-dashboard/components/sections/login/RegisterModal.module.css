@@ -1,0 +1,647 @@
+/* RegisterModal.module.css — Precision Modular Styling for Public Partner Registration */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  animation: slideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:global(.dark) .modalContent {
+  background: #11141a;
+  border-color: #272c38;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(18px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+:global(.dark) .modalHeader {
+  background: #11141a;
+  border-bottom-color: #1e2430;
+}
+
+.headerIconBadge {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 5px;
+}
+
+:global(.dark) .headerIconBadge {
+  background: #1a1f2c;
+  border-color: #2e384d;
+}
+
+.taraHeaderLogo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.headerTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+:global(.dark) .headerTitle {
+  color: #f8fafc;
+}
+
+.headerSubtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+:global(.dark) .headerSubtitle {
+  color: #94a3b8;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.closeButton:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+:global(.dark) .closeButton:hover {
+  background: #1e2430;
+  color: #f8fafc;
+}
+
+.modalBody {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Free Promo Card */
+.promoCard {
+  background: linear-gradient(135deg, #1e3a2f 0%, #11221b 100%);
+  border-radius: 12px;
+  padding: 16px 18px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(30, 58, 47, 0.2);
+}
+
+.promoBadgeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.promoBadge {
+  background: #22c55e;
+  color: #052e16;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.promoPeriodText {
+  font-size: 11.5px;
+  color: #a7f3d0;
+  font-weight: 600;
+}
+
+.promoTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.promoDesc {
+  font-size: 11.5px;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.promoFeaturePills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.featurePill {
+  font-size: 10.5px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* Field Groups */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+:global(.dark) .fieldLabel {
+  color: #cbd5e1;
+}
+
+.fieldHint {
+  font-size: 10.5px;
+  color: #94a3b8;
+  font-weight: normal;
+}
+
+.textInput {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.textInput:focus {
+  border-color: #1e3a2f;
+  box-shadow: 0 0 0 3px rgba(30, 58, 47, 0.12);
+}
+
+:global(.dark) .textInput {
+  background: #161b24;
+  border-color: #272c38;
+  color: #f8fafc;
+}
+
+:global(.dark) .textInput:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+
+/* Two-column responsive row */
+.formRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .formRow2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Logo Upload Area */
+.logoUploadBox {
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.15s ease;
+}
+
+:global(.dark) .logoUploadBox {
+  background: #141820;
+  border-color: #2e3544;
+}
+
+.logoPreviewArea {
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+:global(.dark) .logoPreviewArea {
+  background: #1c222d;
+  border-color: #2e3544;
+}
+
+.logoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.logoUploadContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.logoUploadTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+:global(.dark) .logoUploadTitle {
+  color: #f8fafc;
+}
+
+.logoUploadDesc {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+:global(.dark) .logoUploadDesc {
+  color: #94a3b8;
+}
+
+.logoActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.logoUploadBtn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.logoUploadBtn:hover {
+  background: #1e293b;
+}
+
+:global(.dark) .logoUploadBtn {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+:global(.dark) .logoUploadBtn:hover {
+  background: #e2e8f0;
+}
+
+.logoRemoveBtn {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  cursor: pointer;
+}
+
+/* Radio Group: Lead Source (Darimana Tau Tara) */
+.leadSourceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 500px) {
+  .leadSourceGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.leadSourceItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.leadSourceItem:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.leadSourceItemActive {
+  border-color: #1e3a2f !important;
+  background: #f0fdf4 !important;
+  color: #166534 !important;
+  box-shadow: 0 0 0 2px rgba(30, 58, 47, 0.1);
+}
+
+:global(.dark) .leadSourceItem {
+  background: #161b24;
+  border-color: #272c38;
+  color: #cbd5e1;
+}
+
+:global(.dark) .leadSourceItemActive {
+  background: rgba(22, 101, 52, 0.25) !important;
+  border-color: #34d399 !important;
+  color: #4ade80 !important;
+}
+
+/* Error Alert */
+.errorAlert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 12px;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+:global(.dark) .errorAlert {
+  background: rgba(153, 27, 27, 0.2);
+  border-color: rgba(254, 202, 202, 0.2);
+  color: #fca5a5;
+}
+
+/* Modal Footer */
+.modalFooter {
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f8fafc;
+}
+
+:global(.dark) .modalFooter {
+  background: #11141a;
+  border-top-color: #1e2430;
+}
+
+.footerNote {
+  font-size: 11px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:global(.dark) .footerNote {
+  color: #94a3b8;
+}
+
+.submitBtn {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  background: #1e3a2f;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #2a5242;
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Success Card */
+.successCard {
+  padding: 36px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.successIconBadge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  border: 2px solid #a7f3d0;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(.dark) .successIconBadge {
+  background: rgba(5, 150, 105, 0.2);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #34d399;
+}
+
+.successTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+:global(.dark) .successTitle {
+  color: #f8fafc;
+}
+
+.successDesc {
+  font-size: 13px;
+  color: #475569;
+  max-width: 460px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+:global(.dark) .successDesc {
+  color: #94a3b8;
+}
+
+.credentialsBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+:global(.dark) .credentialsBox {
+  background: #161b24;
+  border-color: #272c38;
+}
+
+.credentialRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.credentialLabel {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.credentialValue {
+  color: #0f172a;
+  font-weight: 700;
+  font-family: var(--font-mono-jb, monospace);
+}
+
+:global(.dark) .credentialValue {
+  color: #f8fafc;
+}
+
+.successBtn {
+  height: 42px;
+  padding: 0 24px;
+  border-radius: 8px;
+  background: #1e3a2f;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  margin-top: 8px;
+}
+
+.successBtn:hover {
+  background: #2a5242;
+}
+

@@ -70,8 +70,8 @@ export function useSettings() {
         const footerData = footerSnap.exists() ? (footerSnap.data() as any) : {};
         const hotelData = hotelSnap && hotelSnap.exists() ? (hotelSnap.data() as any) : {};
 
-        // Preferred colored/main logo is lightLogo (for white paper backgrounds), then darkLogo, then logoUrl
-        const logoUrl = landingData.lightLogo || landingData.darkLogo || landingData.logoUrl || undefined;
+        // Preferred colored/main logo is lightLogo (for white paper backgrounds), then darkLogo, then logoUrl from landing or hotel document
+        const logoUrl = landingData.lightLogo || landingData.darkLogo || landingData.logoUrl || hotelData.logoUrl || posData.logoUrl || undefined;
 
         const propertyName = hotelData.name || (posData.name && posData.name !== 'Hotel' ? posData.name : '') || activeHotelName || 'BUMI ANYOM HOTEL';
         const propertyAddress = hotelData.address || posData.address || footerData.address || '';
@@ -80,8 +80,8 @@ export function useSettings() {
 
         const branding: Branding = {
           logoUrl,
-          lightLogo: landingData.lightLogo,
-          darkLogo: landingData.darkLogo,
+          lightLogo: landingData.lightLogo || hotelData.logoUrl || posData.logoUrl,
+          darkLogo: landingData.darkLogo || hotelData.logoUrl || posData.logoUrl,
         };
 
         const property: PropertyInfo = {

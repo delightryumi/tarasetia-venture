@@ -9,6 +9,9 @@ export interface HotelMasterDoc {
   address: string;
   phone: string;
   email: string;
+  logoUrl?: string;
+  leadSource?: string;
+  isSelfRegistered?: boolean;
   billing: {
     plan: "basic" | "premium" | "enterprise" | "custom";
     cycle: "monthly" | "yearly";

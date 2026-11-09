@@ -48,8 +48,20 @@ export const RegistryTable: React.FC<RegistryTableProps> = ({
             <tr key={hotel.hotelCode}>
               <td className={styles.tdPrimary}>
                 <div className={styles.hotelName}>{hotel.name}</div>
-                <div className={styles.hotelCodeBadge}>
-                  ID: {hotel.hotelCode}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className={styles.hotelCodeBadge}>
+                    ID: {hotel.hotelCode}
+                  </div>
+                  {hotel.leadSource && (
+                    <div className={styles.badgeLeadSource} title={`Sumber: ${hotel.leadSource}`}>
+                      Via: {hotel.leadSource}
+                    </div>
+                  )}
+                  {hotel.isSelfRegistered && (
+                    <div className={styles.badgeTrialTag}>
+                      Free 6 Bulan
+                    </div>
+                  )}
                 </div>
               </td>
               <td>

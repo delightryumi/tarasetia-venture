@@ -276,7 +276,7 @@ export default function POSCatalogView({
                         {formatCurrency(product.price)}
                       </span>
                       {product.stock !== undefined && (
-                        <span className={`text-[10px] font-semibold ${isSoldOut ? 'text-red-600' : 'text-neutral-500 dark:text-neutral-400'}`}>
+                        <span className={`${styles.productStockText} ${isSoldOut ? 'text-red-600' : 'text-neutral-500 dark:text-neutral-400'}`}>
                           {isSoldOut ? 'Stok Habis' : `Stok: ${product.stock}`}
                         </span>
                       )}
