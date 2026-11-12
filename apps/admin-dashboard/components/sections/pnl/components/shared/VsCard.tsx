@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { useCurrency } from "@/hooks/useCurrency";
 import classes from "./VsCard.module.css";
 
 interface VsCardProps {
@@ -26,6 +27,7 @@ export function VsCard({
     serviceRate = 0, taxRateIndividual = 0, lostBreakageRate = 0,
     costLabel = "COGS", healthyThreshold = 35, warningThreshold = 50,
 }: VsCardProps) {
+    const { formatCurrency } = useCurrency();
     const taxRateCombined = Number(serviceRate) + Number(taxRateIndividual) + Number(lostBreakageRate);
     const nettRevenue = taxRateCombined > 0 ? revenue / (1 + taxRateCombined / 100) : revenue;
     const costPercentage = nettRevenue > 0 ? (expenses / nettRevenue) * 100 : 0;
@@ -87,13 +89,13 @@ export function VsCard({
                 <div className={classes.col}>
                     <span className={classes.colLabel}>Net Revenue</span>
                     <span className={classes.colValue}>
-                        {loading ? "—" : `Rp ${Math.round(nettRevenue).toLocaleString("id-ID")}`}
+                        {loading ? "—" : formatCurrency(nettRevenue)}
                     </span>
                 </div>
                 <div className={`${classes.col} ${classes.borderLeft}`}>
                     <span className={classes.colLabel}>Expenses</span>
                     <span className={classes.colValue}>
-                        {loading ? "—" : `Rp ${Math.round(expenses).toLocaleString("id-ID")}`}
+                        {loading ? "—" : formatCurrency(expenses)}
                     </span>
                 </div>
             </div>

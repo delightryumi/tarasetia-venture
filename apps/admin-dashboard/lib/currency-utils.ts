@@ -104,7 +104,9 @@ export function formatCurrencyAmount(
     currencyCode?: string,
     options?: { showCode?: boolean }
 ): string {
-    const num = Number(amount) || 0;
+    const rawNum = Number(amount) || 0;
+    const isNegative = rawNum < 0;
+    const num = Math.abs(rawNum);
     const config = getCurrencyConfig(currencyCode);
 
     try {
@@ -115,9 +117,9 @@ export function formatCurrencyAmount(
 
         const prefix = config.symbol ? `${config.symbol} ` : "";
         const suffix = options?.showCode ? ` ${config.code}` : "";
-        return `${prefix}${formatted}${suffix}`;
+        return `${isNegative ? "-" : ""}${prefix}${formatted}${suffix}`;
     } catch {
-        return `${config.symbol} ${num.toFixed(config.decimals)}`;
+        return `${isNegative ? "-" : ""}${config.symbol} ${num.toFixed(config.decimals)}`;
     }
 }
 

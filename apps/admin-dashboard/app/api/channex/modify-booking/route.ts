@@ -54,78 +54,130 @@ export async function POST(req: NextRequest) {
             try {
                 console.log(`[ModifyBooking] Modifying booking ${targetChannexId} on Channex for property ${channexPropertyId}...`);
 
-                const checkInDate = modificationData.checkInDate || modificationData.checkIn;
-                const checkOutDate = modificationData.checkOutDate || modificationData.checkOut;
-                const totalAmount = Number(modificationData.totalAmount || modificationData.amount || 0);
+                // 1. Fetch current booking from Channex to preserve existing metadata
+                const existingChannex = await channexClient.getBooking(targetChannexId, customApiKey, env).catch(() => null);
+                const existingAttrs = existingChannex?.data?.attributes || {};
+
+                const checkInDate = modificationData.checkInDate || modificationData.checkIn || existingAttrs.arrival_date;
+                const checkOutDate = modificationData.checkOutDate || modificationData.checkOut || existingAttrs.departure_date;
+                const totalAmount = Number(modificationData.totalAmount || modificationData.amount || existingAttrs.total_price || 0);
 
                 // Fetch room types to resolve channexRoomTypeId
                 const roomTypesSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
-                const roomTypes = roomTypesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                const matchedRoom = roomTypes.find((rt: any) =>
+                const roomTypes = roomTypesSnap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }));
+                let matchedRoom = roomTypes.find((rt: any) =>
                     rt.id === modificationData.roomTypeId ||
                     rt.channexRoomTypeId === modificationData.roomTypeId ||
                     rt.name?.toLowerCase() === (modificationData.roomType || modificationData.roomTypeName || "").toLowerCase()
                 ) || roomTypes[0];
 
-                const channexRoomTypeId = (matchedRoom as any)?.channexRoomTypeId || matchedRoom?.id || modificationData.roomTypeId;
+                let channexRoomTypeId = (matchedRoom as any)?.channexRoomTypeId;
+                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+                if (!channexRoomTypeId || !uuidRegex.test(channexRoomTypeId)) {
+                    try {
+                        const channexRoomsRes = await channexClient.getRoomTypes(channexPropertyId, customApiKey, env);
+                        const channexRooms = channexRoomsRes?.data || [];
+                        if (channexRooms.length > 0) {
+                            const matchedChannexRoom = channexRooms.find((cr: any) =>
+                                cr.attributes?.title?.toLowerCase() === (modificationData.roomType || matchedRoom?.name || "").toLowerCase()
+                            ) || channexRooms[0];
+                            if (matchedChannexRoom?.id) {
+                                channexRoomTypeId = matchedChannexRoom.id;
+                                if (matchedRoom?.ref) {
+                                    await matchedRoom.ref.update({ channexRoomTypeId }).catch(() => {});
+                                }
+                            }
+                        }
+                    } catch (rErr) {
+                        console.warn("[ModifyBooking] Warning resolving Channex room type:", rErr);
+                    }
+                }
+
+                if (!channexRoomTypeId && existingAttrs.rooms?.[0]?.room_type_id) {
+                    channexRoomTypeId = existingAttrs.rooms[0].room_type_id;
+                }
 
                 // Fetch rate plans to resolve channexRatePlanId
                 const ratePlansSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
-                const ratePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                const matchedRatePlan = ratePlans.find((rp: any) =>
+                const ratePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }));
+                let matchedRatePlan = ratePlans.find((rp: any) =>
                     rp.id === modificationData.ratePlanId ||
                     rp.channexRatePlanId === modificationData.ratePlanId ||
                     rp.name?.toLowerCase() === (modificationData.ratePlanName || "").toLowerCase()
                 ) || ratePlans[0];
 
-                const channexRatePlanId = (matchedRatePlan as any)?.channexRatePlanId || matchedRatePlan?.id || modificationData.ratePlanId;
+                let channexRatePlanId = (matchedRatePlan as any)?.channexRatePlanId;
 
-                // Calculate nights and daily amounts
+                if (!channexRatePlanId || !uuidRegex.test(channexRatePlanId)) {
+                    try {
+                        const channexRatesRes = await channexClient.getRatePlans(channexPropertyId, customApiKey, env);
+                        const channexRates = channexRatesRes?.data || [];
+                        if (channexRates.length > 0) {
+                            const matchedChannexRate = channexRates.find((cr: any) =>
+                                (channexRoomTypeId ? cr.attributes?.room_type_id === channexRoomTypeId : true) &&
+                                cr.attributes?.title?.toLowerCase() === (modificationData.ratePlanName || matchedRatePlan?.name || "").toLowerCase()
+                            ) || channexRates.find((cr: any) => channexRoomTypeId ? cr.attributes?.room_type_id === channexRoomTypeId : true) || channexRates[0];
+                            if (matchedChannexRate?.id) {
+                                channexRatePlanId = matchedChannexRate.id;
+                                if (matchedRatePlan?.ref) {
+                                    await matchedRatePlan.ref.update({ channexRatePlanId }).catch(() => {});
+                                }
+                            }
+                        }
+                    } catch (rpErr) {
+                        console.warn("[ModifyBooking] Warning resolving Channex rate plan:", rpErr);
+                    }
+                }
+
+                if (!channexRatePlanId && existingAttrs.rooms?.[0]?.rate_plan_id) {
+                    channexRatePlanId = existingAttrs.rooms[0].rate_plan_id;
+                }
+
+                // Calculate nights and daily amounts map: { [dateStr]: "500000.00" }
                 const start = new Date(checkInDate);
                 const end = new Date(checkOutDate);
                 const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
                 const avgNightly = Math.round(totalAmount / nights);
 
-                const dailyAmounts = [];
+                const dailyAmountsMap: Record<string, string> = {};
                 for (let i = 0; i < nights; i++) {
                     const curr = new Date(start);
                     curr.setDate(curr.getDate() + i);
-                    dailyAmounts.push({
-                        date: curr.toISOString().split("T")[0],
-                        amount: String(formatRateForChannex(avgNightly, hotelCurrency))
-                    });
+                    const dateStr = curr.toISOString().split("T")[0];
+                    dailyAmountsMap[dateStr] = String(formatRateForChannex(avgNightly, hotelCurrency));
                 }
+
+                const guestFullName = modificationData.guestName || existingAttrs.customer?.name || "Guest";
+                const nameParts = guestFullName.trim().split(" ");
+                const firstName = nameParts[0] || "Guest";
+                const lastName = nameParts.slice(1).join(" ") || firstName;
 
                 const bookingPayload: any = {
+                    property_id: channexPropertyId,
+                    ota_name: existingAttrs.ota_name || "Offline",
+                    ota_reservation_code: existingAttrs.ota_reservation_code || bookingId || targetChannexId,
+                    status: "modified",
                     arrival_date: checkInDate,
                     departure_date: checkOutDate,
+                    currency: hotelCurrency,
                     total_price: String(formatRateForChannex(totalAmount, hotelCurrency)),
-                    notes: modificationData.note || modificationData.notes || `Modified via My Tara Front Desk (Ref: ${bookingId || targetChannexId})`,
-                };
-
-                if (modificationData.guestName) {
-                    const nameParts = (modificationData.guestName || "Guest").trim().split(" ");
-                    const firstName = nameParts[0] || "Guest";
-                    const lastName = nameParts.slice(1).join(" ") || firstName;
-                    bookingPayload.customer = {
-                        name: modificationData.guestName,
-                        first_name: firstName,
-                        last_name: lastName,
-                        email: modificationData.email || `${(bookingId || targetChannexId).toLowerCase()}@guest.mytara.id`,
-                        phone: modificationData.phone || "+62811111111"
-                    };
-                }
-
-                if (channexRoomTypeId && channexRatePlanId) {
-                    bookingPayload.rooms = [
+                    notes: modificationData.note || modificationData.notes || existingAttrs.notes || `Modified via My Tara Front Desk (Ref: ${bookingId || targetChannexId})`,
+                    customer: {
+                        name: firstName,
+                        surname: lastName,
+                        email: modificationData.email || existingAttrs.customer?.email || existingAttrs.customer?.mail || `${(bookingId || targetChannexId).toLowerCase()}@guest.mytara.id`,
+                        phone: modificationData.phone || existingAttrs.customer?.phone || "+62811111111"
+                    },
+                    rooms: [
                         {
                             room_type_id: channexRoomTypeId,
                             rate_plan_id: channexRatePlanId,
                             occupancy: { adults: Number(modificationData.pax || 2), children: 0 },
-                            days: dailyAmounts
+                            days: dailyAmountsMap
                         }
-                    ];
-                }
+                    ]
+                };
 
                 channexResponse = await channexClient.updateBooking(
                     targetChannexId,

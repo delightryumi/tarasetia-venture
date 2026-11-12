@@ -12,6 +12,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getHotelCollection } from '@/lib/firestoreHelper';
 import { PnlExpenseItem, formatIDR } from "@/lib/pnl-utils";
+import { useCurrency } from "@/hooks/useCurrency";
 import s from "./OperationalExpenses.module.css";
 
 /* ─────────────────────── Department Cost Center Constants ─────────────────────── */
@@ -371,6 +372,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
   expenses,
   onRefresh,
 }) => {
+  const { formatCurrency, currencyCode } = useCurrency();
   const activeDepartments = useMemo(() => {
     return USALI_DEPARTMENTS.filter(d => d.key !== "all" && (!isStartup || (d.group !== "Rooms")));
   }, [isStartup]);
@@ -631,7 +633,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
               <div className={s.kpiIconContainer}><Receipt size={15} /></div>
             </div>
             <span className={s.kpiMainNumber} style={{ color: "#1e4d3a" }}>
-              {formatIDR(totalOpex)}
+              {formatCurrency(totalOpex)}
             </span>
             <span className={s.kpiFooterText}>
               Posting Period: {month}
@@ -651,7 +653,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                 .sort((a, b) => (b.amount || 0) - (a.amount || 0));
               setDetailModal({
                 title:    `Largest Cost Center: ${topSpendingDept.name}`,
-                subtitle: `${formatIDR(topSpendingDept.amount)} · ${topSpendingDept.percent}% of total`,
+                subtitle: `${formatCurrency(topSpendingDept.amount)} · ${topSpendingDept.percent}% of total`,
                 items:    topItems,
               });
             }}
@@ -664,7 +666,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
               {topSpendingDept.name}
             </span>
             <span className={s.kpiFooterText}>
-              {formatIDR(topSpendingDept.amount)} ({topSpendingDept.percent}% of total)
+              {formatCurrency(topSpendingDept.amount)} ({topSpendingDept.percent}% of total)
               <ArrowUpRight size={10} style={{ marginLeft: 4, opacity: 0.5 }} />
             </span>
           </div>
@@ -702,7 +704,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
             tabIndex={0}
             onClick={() => setDetailModal({
               title:    "Transaction Audit (Ranked by Amount)",
-              subtitle: `Average: ${formatIDR(avgExpense)} per voucher`,
+              subtitle: `Average: ${formatCurrency(avgExpense)} per voucher`,
               items:    [...expenses].sort((a, b) => (b.amount || 0) - (a.amount || 0)),
             })}
           >
@@ -711,7 +713,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
               <div className={s.kpiIconContainer}><ArrowUpRight size={15} /></div>
             </div>
             <span className={s.kpiMainNumber} style={{ color: "#059669" }}>
-              {formatIDR(avgExpense)}
+              {formatCurrency(avgExpense)}
             </span>
             <span className={s.kpiFooterText}>
               Average expense per voucher
@@ -880,7 +882,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                         <div className={s.formField}>
                           <label className={s.formLabel}>Total Disbursement</label>
                           <div className={s.totalAmountDisplay}>
-                            {formatIDR((row.amount || 0) + (row.taxAmount || 0))}
+                            {formatCurrency((row.amount || 0) + (row.taxAmount || 0))}
                           </div>
                           <span className={s.formHint}>Net DPP + Tax</span>
                         </div>
@@ -911,7 +913,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
 
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className={s.drawerTotalBadge}>
-                    Total: <b>{formatIDR(newRows.reduce((sum, r) => sum + (r.amount || 0) + (r.taxAmount || 0), 0))}</b>
+                    Total: <b>{formatCurrency(newRows.reduce((sum, r) => sum + (r.amount || 0) + (r.taxAmount || 0), 0))}</b>
                   </span>
                   <button className={s.saveAllEntriesBtn} onClick={handleSaveAll} disabled={loading}>
                     {loading
@@ -969,7 +971,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
               Cost Center: <b>{DEPARTMENT_FILTER_TABS.find(t => t.id === activeFilterTab)?.label}</b> ({displayedExpenses.length} {displayedExpenses.length === 1 ? "entry" : "entries"})
             </span>
             <span>
-              Subtotal: <span className={s.subtotalDigits}>{formatIDR(activeSubtotal)}</span>
+              Subtotal: <span className={s.subtotalDigits}>{formatCurrency(activeSubtotal)}</span>
             </span>
           </div>
         </div>
@@ -987,7 +989,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                   <th style={{ width: "145px" }}>Payee / Vendor</th>
                   <th>Description &amp; Voucher No</th>
                   <th style={{ width: "85px", textAlign: "center" }}>Payment</th>
-                  <th className={s.textRightAlign} style={{ width: "140px" }}>Amount (IDR)</th>
+                  <th className={s.textRightAlign} style={{ width: "140px" }}>Amount ({currencyCode})</th>
                   <th style={{ width: "75px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
@@ -1186,11 +1188,11 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                           ) : (
                             <div style={{ textAlign: "right" }}>
                               <span className={s.amountDisplay}>
-                                {formatIDR(item.amount || 0)}
+                                {formatCurrency(item.amount || 0)}
                               </span>
                               {item.taxAmount && item.taxAmount > 0 && (
                                 <div style={{ fontSize: 10, color: "var(--oe-text-subtle)", marginTop: 1 }}>
-                                  Tax: {formatIDR(item.taxAmount)}
+                                  Tax: {formatCurrency(item.taxAmount)}
                                 </div>
                               )}
                             </div>
@@ -1297,12 +1299,12 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, padding: "12px 20px", background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
                 {[
                   { label: "Total Vouchers",  value: String(detailModal.items.length),  color: "#0f172a" },
-                  { label: "Total Amount",     value: formatIDR(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0)), color: "#1e4d3a" },
-                  { label: "Average / Voucher", value: formatIDR(detailModal.items.length > 0 ? Math.round(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0) / detailModal.items.length) : 0), color: "#1e4d3a" },
+                  { label: "Total Amount",     value: formatCurrency(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0)), color: "#1e4d3a" },
+                  { label: "Average / Voucher", value: formatCurrency(detailModal.items.length > 0 ? Math.round(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0) / detailModal.items.length) : 0), color: "#1e4d3a" },
                 ].map(card => (
                   <div key={card.label} style={{ background: "#fff", borderRadius: 4, padding: "10px 14px", border: "1px solid #cbd5e1" }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{card.label}</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: card.color, fontFamily: "var(--oe-font-mono)" }}>{card.value}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: card.color, fontFamily: "var(--oe-font-mono)", whiteSpace: "nowrap" }}>{card.value}</div>
                   </div>
                 ))}
               </div>
@@ -1320,7 +1322,7 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                   </colgroup>
                   <thead style={{ position: "sticky", top: 0, background: "#0f172a", zIndex: 1 }}>
                     <tr style={{ borderBottom: "1px solid #1e293b" }}>
-                      {(["#", "Posting Date", "Cost Center", "Expense Account", "Description & Voucher No", "Amount (IDR)"] as const).map((col, i) => (
+                      {(["#", "Posting Date", "Cost Center", "Expense Account", "Description & Voucher No", `Amount (${currencyCode})`] as const).map((col, i) => (
                         <th key={col} style={{ padding: "9px 12px", fontSize: 10, fontWeight: 800, color: "#f8fafc", textAlign: i === 5 ? "right" : "left", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
                           {col}
                         </th>
@@ -1369,8 +1371,8 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
                             <td style={{ padding: "11px 14px", fontSize: 12, color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={item.description || ""}>
                               {item.description || "—"}
                             </td>
-                            <td style={{ padding: "11px 14px", fontSize: 13, fontWeight: 600, color: "#dc2626", textAlign: "right", fontFamily: "monospace" }}>
-                              {formatIDR(item.amount || 0)}
+                            <td style={{ padding: "11px 14px", fontSize: 13, fontWeight: 600, color: "#dc2626", textAlign: "right", fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                              {formatCurrency(item.amount || 0)}
                             </td>
                           </tr>
                         );
@@ -1383,8 +1385,8 @@ export const ExpenseSection: React.FC<ExpenseSectionProps> = ({
               {/* ── Modal Footer ── */}
               <div style={{ padding: "12px 26px", borderTop: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
                 <span style={{ fontSize: 12, color: "#94a3b8" }}>{detailModal.items.length} {detailModal.items.length === 1 ? "voucher" : "vouchers"}</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>
-                  Total: {formatIDR(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0))}
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                  Total: {formatCurrency(detailModal.items.reduce((s, e) => s + (e.amount || 0), 0))}
                 </span>
               </div>
 

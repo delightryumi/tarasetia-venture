@@ -4,6 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Receipt, X, Search, TrendingUp, TrendingDown, Hash, FileDown, BarChart2, Equal } from "lucide-react";
 import { formatIDR, PnLDetailedItem, DrillDownData } from "@/lib/pnl-utils";
+import { useCurrency } from "@/hooks/useCurrency";
 import { SourcePill, DocTag, StatCard, MODAL_TOKENS as T } from "./shared/PnLPrimitives";
 import styles from "./PNLDrillDownModal.module.css";
 
@@ -69,6 +70,7 @@ export function PNLDrillDownModal({
     drillDownTab, setDrillDownTab,
     onExportDrillExcel, month,
 }: PNLDrillDownModalProps) {
+    const { formatCurrency } = useCurrency();
     const isOtaCard = selectedDrillDown?.title === "OTA Revenue";
     const otaBreakdown = React.useMemo(() => {
         if (!isOtaCard || !selectedDrillDown?.items) return [];
@@ -163,33 +165,33 @@ export function PNLDrillDownModal({
                                     </div>
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
                                         <span className="flex-1">Subtotal (Base Price)</span>
-                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.subtotal)}</span>
+                                        <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(fbPerformanceData.subtotal)}</span>
                                     </div>
                                     {fbPerformanceData.totalDiscount > 0 && (
                                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--f-expense-color)" }}>
                                             <span className="flex-1">Discount</span>
-                                            <span style={{ fontFamily: T.mono }}>−{formatIDR(fbPerformanceData.totalDiscount)}</span>
+                                            <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>−{formatCurrency(fbPerformanceData.totalDiscount)}</span>
                                         </div>
                                     )}
                                     <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "var(--f-income-color)" }}>
                                         <span className="flex-1">Net Revenue</span>
-                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netRevenue)}</span>
+                                        <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(fbPerformanceData.netRevenue)}</span>
                                     </div>
                                     {[
-                                        [`Service Charge (${fbPerformanceData.serviceRate}%)`,       `+${formatIDR(fbPerformanceData.serviceCharge)}`,   true],
-                                        [`Tax/VAT (${fbPerformanceData.taxRateIndividual}%)`,        `+${formatIDR(fbPerformanceData.taxAmount)}`,        true],
-                                        [`Lost & Breakage (${fbPerformanceData.lostBreakageRate}%)`, `+${formatIDR(fbPerformanceData.lostBreakageAmount)}`,true],
+                                        [`Service Charge (${fbPerformanceData.serviceRate}%)`,       `+${formatCurrency(fbPerformanceData.serviceCharge)}`,   true],
+                                        [`Tax/VAT (${fbPerformanceData.taxRateIndividual}%)`,        `+${formatCurrency(fbPerformanceData.taxAmount)}`,        true],
+                                        [`Lost & Breakage (${fbPerformanceData.lostBreakageRate}%)`, `+${formatCurrency(fbPerformanceData.lostBreakageAmount)}`,true],
                                     ].map(([label, val, dimmed]) => (
                                         <div key={label as string} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: dimmed ? T.textSec : T.textPri }}>
                                             <span className="flex-1">{label}</span>
-                                            <span style={{ fontFamily: T.mono }}>{val}</span>
+                                            <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{val}</span>
                                         </div>
                                     ))}
                                     <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: T.textPri }}>
                                         <span className="flex-1">Gross Revenue</span>
-                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.grossRevenue)}</span>
+                                        <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(fbPerformanceData.grossRevenue)}</span>
                                     </div>
                                 </div>
 
@@ -201,16 +203,16 @@ export function PNLDrillDownModal({
                                     </div>
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
                                         <span className="flex-1">Net Revenue</span>
-                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netRevenue)}</span>
+                                        <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(fbPerformanceData.netRevenue)}</span>
                                     </div>
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--f-expense-color)" }}>
                                         <span className="flex-1">Expenses (Cost)</span>
-                                        <span style={{ fontFamily: T.mono }}>−{formatIDR(fbPerformanceData.expenses)}</span>
+                                        <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>−{formatCurrency(fbPerformanceData.expenses)}</span>
                                     </div>
                                     <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0", marginTop: "auto" }} />
                                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: fbPerformanceData.netProfit >= 0 ? "var(--f-income-color)" : "var(--f-expense-color)" }}>
                                         <span className="flex-1">Net Profit</span>
-                                        <span style={{ fontFamily: T.mono }}>{formatIDR(fbPerformanceData.netProfit)}</span>
+                                        <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(fbPerformanceData.netProfit)}</span>
                                     </div>
                                 </div>
 
@@ -256,7 +258,7 @@ export function PNLDrillDownModal({
                                         <>
                                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
                                                 <span className="flex-1">Total Room Revenue</span>
-                                                <span style={{ fontFamily: T.mono }}>{formatIDR(kpiData.ledgerRoomRevenue)}</span>
+                                                <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(kpiData.ledgerRoomRevenue)}</span>
                                             </div>
                                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textSec }}>
                                                 <span className="flex-1">Rooms Sold</span>
@@ -265,7 +267,7 @@ export function PNLDrillDownModal({
                                             <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
                                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "var(--f-income-color)" }}>
                                                 <span className="flex-1">Average Room Rate</span>
-                                                <span style={{ fontFamily: T.mono }}>{formatIDR(kpiData.arr)}</span>
+                                                <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(kpiData.arr)}</span>
                                             </div>
                                         </>
                                     )}
@@ -274,7 +276,7 @@ export function PNLDrillDownModal({
                                         <>
                                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textPri }}>
                                                 <span className="flex-1">Total Room Revenue</span>
-                                                <span style={{ fontFamily: T.mono }}>{formatIDR(kpiData.ledgerRoomRevenue)}</span>
+                                                <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(kpiData.ledgerRoomRevenue)}</span>
                                             </div>
                                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: T.textSec }}>
                                                 <span className="flex-1">Rooms Available</span>
@@ -283,7 +285,7 @@ export function PNLDrillDownModal({
                                             <div style={{ borderTop: "1px dashed var(--f-hairline)", margin: "4px 0" }} />
                                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700, color: "var(--f-income-color)" }}>
                                                 <span className="flex-1">RevPAR</span>
-                                                <span style={{ fontFamily: T.mono }}>{formatIDR(kpiData.revPar)}</span>
+                                                <span style={{ fontFamily: T.mono, whiteSpace: "nowrap" }}>{formatCurrency(kpiData.revPar)}</span>
                                             </div>
                                         </>
                                     )}
@@ -325,15 +327,15 @@ export function PNLDrillDownModal({
                                 }}
                             >
                                 <StatCard icon={Hash} label="Total records" value={String(modalData.searched.length)} />
-                                {modalData.totalIncome > 0  && <StatCard icon={TrendingUp}   label="Gross income"      value={formatIDR(modalData.totalIncome)}  variant="income"  />}
-                                {modalData.totalExpense > 0 && <StatCard icon={TrendingDown}  label="Total expenses"    value={formatIDR(modalData.totalExpense)} variant="expense" />}
+                                {modalData.totalIncome > 0  && <StatCard icon={TrendingUp}   label="Gross income"      value={formatCurrency(modalData.totalIncome)}  variant="income"  />}
+                                {modalData.totalExpense > 0 && <StatCard icon={TrendingDown}  label="Total expenses"    value={formatCurrency(modalData.totalExpense)} variant="expense" />}
                                 <StatCard
                                     icon={Equal}
                                     label="Net dynamic payout"
                                     value={
                                         modalData.totalIncome > 0
-                                            ? `${formatIDR(Math.abs(modalData.netFlow))} (${modalData.netFlow >= 0 ? "+" : "-"}${Math.abs((modalData.netFlow / modalData.totalIncome) * 100).toFixed(1)}%)`
-                                            : formatIDR(Math.abs(modalData.netFlow))
+                                            ? `${formatCurrency(Math.abs(modalData.netFlow))} (${modalData.netFlow >= 0 ? "+" : "-"}${Math.abs((modalData.netFlow / modalData.totalIncome) * 100).toFixed(1)}%)`
+                                            : formatCurrency(Math.abs(modalData.netFlow))
                                     }
                                     variant={modalData.netFlow >= 0 ? "income" : "expense"}
                                 />
@@ -386,8 +388,8 @@ export function PNLDrillDownModal({
                                                         {ch.percent.toFixed(1)}%
                                                     </span>
                                                 </div>
-                                                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--f-income-color, #059669)", fontFamily: T.mono }}>
-                                                    {formatIDR(ch.total)}
+                                                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--f-income-color, #059669)", fontFamily: T.mono, whiteSpace: "nowrap" }}>
+                                                    {formatCurrency(ch.total)}
                                                 </div>
                                                 <div style={{ fontSize: 10, color: T.textSec, display: "flex", justifyContent: "space-between" }}>
                                                     <span>{ch.count} {ch.count === 1 ? "booking" : "bookings"}</span>
@@ -529,10 +531,10 @@ export function PNLDrillDownModal({
                                                                         {isCancelled && <span style={{ marginLeft: 6, fontSize: 10, color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}>[CANCEL]</span>}
                                                                     </div>
                                                                     {!isCancelled && item.taxAmount !== undefined && item.taxAmount > 0 && (
-                                                                        <div style={{ fontSize: 10, color: T.textSec, marginTop: 4, display: "flex", gap: 6, alignItems: "center" }}>
-                                                                            <span>Net: {formatIDR(item.nettAmount || 0)}</span>
+                                                                        <div style={{ fontSize: 10, color: T.textSec, marginTop: 4, display: "flex", gap: 6, alignItems: "center", whiteSpace: "nowrap" }}>
+                                                                            <span>Net: {formatCurrency(item.nettAmount || 0)}</span>
                                                                             <span style={{ width: 3, height: 3, borderRadius: "50%", background: "currentColor", opacity: 0.4 }} />
-                                                                            <span>Tax &amp; Serv: {formatIDR(item.taxAmount)}</span>
+                                                                            <span>Tax &amp; Serv: {formatCurrency(item.taxAmount)}</span>
                                                                         </div>
                                                                     )}
                                                                 </td>
@@ -586,14 +588,14 @@ export function PNLDrillDownModal({
                                                                             }}
                                                                             title={item.breakfastAmount && item.breakfastAmount > 0 ? "Alokasi Sarapan (Masuk Pendapatan F&B)" : "Discount / Deduction"}
                                                                         >
-                                                                            −{formatIDR(deductionAmount)}
+                                                                            −{formatCurrency(deductionAmount)}
                                                                         </span>
                                                                     ) : (
                                                                         <span style={{ color: T.textSec }}>—</span>
                                                                     )}
                                                                 </td>
-                                                                <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 600, textAlign: "right", fontFamily: T.mono, color: isCancelled ? T.textSec : (isExpense ? "var(--f-expense-color)" : "var(--f-income-color)") }}>
-                                                                    <div>{isCancelled ? "—" : (isExpense ? "−" : "+")}{!isCancelled && formatIDR(item.amount)}</div>
+                                                                <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 600, textAlign: "right", fontFamily: T.mono, color: isCancelled ? T.textSec : (isExpense ? "var(--f-expense-color)" : "var(--f-income-color)"), whiteSpace: "nowrap" }}>
+                                                                    <div>{isCancelled ? "—" : (isExpense ? "−" : "+")}{!isCancelled && formatCurrency(item.amount)}</div>
                                                                 </td>
                                                                 <td style={{ padding: "12px 14px", fontSize: 11, color: T.textSec, fontFamily: T.mono, whiteSpace: "nowrap" }}>{item.date ?? "N/A"}</td>
                                                             </tr>
@@ -674,7 +676,7 @@ export function PNLDrillDownModal({
                                                                 }}
                                                                 title="Alokasi Sarapan (Masuk Pendapatan F&B)"
                                                             >
-                                                                Breakfast Allocation: −{formatIDR(item.breakfastAmount)}
+                                                                Breakfast Allocation: −{formatCurrency(item.breakfastAmount)}
                                                             </span>
                                                         ) : null}
                                                     </div>
@@ -686,8 +688,8 @@ export function PNLDrillDownModal({
                                                     </div>
                                                     <div style={{ textAlign: "right" }}>
                                                         <p style={{ fontSize: 10, color: T.textSec, marginBottom: 2 }}>Amount</p>
-                                                        <p style={{ fontSize: 14, fontWeight: 500, fontFamily: T.mono, color: isCancelled ? T.textSec : (isExpense ? "var(--f-expense-color)" : "var(--f-income-color)") }}>
-                                                            {isCancelled ? "—" : (isExpense ? "−" : "+")}{!isCancelled && formatIDR(item.amount)}
+                                                        <p style={{ fontSize: 14, fontWeight: 500, fontFamily: T.mono, color: isCancelled ? T.textSec : (isExpense ? "var(--f-expense-color)" : "var(--f-income-color)"), whiteSpace: "nowrap" }}>
+                                                            {isCancelled ? "—" : (isExpense ? "−" : "+")}{!isCancelled && formatCurrency(item.amount)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -709,8 +711,8 @@ export function PNLDrillDownModal({
                                     <span style={{ fontSize: 12, color: T.textSec }}>
                                         {isFbPerformanceCard ? "Net Profit" : "Net flow"}
                                     </span>
-                                    <span style={{ fontSize: 16, fontWeight: 500, fontFamily: T.mono, color: (isFbPerformanceCard ? (fbPerformanceData?.netProfit ?? 0) : modalData.netFlow) >= 0 ? "var(--f-income-color)" : "var(--f-expense-color)" }}>
-                                        {formatIDR(Math.abs(isFbPerformanceCard ? (fbPerformanceData?.netProfit ?? 0) : modalData.netFlow))}
+                                    <span style={{ fontSize: 16, fontWeight: 500, fontFamily: T.mono, color: (isFbPerformanceCard ? (fbPerformanceData?.netProfit ?? 0) : modalData.netFlow) >= 0 ? "var(--f-income-color)" : "var(--f-expense-color)", whiteSpace: "nowrap" }}>
+                                        {formatCurrency(Math.abs(isFbPerformanceCard ? (fbPerformanceData?.netProfit ?? 0) : modalData.netFlow))}
                                     </span>
                                 </div>
                             </div>

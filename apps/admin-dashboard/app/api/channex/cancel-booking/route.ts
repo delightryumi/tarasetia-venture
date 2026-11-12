@@ -52,11 +52,46 @@ export async function POST(req: NextRequest) {
         if (targetChannexId && channexPropertyId && customApiKey) {
             try {
                 console.log(`[CancelBooking] Cancelling booking ${targetChannexId} on Channex for property ${channexPropertyId}...`);
-                channexResponse = await channexClient.cancelBooking(
+
+                // 1. Fetch current booking attributes from Channex to ensure complete resource state
+                let cancelPayload: any = {
+                    property_id: channexPropertyId,
+                    status: "cancelled",
+                    ota_name: "Offline",
+                    ota_reservation_code: bookingId || targetChannexId
+                };
+
+                const existingChannex = await channexClient.getBooking(targetChannexId, customApiKey, env).catch(() => null);
+                if (existingChannex?.data?.attributes) {
+                    const attrs = existingChannex.data.attributes;
+                    cancelPayload = {
+                        property_id: attrs.property_id || channexPropertyId,
+                        ota_name: attrs.ota_name || "Offline",
+                        ota_reservation_code: attrs.ota_reservation_code || bookingId || targetChannexId,
+                        arrival_date: attrs.arrival_date,
+                        departure_date: attrs.departure_date,
+                        currency: attrs.currency || hotelData.currency || "IDR",
+                        total_price: String(attrs.total_price || 0),
+                        status: "cancelled",
+                        notes: reason ? `${attrs.notes || ''} [Cancelled: ${reason}]`.trim() : attrs.notes,
+                        customer: {
+                            name: attrs.customer?.name || "Guest",
+                            surname: attrs.customer?.surname || attrs.customer?.name || "Guest",
+                            email: attrs.customer?.email || attrs.customer?.mail,
+                            phone: attrs.customer?.phone
+                        },
+                        rooms: (attrs.rooms || []).map((r: any) => ({
+                            room_type_id: r.room_type_id,
+                            rate_plan_id: r.rate_plan_id,
+                            days: r.days || (attrs.arrival_date ? { [attrs.arrival_date]: String(attrs.total_price || 0) } : {}),
+                            occupancy: r.occupancy || { adults: 2, children: 0 }
+                        }))
+                    };
+                }
+
+                channexResponse = await channexClient.updateBooking(
                     targetChannexId,
-                    {
-                        reason: reason || "Cancelled via My Tara Front Desk",
-                    },
+                    cancelPayload,
                     customApiKey,
                     env
                 );
@@ -64,7 +99,7 @@ export async function POST(req: NextRequest) {
 
                 // Log task to channex_task_logs
                 await adminDb.collection(`hotels/${hotelCode}/channex_task_logs`).add({
-                    task_type: "POST /bookings/{id}/cancel (CRS Cancellation)",
+                    task_type: "PUT /bookings/{id} (CRS Cancellation)",
                     entity: `Booking #${bookingId || targetChannexId}`,
                     user: authUser?.displayName || authUser?.email || "Front Desk",
                     status: "SUCCESS",

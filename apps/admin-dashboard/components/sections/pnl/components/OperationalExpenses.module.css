@@ -285,6 +285,7 @@
   font-family: var(--oe-font-mono);
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .kpiFooterText {
@@ -455,6 +456,7 @@
   letter-spacing: -0.01em;
   width: 100%;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .formControl {
@@ -791,6 +793,7 @@
   font-weight: 800;
   font-family: var(--oe-font-mono);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ── Enterprise Audit Ledger Table ── */
@@ -964,6 +967,7 @@
   text-align: right;
   display: block;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .actionRow {

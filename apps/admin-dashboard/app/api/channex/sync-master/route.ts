@@ -191,6 +191,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Gagal mengaitkan Property ID Channex" }, { status: 500 });
         }
 
+        // Auto-install Booking CRS app on Channex property to enable direct 2-way PMS booking pushes
+        try {
+            await channexClient.installApplication(channexPropertyId, "booking_crs", customApiKey, env);
+        } catch (appErr) {
+            // Already installed or non-fatal
+            console.log("[SyncMaster] Booking CRS app check:", appErr);
+        }
+
         // ==========================================
         // 2. FETCH EXISTING ROOM TYPES ON CHANNEX
         // ==========================================

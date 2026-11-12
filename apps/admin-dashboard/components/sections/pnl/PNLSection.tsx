@@ -4,6 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Receipt } from "lucide-react";
 import { formatIDR } from "@/lib/pnl-utils";
+import { useCurrency } from "@/hooks/useCurrency";
 import { ExpenseSection }    from "./components/ExpenseSection";
 import { usePnL }            from "./usePnL";
 import { PNLHeader }         from "./components/PNLHeader";
@@ -30,6 +31,7 @@ const rise = {
    MAIN COMPONENT — thin orchestrator
 ══════════════════════════════════════════════════════ */
 export function PNLSection() {
+    const { formatCurrency, currencyCode, symbol } = useCurrency();
     const {
         isStartup,
         viewMode, setViewMode,
@@ -123,7 +125,7 @@ export function PNLSection() {
                         onServiceChange={updateServiceCharge}
                         onLostChange={updateLostBreakage}
                         rise={rise}
-                        formatIDR={formatIDR}
+                        formatIDR={formatCurrency}
                         onCardClick={drillDown.handleCardClick}
                     />
                 ) : (
@@ -141,7 +143,7 @@ export function PNLSection() {
                             multiYearTrendData={multiYearTrendData}
                             monthStr={mStr}
                             yearStr={y}
-                            formatIDR={formatIDR}
+                            formatIDR={formatCurrency}
                         />
 
                         {pnlResult && (

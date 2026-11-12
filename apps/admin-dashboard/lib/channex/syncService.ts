@@ -478,28 +478,42 @@ export class ChannexSyncService {
         };
 
         const chanKey = channelName.toLowerCase().trim();
-        const catalogDefaultComm = defaultCommissions[chanKey] || 15;
+        const isOfflineOrWalkIn = 
+            chanKey === "offline" || 
+            chanKey === "walk-in" || 
+            chanKey === "walk in" || 
+            chanKey === "direct" || 
+            chanKey === "internal" ||
+            chanKey.includes("walk") || 
+            chanKey.includes("direct") ||
+            (payload as any)?.is_walkin === true ||
+            (payload as any)?.isOTA === false ||
+            (booking as any)?.isOTA === false;
+
+        const catalogDefaultComm = isOfflineOrWalkIn ? 0 : (defaultCommissions[chanKey] || 15);
 
         // ── 3-TIER FINANCIAL RECONCILIATION ENGINE (Industry Standard Two-Way Normalizer) ──
         // 1. Identify Extranet Rate Model: Does the OTA extranet send Gross (Sell Rate) or Net (Payout Rate)?
-        const isExtranetNetRate = matchedChannel?.extranetRateModel === "net" ||
+        const isExtranetNetRate = !isOfflineOrWalkIn && (
+            matchedChannel?.extranetRateModel === "net" ||
             Boolean((booking as any)?.is_net_rate) ||
-            ((booking as any)?.pricing_model === "net" && matchedChannel?.extranetRateModel !== "gross");
+            ((booking as any)?.pricing_model === "net" && matchedChannel?.extranetRateModel !== "gross")
+        );
 
         // 2. Resolve Dynamic Deductions: Commission %, Marketing/Ads Booster %, Promo Subsidy %
-        const finalCommissionPercent = Number(
+        const finalCommissionPercent = isOfflineOrWalkIn ? 0 : Number(
             (payload as any).ota_commission_percent ??
             (booking as any)?.commission_percent ??
             matchedChannel?.commissionPercent ??
             hotelData.settings?.defaultOtaCommission ??
             catalogDefaultComm
         );
-        const finalAdsPercent = Number(
+        const finalAdsPercent = isOfflineOrWalkIn ? 0 : Number(
             (payload as any).ota_ads_percent ??
             matchedChannel?.marketingAdsPercent ??
             0
         );
-        const finalPromoPercent = Number(
+        const finalPromoPercent = isOfflineOrWalkIn ? 0 : Number(
             (payload as any).ota_promo_percent ??
             (booking as any)?.promo_percent ??
             matchedChannel?.promoDeductionPercent ??
@@ -530,7 +544,14 @@ export class ChannexSyncService {
         let finalPromoAmount = 0;
         let finalTotalDeductions = 0;
 
-        if (isExtranetNetRate) {
+        if (isOfflineOrWalkIn) {
+            // Case 0: Direct / Walk-in / Offline Booking (0% OTA commission, 100% Net to Hotel)
+            finalNetToHotel = totalPrice;
+            finalCommissionAmount = 0;
+            finalAdsAmount = 0;
+            finalPromoAmount = 0;
+            finalTotalDeductions = 0;
+        } else if (isExtranetNetRate) {
             // Case A: Extranet sends NETT. totalPrice is already Net to Hotel.
             finalNetToHotel = totalPrice;
             const grossCalc = totalDeductionPercentCalc > 0 
@@ -1089,10 +1110,10 @@ export class ChannexSyncService {
                         isOverbooked: isOverbookedRoom,
                         otaReservationId: resolvedOtaReservationId,
                         channel: channelName,
-                        source: channelName,
-                        otaName: channelName,
-                        company: channelName,
-                        connectionChannel: booking.channel_name || "Open Channel",
+                        source: isOfflineOrWalkIn ? "Walk-in" : channelName,
+                        otaName: isOfflineOrWalkIn ? "Walk-in" : channelName,
+                        company: isOfflineOrWalkIn ? "Walk-in" : channelName,
+                        connectionChannel: booking.channel_name || (isOfflineOrWalkIn ? "Direct Front Desk" : "Open Channel"),
                         phone: guest.phone || "",
                         email: guest.email || "",
                         address: guest.address || "",
@@ -1131,20 +1152,24 @@ export class ChannexSyncService {
                         paidAmount1: 0,
                         paidTransfer: roomPayTransfer,
                         paidAmount2: roomPayTransfer,
-                        paidOta: roomPayTransfer,
-                        paymentMethod: isChannelCollect ? "Channel Collect (OTA Collect / VCC)" : "Property Collect (Pay at Hotel)",
-                        paymentCollect: isChannelCollect ? "channel" : "property",
-                        paymentType: booking.payment_type || (isChannelCollect ? "virtual_card" : "cash"),
+                        paidOta: isOfflineOrWalkIn ? 0 : roomPayTransfer,
+                        paymentMethod: isOfflineOrWalkIn 
+                            ? "Direct / Cash / Transfer" 
+                            : (isChannelCollect ? "Channel Collect (OTA Collect / VCC)" : "Property Collect (Pay at Hotel)"),
+                        paymentCollect: isOfflineOrWalkIn ? "property" : (isChannelCollect ? "channel" : "property"),
+                        paymentType: booking.payment_type || (isOfflineOrWalkIn ? "cash" : (isChannelCollect ? "virtual_card" : "cash")),
                         paymentStatus: isCancelled ? "CANCELLED" : paymentStatus,
                         payHotel: 0,
                         payTransfer: roomPayTransfer,
                         status: isCancelled ? "CANCELLED" : finalStatus,
                         propertyName,
                         currency: propertyCurrency,
-                        staffName: "Channex Channel Manager",
-                        note: `OTA Booking via ${channelName}. Ref: ${otaBookingId}.${isOverbookedRoom ? ' [OVERBOOKING DETECTED - PLEASE REASSIGN ROOM]' : ''}${isWithBreakfast ? ' [USALI Room Charge (Net of Breakfast)]' : ''} [Recon: ${revenueRecordingMode === 'net' ? 'Net-to-Hotel' : 'Gross'}] ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
+                        staffName: isOfflineOrWalkIn ? (booking.staffName || "Front Desk Walk-in") : "Channex Channel Manager",
+                        note: isOfflineOrWalkIn
+                            ? `Direct/Walk-in Booking. Ref: ${otaBookingId}.${isCancelled ? ' [CANCELLED]' : ''} ${booking.notes || ""}`.trim()
+                            : `OTA Booking via ${channelName}. Ref: ${otaBookingId}.${isOverbookedRoom ? ' [OVERBOOKING DETECTED - PLEASE REASSIGN ROOM]' : ''}${isWithBreakfast ? ' [USALI Room Charge (Net of Breakfast)]' : ''} [Recon: ${revenueRecordingMode === 'net' ? 'Net-to-Hotel' : 'Gross'}] ${isCancelled ? '[CANCELLED]' : ''} ${booking.notes || ""}`.trim(),
                         timestamp: new Date().toISOString(),
-                        isOTA: true,
+                        isOTA: !isOfflineOrWalkIn,
                         channexRaw: {
                             eventId: payload.event || "booking",
                             insertedAt: payload.inserted_at || new Date().toISOString()
@@ -2274,61 +2299,110 @@ export class ChannexSyncService {
 
         // Fetch room types to resolve channexRoomTypeId
         const roomTypesSnap = await adminDb.collection(`hotels/${hotelCode}/roomTypes`).get();
-        const roomTypes = roomTypesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        const matchedRoom = roomTypes.find((rt: any) => 
+        const roomTypes = roomTypesSnap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }));
+        let matchedRoom = roomTypes.find((rt: any) => 
             rt.id === bookingData.roomTypeId || 
             rt.channexRoomTypeId === bookingData.roomTypeId ||
             rt.name?.toLowerCase() === (bookingData.roomTypeName || "").toLowerCase()
         ) || roomTypes[0];
 
-        const channexRoomTypeId = (matchedRoom as any)?.channexRoomTypeId || matchedRoom?.id || bookingData.roomTypeId;
+        let channexRoomTypeId = (matchedRoom as any)?.channexRoomTypeId;
+
+        // If local room type doesn't have a valid Channex UUID, resolve from Channex API directly
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!channexRoomTypeId || !uuidRegex.test(channexRoomTypeId)) {
+            try {
+                const channexRoomsRes = await channexClient.getRoomTypes(channexPropertyId, customApiKey, env);
+                const channexRooms = channexRoomsRes?.data || [];
+                if (channexRooms.length > 0) {
+                    const matchedChannexRoom = channexRooms.find((cr: any) => 
+                        cr.attributes?.title?.toLowerCase() === (bookingData.roomTypeName || matchedRoom?.name || "").toLowerCase()
+                    ) || channexRooms[0];
+
+                    if (matchedChannexRoom?.id) {
+                        channexRoomTypeId = matchedChannexRoom.id;
+                        if (matchedRoom?.ref) {
+                            await matchedRoom.ref.update({ channexRoomTypeId }).catch(() => {});
+                        }
+                    }
+                }
+            } catch (rErr) {
+                console.warn("[ChannexCRS] Warning resolving Channex room type from API:", rErr);
+            }
+        }
 
         // Fetch rate plans to resolve channexRatePlanId
         const ratePlansSnap = await adminDb.collection(`hotels/${hotelCode}/ratePlans`).get();
-        const ratePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        const matchedRatePlan = ratePlans.find((rp: any) =>
+        const ratePlans = ratePlansSnap.docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }));
+        let matchedRatePlan = ratePlans.find((rp: any) =>
             rp.id === bookingData.ratePlanId ||
             rp.channexRatePlanId === bookingData.ratePlanId ||
             rp.name?.toLowerCase() === (bookingData.ratePlanName || "").toLowerCase()
         ) || ratePlans[0];
 
-        const channexRatePlanId = (matchedRatePlan as any)?.channexRatePlanId || matchedRatePlan?.id || bookingData.ratePlanId;
+        let channexRatePlanId = (matchedRatePlan as any)?.channexRatePlanId;
 
-        // Calculate nights
+        // If local rate plan doesn't have a valid Channex UUID, resolve from Channex API directly
+        if (!channexRatePlanId || !uuidRegex.test(channexRatePlanId)) {
+            try {
+                const channexRatesRes = await channexClient.getRatePlans(channexPropertyId, customApiKey, env);
+                const channexRates = channexRatesRes?.data || [];
+                if (channexRates.length > 0) {
+                    const matchedChannexRate = channexRates.find((cr: any) =>
+                        (channexRoomTypeId ? cr.attributes?.room_type_id === channexRoomTypeId : true) &&
+                        cr.attributes?.title?.toLowerCase() === (bookingData.ratePlanName || matchedRatePlan?.name || "").toLowerCase()
+                    ) || channexRates.find((cr: any) => channexRoomTypeId ? cr.attributes?.room_type_id === channexRoomTypeId : true) || channexRates[0];
+
+                    if (matchedChannexRate?.id) {
+                        channexRatePlanId = matchedChannexRate.id;
+                        if (matchedRatePlan?.ref) {
+                            await matchedRatePlan.ref.update({ channexRatePlanId }).catch(() => {});
+                        }
+                    }
+                }
+            } catch (rpErr) {
+                console.warn("[ChannexCRS] Warning resolving Channex rate plan from API:", rpErr);
+            }
+        }
+
+        if (!channexRoomTypeId || !channexRatePlanId) {
+            throw new Error(`Kamar atau Rate Plan belum terkonfigurasi di Channex untuk Properti ${channexPropertyId}. Silakan jalankan 'Sync Master' terlebih dahulu di menu Channel Manager.`);
+        }
+
+        // Calculate nights and daily amount mapping: { [YYYY-MM-DD]: "500000.00" }
         const start = new Date(bookingData.checkInDate);
         const end = new Date(bookingData.checkOutDate);
         const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
         const avgNightly = Math.round(bookingData.totalAmount / nights);
 
-        const dailyAmounts = [];
+        const dailyAmountsMap: Record<string, string> = {};
         for (let i = 0; i < nights; i++) {
             const curr = new Date(start);
             curr.setDate(curr.getDate() + i);
-            dailyAmounts.push({
-                date: curr.toISOString().split("T")[0],
-                amount: String(formatRateForChannex(avgNightly, hotelCurrency))
-            });
+            const dateStr = curr.toISOString().split("T")[0];
+            dailyAmountsMap[dateStr] = String(formatRateForChannex(avgNightly, hotelCurrency));
         }
 
         const nameParts = (bookingData.guestName || "Guest").trim().split(" ");
         const firstName = nameParts[0] || "Guest";
         const lastName = nameParts.slice(1).join(" ") || firstName;
+        const reservationCode = bookingData.reservationId || bookingData.bookingId;
 
+        // Official Channex CRS Specification for POST /api/v1/bookings
         const crsPayload = {
             property_id: channexPropertyId,
-            status: "confirmed",
-            channel_name: bookingData.channel || "Walk-In / Direct",
-            channel_booking_id: bookingData.reservationId || bookingData.bookingId,
+            status: "new",
+            ota_name: "Offline",
+            ota_reservation_code: reservationCode,
             arrival_date: bookingData.checkInDate,
             departure_date: bookingData.checkOutDate,
             currency: hotelCurrency,
             total_price: String(formatRateForChannex(bookingData.totalAmount, hotelCurrency)),
             payment_collect: "property",
-            notes: bookingData.notes || `Created via My Tara Front Desk (Ref: ${bookingData.bookingId})`,
+            notes: bookingData.notes || `Created via My Tara Front Desk (Ref: ${reservationCode})`,
             customer: {
-                name: bookingData.guestName,
-                first_name: firstName,
-                last_name: lastName,
+                name: firstName,
+                surname: lastName,
                 email: bookingData.email || `${bookingData.bookingId.toLowerCase()}@guest.mytara.id`,
                 phone: bookingData.phone || "+62811111111"
             },
@@ -2337,13 +2411,30 @@ export class ChannexSyncService {
                     room_type_id: channexRoomTypeId,
                     rate_plan_id: channexRatePlanId,
                     occupancy: { adults: 2, children: 0 },
-                    days: dailyAmounts
+                    days: dailyAmountsMap
                 }
             ]
         };
 
         console.log(`[ChannexCRS] Registering PMS booking ${bookingData.bookingId} to Channex for Property ${channexPropertyId}...`);
-        const result = await channexClient.createBooking(crsPayload, customApiKey, env);
+        let result: any = null;
+        try {
+            result = await channexClient.createBooking(crsPayload, customApiKey, env);
+        } catch (initialErr: any) {
+            // Auto-heal: If 403 Forbidden, property might be missing the Booking CRS app
+            if (initialErr?.message?.includes("403") || initialErr?.message?.toLowerCase().includes("forbidden")) {
+                console.log(`[ChannexCRS] Attempting auto-installation of 'booking_crs' app on Property ${channexPropertyId}...`);
+                try {
+                    await channexClient.installApplication(channexPropertyId, "booking_crs", customApiKey, env);
+                    // Retry booking creation after installing booking_crs app
+                    result = await channexClient.createBooking(crsPayload, customApiKey, env);
+                } catch (installErr) {
+                    throw initialErr;
+                }
+            } else {
+                throw initialErr;
+            }
+        }
         const createdId = result?.data?.id;
 
         if (createdId) {

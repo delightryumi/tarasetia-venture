@@ -143,6 +143,10 @@
   letter-spacing: -0.01em;
   margin: 0;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .progressContainer {

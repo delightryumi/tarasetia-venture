@@ -26,7 +26,7 @@ import { useAuth } from "@/context/AuthContext";
 import { isUserSuperadmin } from "@/lib/permissionCheck";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { resolveBookingIdentifiers } from "@/lib/channelHelper";
+import { resolveBookingIdentifiers, isChannelOTA } from "@/lib/channelHelper";
 import { useCurrency } from "@/hooks/useCurrency";
 
 interface GuestFolioViewProps {
@@ -197,8 +197,26 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
         return new Date();
     }, [guest]);
 
-    const isWalkIn = guest.channel === "Walk-in" || guest.source === "Walk-in" || guest.channel === "Nexura Sales" || (!guest.isOTA && guest.channel?.toLowerCase() !== "booking engine");
-    const otaName = guest.channel || guest.company || "Traveloka";
+    const isWalkIn = useMemo(() => {
+        const ch = String(guest.channel || guest.otaName || "").toLowerCase().trim();
+        const src = String(guest.source || "").toLowerCase().trim();
+        const comp = String(guest.company || "").toLowerCase().trim();
+        if (
+            ch.includes("walk") || ch.includes("direct") || ch.includes("offline") || ch === "internal" ||
+            src.includes("walk") || src.includes("direct") || src.includes("offline") ||
+            comp.includes("walk") || comp.includes("direct")
+        ) {
+            return true;
+        }
+        if (guest.isOTA === false) return true;
+        return !isChannelOTA(guest);
+    }, [guest]);
+
+    const isOtaBooking = useMemo(() => {
+        return !isWalkIn && isChannelOTA(guest);
+    }, [isWalkIn, guest]);
+
+    const otaName = guest.channel || guest.company || (isWalkIn ? "Walk-in" : "Traveloka");
     // Use only data saved in the booking document.
     // staffName & staffEmail are now always saved on new transactions (since the fix).
     // For old data that has neither, show a neutral placeholder – do NOT use the current
@@ -799,8 +817,8 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                 </div>
                             </div>
 
-                            {/* ── SUPERADMIN ONLY: NET VS GROSS FINANCIAL RECONCILIATION AUDIT ── */}
-                            {isUserSuperadmin(user) && (
+                            {/* ── SUPERADMIN ONLY: NET VS GROSS FINANCIAL RECONCILIATION AUDIT (OTA ONLY) ── */}
+                            {isUserSuperadmin(user) && isOtaBooking && (
                                 <div style={{
                                     marginTop: '8px',
                                     marginBottom: '8px',
@@ -826,9 +844,9 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                             </div>
                                         </div>
                                         <div style={{ background: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                                            <div style={{ color: '#64748b', fontSize: '10px' }}>OTA Commission ({guest.otaCommissionPercent || 15}%)</div>
+                                            <div style={{ color: '#64748b', fontSize: '10px' }}>OTA Commission ({guest.otaCommissionPercent ?? 15}%)</div>
                                             <div style={{ fontWeight: 700, color: '#dc2626', marginTop: '2px' }}>
-                                                - {formatCurrency(Number(guest.otaCommissionAmount || Math.round((guest.grossAmount || totalAmount) * ((guest.otaCommissionPercent || 15) / 100))))}
+                                                - {formatCurrency(Number(guest.otaCommissionAmount || Math.round((guest.grossAmount || totalAmount) * ((guest.otaCommissionPercent ?? 15) / 100))))}
                                             </div>
                                         </div>
                                         <div style={{ background: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
@@ -860,17 +878,22 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                     <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 600 }}>Metode & Penagihan:</span>
                                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                        <span style={{
-                                            padding: '2px 8px',
-                                            borderRadius: '4px',
-                                            fontSize: '11px',
-                                            fontWeight: 700,
-                                            backgroundColor: (guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#eff6ff' : '#fef3c7',
-                                            border: `1px solid ${(guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#bfdbfe' : '#fde68a'}`,
-                                            color: (guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#1d4ed8' : '#b45309'
-                                        }}>
-                                            {(guest.paymentCollect === 'channel' || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? 'OTA Collect (Channel)' : 'Hotel Collect (Property)'}
-                                        </span>
+                                        {(() => {
+                                            const isOtaCollect = !isWalkIn && (guest.paymentCollect === 'channel' || (guest.isOTA && guest.paymentCollect !== 'property'));
+                                            return (
+                                                <span style={{
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 700,
+                                                    backgroundColor: isOtaCollect ? '#eff6ff' : '#fef3c7',
+                                                    border: `1px solid ${isOtaCollect ? '#bfdbfe' : '#fde68a'}`,
+                                                    color: isOtaCollect ? '#1d4ed8' : '#b45309'
+                                                }}>
+                                                    {isOtaCollect ? 'OTA Collect (Channel)' : 'Hotel Collect (Property)'}
+                                                </span>
+                                            );
+                                        })()}
                                         <span style={{
                                             padding: '2px 8px',
                                             borderRadius: '4px',
@@ -1036,12 +1059,14 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <span style={{ width: '160px', color: '#8c8c8c' }}>Source / OTA:</span>
-                                        <span style={{ color: '#262626', fontWeight: 500 }}>{guest.channel || 'Traveloka'}</span>
+                                        <span style={{ color: '#262626', fontWeight: 500 }}>
+                                            {guest.channel || (isWalkIn ? 'Direct Front Desk' : 'Traveloka')}
+                                        </span>
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <span style={{ width: '160px', color: '#8c8c8c' }}>Channel:</span>
                                         <span style={{ color: '#1890ff', cursor: 'pointer' }}>
-                                            {guest.isOTA ? 'Open Channel' : 'Direct Web'}
+                                            {isOtaBooking ? (guest.channel || 'Open Channel') : 'Walk-in / Direct'}
                                         </span>
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>

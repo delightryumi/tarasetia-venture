@@ -680,13 +680,15 @@ export class ChannexClient {
     }
 
     /**
-     * Cancel an existing booking in Channex
+     * Cancel an existing booking in Channex CRS (via PUT /bookings/:id with status: 'cancelled')
      */
     async cancelBooking(bookingId: string, payload?: any, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
-        return this.request<{ data: any; meta?: any }>(`/bookings/${bookingId}/cancel`, {
-            method: "POST",
-            body: JSON.stringify(payload || {})
-        }, customApiKey, environment);
+        const rawBooking = payload?.booking || payload || {};
+        const bookingPayload = {
+            ...rawBooking,
+            status: "cancelled"
+        };
+        return this.updateBooking(bookingId, bookingPayload, customApiKey, environment);
     }
 
     /**
@@ -694,6 +696,21 @@ export class ChannexClient {
      */
     async getBooking(bookingId: string, customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
         return this.request<{ data: any }>(`/bookings/${bookingId}`, { method: "GET" }, customApiKey, environment);
+    }
+
+    /**
+     * Install an application onto a property (e.g. 'booking_crs', 'stripe_tokenization')
+     */
+    async installApplication(propertyId: string, appCode: string = "booking_crs", customApiKey?: string, environment?: "staging" | "production"): Promise<any> {
+        return this.request<{ data: any }>(`/applications/install`, {
+            method: "POST",
+            body: JSON.stringify({
+                application_installation: {
+                    property_id: propertyId,
+                    application_code: appCode
+                }
+            })
+        }, customApiKey, environment);
     }
 
     /**

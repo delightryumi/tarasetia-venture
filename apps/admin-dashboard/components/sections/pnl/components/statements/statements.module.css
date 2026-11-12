@@ -84,13 +84,13 @@
 .excelTable tbody tr:hover { background-color: #f1f5f9; }
 :global(.dark) .excelTable tbody tr:hover { background-color: #242427; }
 
-.excelAmountDebit { color: #006400; font-family: "Inter Display", monospace; text-align: right; }
+.excelAmountDebit { color: #006400; font-family: "Inter Display", monospace; text-align: right; white-space: nowrap; }
 :global(.dark) .excelAmountDebit { color: #34d399; }
 
-.excelAmountCredit { color: #aa2d00; font-family: "Inter Display", monospace; text-align: right; }
+.excelAmountCredit { color: #aa2d00; font-family: "Inter Display", monospace; text-align: right; white-space: nowrap; }
 :global(.dark) .excelAmountCredit { color: #f87171; }
 
-.excelBalance { font-weight: 500; color: #181d26; text-align: right; font-family: "Inter Display", monospace; }
+.excelBalance { font-weight: 500; color: #181d26; text-align: right; font-family: "Inter Display", monospace; white-space: nowrap; }
 :global(.dark) .excelBalance { color: #f4f4f5; }
 
 /* Inputs */

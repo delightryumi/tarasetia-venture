@@ -29,6 +29,9 @@ const OTA_CATALOG = [
   { key: "other_income", name: "Other Income", logo: "/channels/other_income.svg", prefixes: ["oth"] },
   { key: "booking engine", name: "Booking Engine", logo: "/channels/walk_in.png", prefixes: ["be", "web", "drc"] },
   { key: "walk-in", name: "Walk-in", logo: "/channels/walk_in.png", prefixes: ["win", "pos"] },
+  { key: "walk in", name: "Walk-in", logo: "/channels/walk_in.png", prefixes: ["win", "pos"] },
+  { key: "offline", name: "Walk-in", logo: "/channels/walk_in.png", prefixes: ["off"] },
+  { key: "direct", name: "Walk-in", logo: "/channels/walk_in.png", prefixes: ["dir"] },
 ];
 
 /**
@@ -59,6 +62,17 @@ export function resolveChannelName(item: any): string {
   ).trim();
 
   const rawLower = rawChannel.toLowerCase();
+  if (
+    rawLower.includes("walk") || 
+    rawLower.includes("direct") || 
+    rawLower.includes("offline") || 
+    rawLower === "internal" ||
+    rawLower === "front desk" ||
+    rawLower === "fo"
+  ) {
+    return "Walk-in";
+  }
+
   const idStr = String(
     item.reservationId || 
     item.bookingId || 
@@ -101,11 +115,20 @@ export function resolveChannelName(item: any): string {
 export function isChannelOTA(item: any): boolean {
   if (!item) return false;
   if (item.type === "other_income") return false;
-  if (item.isOTA === true) return true;
   const name = resolveChannelName(item).toLowerCase();
-  if (name.includes("walk") || name === "direct" || name.includes("front") || name.includes("other income") || name.includes("other_income")) {
+  if (
+    name.includes("walk") || 
+    name === "direct" || 
+    name.includes("direct") || 
+    name.includes("front") || 
+    name.includes("other income") || 
+    name.includes("other_income") ||
+    name.includes("offline") ||
+    name.includes("internal")
+  ) {
     return false;
   }
+  if (item.isOTA === false) return false;
   return true;
 }
 
@@ -233,7 +256,7 @@ export function resolveBookingIdentifiers(item: any): ResolvedBookingIdentifiers
     revisionId,
     otaReservationId,
     channelName: channel,
-    connectionChannel: item.connectionChannel || (item.isOTA ? "Open Channel" : "Direct"),
+    connectionChannel: item.connectionChannel || (isChannelOTA(item) ? "Open Channel" : "Direct Front Desk"),
     channelLogo: logo
   };
 }

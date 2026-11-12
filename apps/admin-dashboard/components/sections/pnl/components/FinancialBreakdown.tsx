@@ -7,6 +7,7 @@ import {
   Calculator, Wallet, Percent, ArrowRight, ShieldCheck
 } from "lucide-react";
 import { formatIDR, GlobalPnLResult, PnlIncomeItem } from "@/lib/pnl-utils";
+import { useCurrency } from "@/hooks/useCurrency";
 import styles from "./FinancialBreakdown.module.css";
 
 interface FinancialBreakdownProps {
@@ -51,9 +52,10 @@ const StatementTableRow = ({
   isTotal,
   highlight
 }: StatementTableRowProps) => {
+  const { formatCurrency } = useCurrency();
   const adjustedValue = isNegative ? -Math.abs(value) : value;
   const displayVal = adjustedValue !== null && adjustedValue !== undefined && adjustedValue !== 0 
-    ? formatIDR(adjustedValue) 
+    ? formatCurrency(adjustedValue) 
     : null;
 
   if (isTotal) {
@@ -117,6 +119,7 @@ export default function FinancialBreakdown({
   serviceChargePercentage = 0,
   lostBreakagePercentage = 0
 }: FinancialBreakdownProps) {
+  const { formatCurrency, currencyCode } = useCurrency();
   if (!pnlResult) return null;
 
   // ── Statement I: Operating Revenues ──
@@ -205,7 +208,7 @@ export default function FinancialBreakdown({
                 <thead>
                   <tr className={styles.tableHead}>
                     <th>Revenue Center / Line Item</th>
-                    <th className={styles.thRight}>Amount (IDR)</th>
+                    <th className={styles.thRight}>Amount ({currencyCode})</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -266,7 +269,7 @@ export default function FinancialBreakdown({
                 <thead>
                   <tr className={styles.tableHead}>
                     <th>Cost Center / Expense Item</th>
-                    <th className={styles.thRight}>Amount (IDR)</th>
+                    <th className={styles.thRight}>Amount ({currencyCode})</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -346,7 +349,7 @@ export default function FinancialBreakdown({
                 <thead>
                   <tr className={styles.tableHead}>
                     <th>Metric / Reconciliation Item</th>
-                    <th className={styles.thRight}>Amount (IDR)</th>
+                    <th className={styles.thRight}>Amount ({currencyCode})</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -428,7 +431,7 @@ export default function FinancialBreakdown({
                   <div>
                     <p className={styles.investorName}>{inv.name}</p>
                     <p className={styles.investorAmount}>
-                      {formatIDR(inv.calculatedAmount)}
+                      {formatCurrency(inv.calculatedAmount)}
                     </p>
                   </div>
                 </div>
@@ -460,13 +463,13 @@ export default function FinancialBreakdown({
               <div className={styles.mgmtStatsGrid}>
                 <div className={styles.mgmtStatCol}>
                   <p className={styles.mgmtStatMeta}>Gross Management Share</p>
-                  <p className={styles.mgmtStatVal}>{formatIDR(mgmtShareAmount)}</p>
+                  <p className={styles.mgmtStatVal}>{formatCurrency(mgmtShareAmount)}</p>
                 </div>
                 
                 <div className={styles.mgmtStatCol}>
                   <p className={styles.mgmtStatMeta}>Retained Earnings Reserve</p>
                   <div className={styles.retainedActionBox}>
-                    <p className={styles.mgmtStatValNegative}>-{formatIDR(retainedEarningsValue)}</p>
+                    <p className={styles.mgmtStatValNegative}>-{formatCurrency(retainedEarningsValue)}</p>
                     <div className={styles.retainedInputWrap}>
                       <input 
                         type="number" 
@@ -489,14 +492,14 @@ export default function FinancialBreakdown({
                 
                 <div className={styles.mgmtStatCol}>
                   <p className={styles.mgmtStatMeta}>Operator Internal Cost</p>
-                  <p className={styles.mgmtStatValNegative}>-{formatIDR(mgmtExpensesTotal)}</p>
+                  <p className={styles.mgmtStatValNegative}>-{formatCurrency(mgmtExpensesTotal)}</p>
                 </div>
               </div>
               
               <div className={styles.settlementCard}>
                 <div className={styles.settlementInfo}>
                   <span className={styles.settlementMeta}>Net Cash Disbursement to Operator</span>
-                  <p className={styles.settlementAmount}>{formatIDR(totalSisaManagement)}</p>
+                  <p className={styles.settlementAmount}>{formatCurrency(totalSisaManagement)}</p>
                 </div>
                 <button className={styles.settlementBtn}>
                   Process Settlement <ArrowRight size={13} />

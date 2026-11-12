@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useCurrency } from "@/hooks/useCurrency";
 import classes from "./SummaryCard.module.css";
 
 interface SummaryCardProps {
@@ -19,6 +20,7 @@ export function SummaryCard({
     label, icon, value = 0, loading = false,
     formatter, onClick, extra, variants, accent, bgVariant = "neutral",
 }: SummaryCardProps) {
+    const { formatCurrency } = useCurrency();
     const bgMap: Record<string, string> = {
         neutral: classes.bgNeutral,
         revenue: classes.bgRevenue,
@@ -60,7 +62,7 @@ export function SummaryCard({
                 </div>
                 <div className={classes.valueContainer}>
                     <span className={classes.value}>
-                        {loading ? "—" : (formatter ? formatter(value) : `Rp ${Math.round(value || 0).toLocaleString("id-ID")}`)}
+                        {loading ? "—" : (formatter ? formatter(value) : formatCurrency(value || 0))}
                     </span>
                 </div>
             </div>

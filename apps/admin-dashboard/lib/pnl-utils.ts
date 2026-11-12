@@ -162,3 +162,5 @@ export const formatIDR = (amount: number, currencyCode?: string): string => {
   }
   return formatCurrencyAmount(amount, activeCurr || DEFAULT_CURRENCY);
 };
+
+export const formatCurrency = formatIDR;

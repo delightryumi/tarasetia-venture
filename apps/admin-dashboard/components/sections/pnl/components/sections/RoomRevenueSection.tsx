@@ -105,7 +105,6 @@ export function RoomRevenueSection({ pnlResult, loading, rise, onCardClick }: Ro
                         accent="#6366f1"
                         value={pnlResult?.revPar || 0}
                         loading={loading}
-                        formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
                         variants={rise}
                         onClick={onCardClick}
                     />

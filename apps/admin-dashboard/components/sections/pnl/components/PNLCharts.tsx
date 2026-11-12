@@ -65,7 +65,7 @@ const HotelChartTooltip = ({ active, payload, label, formatIDR, baseRev }: any) 
                         borderRadius: "2px", 
                         background: item.payload?.fill || item.color || HOTEL_PALETTE.pine 
                     }} />
-                    <span style={{ fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: "#ffffff" }}>
+                    <span style={{ fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: "#ffffff", whiteSpace: "nowrap" }}>
                         {formatIDR(val)}
                     </span>
                     {pct && (

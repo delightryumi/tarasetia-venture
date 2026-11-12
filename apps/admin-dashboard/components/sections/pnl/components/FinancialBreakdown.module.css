@@ -583,6 +583,7 @@
   color: #1e4d3a;
   margin: 0;
   font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
 }
 
 :global(.dark) .investorAmount {
@@ -670,6 +671,7 @@
   color: #0f172a;
   font-family: 'JetBrains Mono', monospace;
   margin: 0;
+  white-space: nowrap;
 }
 
 :global(.dark) .mgmtStatVal {
@@ -682,6 +684,7 @@
   color: #dc2626;
   font-family: 'JetBrains Mono', monospace;
   margin: 0;
+  white-space: nowrap;
 }
 
 :global(.dark) .mgmtStatValNegative {
@@ -779,6 +782,7 @@
   letter-spacing: -0.02em;
   font-family: 'JetBrains Mono', monospace;
   margin: 0;
+  white-space: nowrap;
 }
 
 .settlementBtn {
