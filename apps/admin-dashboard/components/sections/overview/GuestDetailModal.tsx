@@ -323,6 +323,8 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
         addDateRange(b.oldCheckIn, b.oldCheckOut);
         if (b.effectiveDate) dates.add(b.effectiveDate);
         if (b._docDate) dates.add(b._docDate);
+        if (b.cancelledAt) dates.add(b.cancelledAt);
+        if (b.date) dates.add(b.date);
 
         if (b.timestamp) {
             try {

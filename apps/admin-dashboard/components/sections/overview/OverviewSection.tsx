@@ -147,6 +147,10 @@ export function OverviewSection() {
         const checkOut = b.checkOutDate || b.checkOut;
         if (checkIn) dates.add(checkIn);
         if (checkOut) dates.add(checkOut);
+        if (b.cancelledAt) dates.add(b.cancelledAt);
+        if (b.effectiveDate) dates.add(b.effectiveDate);
+        if (b._docDate) dates.add(b._docDate);
+        if (b.date) dates.add(b.date);
         
         const todayStr = new Date().toISOString().split('T')[0];
         dates.add(todayStr);

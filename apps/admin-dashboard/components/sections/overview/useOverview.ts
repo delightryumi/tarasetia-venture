@@ -98,7 +98,7 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
 
                 const [eY, eM, eD] = endDateStr.split('-').map(Number);
                 const endD = new Date(eY, (eM || 1) - 1, eD || 1);
-                endD.setDate(endD.getDate() + 7);
+                endD.setDate(endD.getDate() + 90);
                 const endRange = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
 
                 const q = query(
@@ -149,16 +149,20 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
 
                     allEntriesRaw.forEach((e) => {
                         const isPOS = e.guestName?.startsWith("POS Order") || !!e.posItems || !!e.revenueType;
-                        const isAccommodation = !isPOS && (e.type === "accommodation" || (!e.type && e.guestName));
+                        const isAccommodation = !isPOS && (e.type === "accommodation" || e.type === "room" || (!e.type && e.guestName));
                         
                         if (isAccommodation) {
                             const normGuestName = (e.guestName || "").trim().toLowerCase();
-                            const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
+                            const roomIdent = String(e.roomNumber || e.roomIndex || e.roomTypeId || e.roomType || '').trim();
                             const cIn = e.checkInDate || e.checkIn || '';
                             const cOut = e.checkOutDate || e.checkOut || '';
-                            const key = (normGuestName && cIn) 
-                                ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
-                                : (e.bookingId ? `b_${e.bookingId}` : `t_${e.timestamp}`);
+                            const bId = e.bookingId && e.bookingId !== '-' ? String(e.bookingId).trim() : '';
+                            const rIdx = e.roomIndex !== undefined ? `_r${e.roomIndex}` : '';
+                            const key = bId 
+                                ? `b_${bId}${rIdx}_${roomIdent}` 
+                                : (normGuestName && cIn) 
+                                    ? `${normGuestName}_${roomIdent}${rIdx}_${cIn}_${cOut}` 
+                                    : `t_${e.timestamp || Math.random()}`;
                             if (!accommodationGroups[key]) {
                                 accommodationGroups[key] = [];
                             }
@@ -296,43 +300,51 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         const gst = String(e.guestStatus || "").toLowerCase();
                         const isCancelled = st === "CANCELLED" || st === "CANCEL" || pst === "CANCELLED" || pst === "CANCEL" || gst === "cancelled" || gst === "cancel";
                         
+                        const isCheckInInPeriod = e.checkInDate >= startDateStr && e.checkInDate <= endDateStr;
+                        const isInHouseInPeriod = e.checkInDate < startDateStr && e.checkOutDate > startDateStr;
+                        const isCheckOutInPeriod = e.checkOutDate >= startDateStr && e.checkOutDate <= endDateStr;
+                        const cancellationDate = e.cancelledAt || e.checkInDate;
+                        const isCancelledInPeriod = isCancelled && Boolean(cancellationDate && cancellationDate >= startDateStr && cancellationDate <= endDateStr);
+                        const bookingCreatedDate = e.timestamp ? String(e.timestamp).slice(0, 10) : "";
+                        const isCreatedInPeriod = bookingCreatedDate >= startDateStr && bookingCreatedDate <= endDateStr;
+
                         if (!isCancelled) {
-                            if (e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {
+                            if (isCheckInInPeriod) {
                                 checkIn.push({ ...e, isExtend: false });
                                 todayTransactions.push({ ...e, isExtend: false });
-                            } else if (e.checkInDate < startDateStr && e.checkOutDate > startDateStr) {
+                            } else if (isInHouseInPeriod) {
                                 checkIn.push({ ...e, isExtend: true });
                                 todayTransactions.push({ ...e, isExtend: true });
+                            } else if (isCreatedInPeriod) {
+                                todayTransactions.push({ ...e, isExtend: false });
                             }
                             
-                            if (e.checkOutDate >= startDateStr && e.checkOutDate <= endDateStr) {
+                            if (isCheckOutInPeriod) {
                                 checkOut.push(e);
                             }
                             allAccommodation.push(e);
                         } else {
-                            const cancellationDate = e.cancelledAt || e.checkInDate;
-                            if (cancellationDate >= startDateStr && cancellationDate <= endDateStr) {
+                            if (isCancelledInPeriod) {
                                 cancels.push(e);
                             }
-                            if (e.checkInDate >= startDateStr && e.checkInDate <= endDateStr) {
-                                todayTransactions.push({ ...e, isExtend: false });
-                            } else if (e.checkInDate < startDateStr && e.checkOutDate > startDateStr) {
-                                todayTransactions.push({ ...e, isExtend: true });
+                            // CANCELLED GUEST: Keep in todayTransactions (with status CANCELLED) so it stays visible with strikethrough in AuditLedger!
+                            if (isCancelledInPeriod || isCheckInInPeriod || isInHouseInPeriod || isCreatedInPeriod) {
+                                todayTransactions.push({ ...e, isExtend: isInHouseInPeriod && !isCheckInInPeriod, status: "CANCELLED", paymentStatus: "CANCELLED" });
                             }
                         }
                     });
 
-                    // Note: Overview Front Office only tracks front office accommodation bookings.
-                    // Other income is non-room revenue routed to Forecast and Accounting (P&L, DSR, Budgeting).
-                    
-                    // Deduplicate: each unique booking should appear once in the feed
+                    // Note: Overview Front Office tracks accommodation bookings.
+                    // Deduplicate per room unit so multi-room bookings keep all units
                     const seenKeys = new Set<string>();
                     const deduped = todayTransactions.filter(e => {
+                        const rIdx = e.roomIndex !== undefined ? `_r${e.roomIndex}` : '';
+                        const rNum = e.roomNumber ? `_${e.roomNumber}` : '';
                         const key = e.bookingId
-                            ? String(e.bookingId)
+                            ? `${e.bookingId}${rIdx}${rNum}`
                             : e._docId
-                            ? `${e._docId}_${e.guestName || ""}`
-                            : `${String(e.guestName || "").toLowerCase()}_${e.checkInDate || ""}_${e.checkOutDate || ""}`;
+                            ? `${e._docId}_${e.guestName || ""}${rIdx}${rNum}`
+                            : `${String(e.guestName || "").toLowerCase()}_${e.checkInDate || ""}_${e.checkOutDate || ""}${rIdx}${rNum}`;
                         if (seenKeys.has(key)) return false;
                         seenKeys.add(key);
                         return true;

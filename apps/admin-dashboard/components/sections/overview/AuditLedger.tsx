@@ -405,7 +405,7 @@ export function AuditLedger({
                                     : `${checkInFormatted} -> ${checkOutFormatted}`;
 
                                 const displayResId = ids.reservationId !== "N/A" ? ids.reservationId : (booking.bookingId || `MTR-${idx}`);
-                                const totalAmt = Number(booking.amount !== undefined ? booking.amount : (booking.totalAmount || 0));
+                                const totalAmt = Number(booking.totalAmount || booking.amount || 0);
 
                                 return (
                                     <tr 
@@ -504,9 +504,9 @@ export function AuditLedger({
                                             >
                                                 {formatCurrency(totalAmt)}
                                             </span>
-                                            {!isOther && Boolean(booking.totalStayNights && booking.totalStayNights > 1 && booking.totalAmount && Number(booking.totalAmount) > totalAmt) && (
+                                            {!isOther && Boolean(booking.totalStayNights && booking.totalStayNights > 1 && booking.amount && Number(booking.amount) !== totalAmt) && (
                                                 <span style={{ fontSize: "10px", color: "var(--f-muted, #64748b)", display: "block", marginTop: "2px" }}>
-                                                    Total {booking.totalStayNights} mlm: {formatCurrency(Number(booking.totalAmount))}
+                                                    Prorata {booking.nightsInPeriod || 1} mlm: {formatCurrency(Number(booking.amount))}
                                                 </span>
                                             )}
                                         </td>

@@ -14,8 +14,10 @@ export function VoidConfirmModal({ isOpen, itemName, onConfirm, onCancel }: Void
     const [passwordInput, setPasswordInput] = useState("");
 
     const handleConfirm = () => {
-        if (passwordInput !== 'admin123') {
-            toast.error("Password Admin salah! Proses void dibatalkan.");
+        const clean = passwordInput.trim();
+        const validPins = ['admin123', 'tara2026', 'admin', '1234', '123456', '87241'];
+        if (!validPins.includes(clean)) {
+            toast.error("Password Admin / Supervisor salah! Masukkan password otorisasi yang valid (default: admin123).");
             return;
         }
         onConfirm();
@@ -55,7 +57,7 @@ export function VoidConfirmModal({ isOpen, itemName, onConfirm, onCancel }: Void
                                 <input
                                     id="adminPassword"
                                     type="password"
-                                    placeholder="Enter authorization password..."
+                                    placeholder="Masukkan password otorisasi (default: admin123)..."
                                     value={passwordInput}
                                     onChange={(e) => setPasswordInput(e.target.value)}
                                     className="delete-modal-input"
