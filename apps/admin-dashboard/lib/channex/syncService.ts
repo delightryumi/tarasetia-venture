@@ -399,8 +399,65 @@ export class ChannexSyncService {
             reservationId;
 
         const otaBookingId = reservationId;
+
+        // ── VOID PROTECTION GUARD (Tombstone Blacklist) ──
+        // If this reservation was VOIDED by Front Desk in PMS, immediately drop incoming webhooks/revisions
+        // to prevent deleted/voided bookings from resurrecting in daily_revenue.
+        const voidCheckIds = [
+            channexBookingId,
+            otaBookingId,
+            reservationId,
+            otaReservationId,
+            (booking as any)?.booking_id,
+            (booking as any)?.unique_id
+        ].filter(Boolean);
+
+        for (const vId of voidCheckIds) {
+            try {
+                const voidSnap = await adminDb.collection(`hotels/${hotelCode}/voided_bookings`).doc(String(vId)).get();
+                if (voidSnap.exists) {
+                    console.log(`[ChannexSync] Dropping incoming event ${event} for VOIDED booking [${vId}]. Will not re-insert into PMS.`);
+                    return {
+                        success: true,
+                        message: `Booking ${vId} was VOIDED in PMS. Webhook event safely dropped.`
+                    };
+                }
+            } catch (vErr) {
+                console.warn(`[ChannexSync] Void check warning for ID ${vId}:`, vErr);
+            }
+        }
+
         const guest = booking.customer || booking.guest || {};
-        const guestName = (guest.name || `${guest.first_name || ""} ${guest.last_name || ""}`).trim() || "OTA Guest";
+        
+        // Comprehensive guest name resolver: handles Channex customer { name, surname } structure properly
+        // without dropping surname when name only holds salutation ("Mr.") or given name!
+        const extractAuthoritativeGuestName = (g: any): string => {
+            if (!g) return "OTA Guest";
+            if (typeof g === "string") return g.trim() || "OTA Guest";
+            if (g.full_name && String(g.full_name).trim()) return String(g.full_name).trim();
+
+            const fName = String(g.name || g.first_name || "").trim();
+            const lName = String(g.surname || g.last_name || "").trim();
+
+            if (fName && lName) {
+                // If they are exactly identical (single word name sent as both name & surname)
+                if (fName.toLowerCase() === lName.toLowerCase()) return fName;
+                // If lName already contains fName (or fName contains lName)
+                if (lName.toLowerCase().startsWith(fName.toLowerCase())) return lName;
+                if (fName.toLowerCase().endsWith(lName.toLowerCase())) return fName;
+                return `${fName} ${lName}`.trim();
+            }
+
+            const candidate = fName || lName || "";
+            // Check if candidate is merely an orphan salutation (e.g. "Mr.", "Mrs.", "Ms.")
+            const isOrphanSalutation = /^(mr|mrs|ms|miss|dr|prof)\.?$/i.test(candidate);
+            if (!candidate || isOrphanSalutation) {
+                return (booking as any)?.rawGuestName || (booking as any)?.guestName || g.email || g.phone || "OTA Guest";
+            }
+            return candidate;
+        };
+
+        const guestName = extractAuthoritativeGuestName(guest);
         const arrivalDate = booking.arrival_date;
         const departureDate = booking.departure_date;
         const eta = (booking as any)?.arrival_hour || 
@@ -861,7 +918,24 @@ export class ChannexSyncService {
         }
 
         // Process each booked room (skip creating new entries if already cancelled in existing daily records)
-        if (!isCancelled || affectedDates.size === 0) {
+        // CRITICAL FIX: If the booking is CANCELLED and has no existing active records in PMS (e.g. already VOIDED by Front Desk),
+        // NEVER resurrect it or create new phantom entries in daily_revenue!
+        if (isCancelled) {
+            if (affectedDates.size === 0) {
+                console.log(`[ChannexSync] Ignored cancellation for booking ${otaBookingId || channexBookingId}: no active records found in PMS (already voided or nonexistent).`);
+                return {
+                    success: true,
+                    message: "Cancellation ignored: booking has no existing active records in PMS (already voided)."
+                };
+            }
+            // Existing records were already marked as CANCELLED above (lines 720-755)
+            return {
+                success: true,
+                message: `Cancellation processed for booking ${otaBookingId || channexBookingId}.`
+            };
+        }
+
+        if (!isCancelled) {
             const assignedInCurrentReservation = new Set<string>();
             const pendingWritesByDate = new Map<string, { ref: any; exists: boolean; entries: any[] }>();
 
@@ -2383,9 +2457,20 @@ export class ChannexSyncService {
             dailyAmountsMap[dateStr] = String(formatRateForChannex(avgNightly, hotelCurrency));
         }
 
-        const nameParts = (bookingData.guestName || "Guest").trim().split(" ");
-        const firstName = nameParts[0] || "Guest";
-        const lastName = nameParts.slice(1).join(" ") || firstName;
+        const rawFullName = (bookingData.guestName || "Guest").trim();
+        const salutations = ["mr.", "mr", "mrs.", "mrs", "ms.", "ms", "miss", "dr.", "dr", "prof.", "prof"];
+        const words = rawFullName.split(/\s+/).filter(Boolean);
+        
+        let title = "";
+        let actualWords = [...words];
+        if (words.length > 1 && salutations.includes(words[0].toLowerCase())) {
+            title = words[0];
+            actualWords = words.slice(1);
+        }
+        
+        const firstName = actualWords[0] || "Guest";
+        const lastName = actualWords.slice(1).join(" ") || firstName;
+        const customerFirstName = title ? `${title} ${firstName}` : firstName;
         const reservationCode = bookingData.reservationId || bookingData.bookingId;
 
         // Official Channex CRS Specification for POST /api/v1/bookings
@@ -2401,7 +2486,7 @@ export class ChannexSyncService {
             payment_collect: "property",
             notes: bookingData.notes || `Created via My Tara Front Desk (Ref: ${reservationCode})`,
             customer: {
-                name: firstName,
+                name: customerFirstName,
                 surname: lastName,
                 email: bookingData.email || `${bookingData.bookingId.toLowerCase()}@guest.mytara.id`,
                 phone: bookingData.phone || "+62811111111"

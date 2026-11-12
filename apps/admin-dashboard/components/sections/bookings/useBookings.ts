@@ -256,12 +256,26 @@ export function useBookings({
 
                 // Safely sanitize string fields that might be stored as objects in Firestore
                 const guestName = (() => {
-                    if (!entry.guestName) return "Tamu";
-                    if (typeof entry.guestName === "string") return entry.guestName.trim() || "Tamu";
-                    if (typeof entry.guestName === "object") {
-                        return (entry.guestName.name || `${entry.guestName.first_name || ""} ${entry.guestName.last_name || ""}`).trim() || "Tamu";
+                    let nameStr = "";
+                    if (!entry.guestName) {
+                        nameStr = "";
+                    } else if (typeof entry.guestName === "string") {
+                        nameStr = entry.guestName.trim();
+                    } else if (typeof entry.guestName === "object") {
+                        const g = entry.guestName;
+                        const f = String(g.name || g.first_name || "").trim();
+                        const l = String(g.surname || g.last_name || "").trim();
+                        nameStr = (g.full_name || (f && l ? `${f} ${l}` : f || l)).trim();
+                    } else {
+                        nameStr = String(entry.guestName).trim();
                     }
-                    return String(entry.guestName);
+
+                    // Check if nameStr is merely an orphan salutation (e.g. "Mr.", "Mrs.", "Ms.")
+                    const isOrphanSalutation = /^(mr|mrs|ms|miss|dr|prof)\.?$/i.test(nameStr);
+                    if (!nameStr || isOrphanSalutation) {
+                        return (entry.rawGuestName && String(entry.rawGuestName).trim()) || entry.phone || entry.email || "Tamu";
+                    }
+                    return nameStr;
                 })();
 
                 const safeRoomType = (() => {

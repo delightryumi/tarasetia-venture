@@ -467,17 +467,26 @@ export function AuditLedger({
                                             </span>
                                         </td>
                                         <td className={`${styles.tableCell} ${styles.colGuest}`}>
-                                            <p 
-                                                className={styles.guestNameText} 
-                                                title={booking.guestName || booking.incomeCategory || (isOther ? "Other Non-Room Income" : "Direct Guest Folio")}
-                                                style={{
-                                                    textDecoration: isCancelled ? "line-through" : "none",
-                                                    color: isCancelled ? "#94a3b8" : "#0f172a",
-                                                    margin: 0
-                                                }}
-                                            >
-                                                {booking.guestName || booking.incomeCategory || (isOther ? "Other Non-Room Income" : "Direct Guest Folio")}
-                                            </p>
+                                            {(() => {
+                                                const raw = String(booking.guestName || "").trim();
+                                                const displayGuestName = (/^(mr|mrs|ms|miss|dr|prof)\.?$/i.test(raw))
+                                                    ? (booking.rawGuestName || booking.phone || booking.email || "Tamu Hotel")
+                                                    : (raw || booking.incomeCategory || (isOther ? "Other Non-Room Income" : "Direct Guest Folio"));
+
+                                                return (
+                                                    <p 
+                                                        className={styles.guestNameText} 
+                                                        title={displayGuestName}
+                                                        style={{
+                                                            textDecoration: isCancelled ? "line-through" : "none",
+                                                            color: isCancelled ? "#94a3b8" : "#0f172a",
+                                                            margin: 0
+                                                        }}
+                                                    >
+                                                        {displayGuestName}
+                                                    </p>
+                                                );
+                                            })()}
                                             {isOther && (
                                                 <span style={{ fontSize: "10px", color: "var(--f-muted, #64748b)", display: "block", marginTop: "2px" }}>
                                                     Pendapatan Non-Kamar • Kasir: {booking.staffName || "Staff FO"}

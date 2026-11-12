@@ -55,6 +55,14 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
         return String(val);
     };
 
+    const getSafeGuestName = (val: any): string => {
+        const raw = getSafeDisplay(val, "Tamu");
+        if (/^(mr|mrs|ms|miss|dr|prof)\.?$/i.test(raw.trim())) {
+            return (booking as any)?.rawGuestName || (booking as any)?.phone || (booking as any)?.email || "Tamu Hotel";
+        }
+        return raw;
+    };
+
     const getStatusClass = () => {
         if (booking.isCancelled) return s.statusCancelled;
         if (booking.status === "CHECKED_IN" || booking.guestStatus === "in_house") return s.statusCheckedIn;
@@ -124,7 +132,7 @@ export function BookingCard({ booking, onSelect }: BookingCardProps) {
             {/* Guest Name & Reservation IDs */}
             <div className={s.guestSection}>
                 <div className={`${s.guestName} ${booking.isCancelled ? s.guestNameCancelled : ""}`}>
-                    {getSafeDisplay(booking.guestName, "Tamu")}
+                    {getSafeGuestName(booking.guestName)}
                 </div>
                 
                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 4 }}>

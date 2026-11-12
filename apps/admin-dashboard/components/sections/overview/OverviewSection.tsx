@@ -12,7 +12,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, collection, query, where, getDocs, deleteDoc, setDoc } from "firebase/firestore";
 import { getHotelCollection } from "@/lib/firestoreHelper";
 import { resolveBookingIdentifiers } from "@/lib/channelHelper";
 import { logAuditEvent } from "@/lib/auditLogger";
@@ -411,6 +411,33 @@ export function OverviewSection() {
                 const revSnap = await getDocs(revQuery);
                 for (const d of revSnap.docs) {
                     await updateDoc(d.ref, { status: "VOID", isDeleted: true });
+                }
+            }
+
+            // Record authoritative Void Tombstone in Firestore
+            // Permanently prevents Channex Webhooks or background sync from resurrecting this booking
+            const voidIds = [
+                bookingToVoid.bookingId,
+                bookingToVoid.id,
+                bookingToVoid.channexBookingId,
+                bookingToVoid.channexId,
+                bookingToVoid.reservationId,
+                bookingToVoid.otaReservationId,
+                bookingToVoid.voucherCode
+            ].filter(Boolean);
+
+            for (const vId of voidIds) {
+                try {
+                    await setDoc(doc(getHotelCollection(db, "voided_bookings", hotelId), String(vId)), {
+                        bookingId: bookingToVoid.bookingId || bookingToVoid.id || "",
+                        channexBookingId: bookingToVoid.channexBookingId || bookingToVoid.channexId || "",
+                        reservationId: bookingToVoid.reservationId || "",
+                        guestName: bookingToVoid.guestName || "",
+                        voidedAt: new Date().toISOString(),
+                        voidedBy: user?.displayName || user?.name || user?.email || "Operator"
+                    });
+                } catch (tombErr) {
+                    console.warn("[Void] Tombstone recording warning:", tombErr);
                 }
             }
 

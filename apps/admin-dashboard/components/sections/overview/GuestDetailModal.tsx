@@ -684,6 +684,33 @@ export function GuestDetailModal({ guest, isEditing: initialEditing, onClose, on
                 }
             }
 
+            // Record authoritative Void Tombstone in Firestore
+            // This permanently blocks Channex Webhooks or sync-feed polling from re-inserting this booking!
+            const voidIds = [
+                guest.bookingId,
+                guest.id,
+                guest.channexBookingId,
+                guest.channexId,
+                guest.reservationId,
+                guest.otaReservationId,
+                guest.voucherCode
+            ].filter(Boolean);
+
+            for (const vId of voidIds) {
+                try {
+                    await setDoc(doc(getHotelCollection(db, "voided_bookings", hotelId), String(vId)), {
+                        bookingId: guest.bookingId || guest.id || "",
+                        channexBookingId: guest.channexBookingId || guest.channexId || "",
+                        reservationId: guest.reservationId || "",
+                        guestName: guest.guestName || "",
+                        voidedAt: new Date().toISOString(),
+                        voidedBy: user?.displayName || user?.name || user?.email || "Operator"
+                    });
+                } catch (tombErr) {
+                    console.warn("[Void] Tombstone recording warning:", tombErr);
+                }
+            }
+
             logAuditEvent({
                 hotelCode: hotelId,
                 actor: {

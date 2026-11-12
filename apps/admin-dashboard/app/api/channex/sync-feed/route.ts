@@ -162,7 +162,17 @@ export async function POST(req: NextRequest) {
                         try {
                             const { dispatchWhatsAppNotification } = await import("@/lib/notifications/whatsappDispatcher");
                             const customer = booking.customer || (booking as any)?.guest || {};
-                            const guestName = (customer.name || `${customer.first_name || ""} ${customer.last_name || ""}`).trim() || "Tamu OTA";
+                            const fName = String(customer.name || customer.first_name || "").trim();
+                            const lName = String(customer.surname || customer.last_name || "").trim();
+                            let guestName = "Tamu OTA";
+                            if (fName && lName) {
+                                guestName = fName.toLowerCase() === lName.toLowerCase() ? fName : `${fName} ${lName}`.trim();
+                            } else {
+                                guestName = fName || lName || "Tamu OTA";
+                            }
+                            if (/^(mr|mrs|ms|miss|dr|prof)\.?$/i.test(guestName)) {
+                                guestName = (booking as any)?.rawGuestName || customer.email || customer.phone || "Tamu OTA";
+                            }
                             const isCancel = rev.event === "booking_cancellation" || booking.status === "cancelled";
                             const isModif = rev.event === "booking_modification" || booking.status === "modified";
                             const roomsList = booking.rooms || [];
