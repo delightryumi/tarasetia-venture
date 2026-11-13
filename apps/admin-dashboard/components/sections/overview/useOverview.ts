@@ -157,9 +157,10 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                             const cIn = e.checkInDate || e.checkIn || '';
                             const cOut = e.checkOutDate || e.checkOut || '';
                             const bId = e.bookingId && e.bookingId !== '-' ? String(e.bookingId).trim() : '';
+                            const cleanBId = bId.replace(/^OFL-/, '').replace(/-BFT$/i, '');
                             const rIdx = e.roomIndex !== undefined ? `_r${e.roomIndex}` : '';
-                            const key = bId 
-                                ? `b_${bId}${rIdx}_${roomIdent}` 
+                            const key = cleanBId 
+                                ? `b_${cleanBId}${rIdx}_${roomIdent}` 
                                 : (normGuestName && cIn) 
                                     ? `${normGuestName}_${roomIdent}${rIdx}_${cIn}_${cOut}` 
                                     : `t_${e.timestamp || Math.random()}`;
@@ -229,12 +230,25 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         });
                         const distinctEntries = Object.values(dateMap);
 
-                        let trueTotalAmount = Number(rep.totalAmount) || 0;
+                        // FRONT OFFICE USALI STANDARD: Always display full room rate plan selling price (Rp 600.000)
+                        const repGross = Number(rep.grossAmount || 0);
+                        const repTotal = Number(rep.totalAmount || 0);
+                        const repAmount = Number(rep.amount || 0);
+
+                        let trueTotalAmount = repGross > 0 ? repGross : (repTotal > 0 ? repTotal : repAmount);
                         if (trueTotalAmount <= 0) {
                             if (distinctEntries.length === totalStayNights) {
-                                trueTotalAmount = distinctEntries.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                                trueTotalAmount = distinctEntries.reduce((sum, item) => {
+                                    const iAmt = Number(item.amount) || 0;
+                                    const iGross = Number(item.grossAmount) || 0;
+                                    return sum + (iGross > 0 ? iGross : (Number(item.totalAmount) || iAmt));
+                                }, 0);
                             } else {
-                                trueTotalAmount = Math.max(...distinctEntries.map(item => Number(item.amount) || 0), 0);
+                                trueTotalAmount = Math.max(...distinctEntries.map(item => {
+                                    const iAmt = Number(item.amount) || 0;
+                                    const iGross = Number(item.grossAmount) || 0;
+                                    return iGross > 0 ? iGross : (Number(item.totalAmount) || iAmt);
+                                }), 0);
                             }
                         }
                         if (trueTotalAmount <= 0) {
@@ -265,8 +279,12 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                         matchingNights.forEach(nightDate => {
                             const exactEntry = dateMap[nightDate];
                             const nIdx = stayNightDates.indexOf(nightDate);
-                            const specificNightRate = (exactEntry && Number(exactEntry.amount) > 0)
-                                ? Number(exactEntry.amount)
+                            const exactAmt = Number(exactEntry?.amount || 0);
+                            const exactGross = Number(exactEntry?.grossAmount || 0);
+                            const fullExactRate = exactGross > 0 ? exactGross : (exactAmt > 0 ? exactAmt : ratePerNight);
+
+                            const specificNightRate = (exactEntry && fullExactRate > 0)
+                                ? fullExactRate
                                 : (Array.isArray(rep.nightRates) && nIdx >= 0 && rep.nightRates[nIdx] !== undefined && Number(rep.nightRates[nIdx]) > 0
                                     ? Number(rep.nightRates[nIdx])
                                     : ratePerNight);
@@ -275,6 +293,31 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
 
                         const periodPayHotel = totalStayNights > 0 ? Math.round((stayPayHotel / totalStayNights) * nightsInPeriod) : stayPayHotel;
                         const periodPayTransfer = totalStayNights > 0 ? Math.round((stayPayTransfer / totalStayNights) * nightsInPeriod) : stayPayTransfer;
+
+                        // Authoritative Payment Status Resolution (Due Amount = 0 => Lunas)
+                        const totalStayPaid = stayPayHotel + stayPayTransfer;
+                        const isPaidInFull = !isCancelled && (
+                            rep.isCompliment ||
+                            (trueTotalAmount > 0 && totalStayPaid >= trueTotalAmount) ||
+                            distinctEntries.some(item => {
+                                const ps = String(item.paymentStatus || '').trim().toLowerCase();
+                                return ps === 'lunas' || ps === 'settled';
+                            }) ||
+                            group.some(item => {
+                                const ps = String(item.paymentStatus || '').trim().toLowerCase();
+                                return ps === 'lunas' || ps === 'settled';
+                            })
+                        );
+
+                        if (isCancelled) {
+                            rep.paymentStatus = "CANCELLED";
+                        } else if (isPaidInFull) {
+                            rep.paymentStatus = "Lunas";
+                        } else if (totalStayPaid > 0 && totalStayPaid < trueTotalAmount) {
+                            rep.paymentStatus = "DP / Partial";
+                        } else if (rep.paymentStatus === "Belum Bayar" && totalStayPaid >= trueTotalAmount && trueTotalAmount > 0) {
+                            rep.paymentStatus = "Lunas";
+                        }
 
                         rep.totalAmount = trueTotalAmount;
                         rep.ratePerNight = ratePerNight;
@@ -320,7 +363,11 @@ export const useOverview = (startDateStr: string, endDateStr: string) => {
                             }
                             
                             if (isCheckOutInPeriod) {
-                                checkOut.push(e);
+                                const checkOutEntry = {
+                                    ...e,
+                                    amount: Number(e.amount) > 0 ? e.amount : (e.totalAmount || e.ratePerNight || 0)
+                                };
+                                checkOut.push(checkOutEntry);
                             }
                             allAccommodation.push(e);
                         } else {

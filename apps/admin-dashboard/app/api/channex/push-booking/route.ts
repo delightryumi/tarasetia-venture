@@ -43,13 +43,14 @@ export async function POST(req: NextRequest) {
                         const entries = docSnap.data()?.entries || [];
                         let matchedInDoc = false;
                         const updatedEntries = entries.map((e: any) => {
-                            const isMatch = (bookingData.bookingId && e.bookingId === bookingData.bookingId) ||
-                                (bookingData.reservationId && e.reservationId === bookingData.reservationId);
+                            const isMatch = (bookingData.bookingId && (e.bookingId === bookingData.bookingId || String(e.bookingId || "").replace(/^OFL-/, "") === String(bookingData.bookingId).replace(/^OFL-/, ""))) ||
+                                (bookingData.reservationId && (e.reservationId === bookingData.reservationId || String(e.reservationId || "").replace(/^OFL-/, "") === String(bookingData.reservationId).replace(/^OFL-/, "")));
                             if (isMatch) {
                                 matchedInDoc = true;
                                 return {
                                     ...e,
                                     channexBookingId: result.channexBookingId,
+                                    otaReservationId: bookingData.bookingId || e.bookingId,
                                     isSyncedToChannexCrs: true,
                                     syncedToChannexAt: new Date().toISOString()
                                 };

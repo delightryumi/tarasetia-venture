@@ -215,17 +215,31 @@ export function StatCard({ icon, icon3d, label, count, accent, items = [], onIte
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '6px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
-                                        <p 
-                                            className={styles.guestAmount} 
-                                            style={{ 
-                                                margin: 0, 
-                                                lineHeight: 1.2,
-                                                color: isCancelled ? '#9ca3af' : undefined,
-                                                textDecoration: isCancelled ? 'line-through' : 'none'
-                                            }}
-                                        >
-                                            {formatCurrency(Number(item.amount))}
-                                        </p>
+                                        {(() => {
+                                            const rawAmt = Number(item.amount || 0);
+                                            const rawTotal = Number(item.totalAmount || 0);
+                                            const rawNightly = Number(item.ratePerNight || 0);
+                                            const rawGross = Number(item.grossAmount || 0);
+
+                                            // Front Office PMS Standard: Display full room rate plan selling price (Rp 600.000)
+                                            const displayAmount = item.isCompliment 
+                                                ? 0 
+                                                : (rawGross > 0 ? rawGross : (rawTotal > 0 ? rawTotal : (rawAmt > 0 ? rawAmt : rawNightly)));
+
+                                            return (
+                                                <p 
+                                                    className={styles.guestAmount} 
+                                                    style={{ 
+                                                        margin: 0, 
+                                                        lineHeight: 1.2,
+                                                        color: isCancelled ? '#9ca3af' : undefined,
+                                                        textDecoration: isCancelled ? 'line-through' : 'none'
+                                                    }}
+                                                >
+                                                    {formatCurrency(displayAmount)}
+                                                </p>
+                                            );
+                                        })()}
                                         <span 
                                             className={`${styles.paymentBadge} ${
                                                 isCancelled 

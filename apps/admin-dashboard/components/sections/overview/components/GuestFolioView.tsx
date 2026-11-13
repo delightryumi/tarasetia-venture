@@ -938,12 +938,24 @@ export function GuestFolioView({ guest, onEditPayment }: GuestFolioViewProps) {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#8c8c8c' }}>Status Penagihan:</span>
-                                <span style={{ 
-                                    fontWeight: 700,
-                                    color: (guest.paymentStatus?.includes('Lunas') || guest.paymentStatus?.includes('LUNAS') || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? '#16a34a' : '#d97706' 
-                                }}>
-                                    {(guest.paymentStatus?.includes('Lunas') || guest.paymentStatus?.includes('LUNAS') || guest.payTransfer > 0 || (guest.isOTA && guest.paymentCollect !== 'property')) ? 'LUNAS (Settled / Prepaid)' : 'TAGIHAN SAAT KEDATANGAN (Pay at Hotel)'}
-                                </span>
+                                {(() => {
+                                    const totalPaidSettlement = (Number(guest.paidCash || 0) + Number(guest.paidEdc || 0) + Number(guest.paidQris || 0) + Number(guest.paidTransfer || 0) + Number(guest.paidOta || 0) + Number(guest.payHotel || 0));
+                                    const isSettled = Boolean(
+                                        guest.paymentStatus?.toLowerCase().includes('lunas') ||
+                                        guest.paymentStatus?.toLowerCase().includes('settled') ||
+                                        guest.isCompliment ||
+                                        (totalAmount > 0 && totalPaidSettlement >= totalAmount) ||
+                                        (guest.isOTA && guest.paymentCollect !== 'property')
+                                    );
+                                    return (
+                                        <span style={{ 
+                                            fontWeight: 700,
+                                            color: isSettled ? '#16a34a' : '#d97706' 
+                                        }}>
+                                            {isSettled ? 'LUNAS (Settled / Prepaid)' : 'TAGIHAN SAAT KEDATANGAN (Pay at Hotel)'}
+                                        </span>
+                                    );
+                                })()}
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span style={{ color: '#8c8c8c' }}>Deposit / Uang Muka:</span>

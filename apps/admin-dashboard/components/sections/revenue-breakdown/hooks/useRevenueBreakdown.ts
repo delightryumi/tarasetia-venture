@@ -278,14 +278,17 @@ export const useRevenueBreakdown = () => {
       const accommodationGroups: Record<string, any[]> = {};
       allEntriesRaw.forEach((e) => {
         const normGuestName = (e.guestName || "").trim().toLowerCase();
-        const roomIdent = String(e.roomNumber || e.roomTypeId || e.roomType || '').trim();
+        const roomIdent = String(e.roomNumber || e.roomIndex || e.roomTypeId || e.roomType || '').trim();
         const cIn = e.checkInDate || '';
         const cOut = e.checkOutDate || '';
-        const cleanBookingId = String(e.bookingId || e.voucherCode || "").replace(/-BFT$/i, "").trim();
+        const cleanBookingId = String(e.bookingId || e.reservationId || e.voucherCode || "").replace(/-BFT$/i, "").replace(/^OFL-/, "").trim();
+        const rIdx = e.roomIndex !== undefined ? `_r${e.roomIndex}` : '';
 
-        const key = (normGuestName && cIn) 
-          ? `${normGuestName}_${roomIdent}_${cIn}_${cOut}` 
-          : (cleanBookingId ? `b_${cleanBookingId}` : `t_${e.timestamp}`);
+        const key = cleanBookingId && cleanBookingId !== '-'
+          ? `b_${cleanBookingId}${rIdx}_${roomIdent}`
+          : (normGuestName && cIn) 
+              ? `${normGuestName}_${roomIdent}${rIdx}_${cIn}_${cOut}` 
+              : `t_${e.timestamp || Math.random()}`;
 
         if (!accommodationGroups[key]) {
           accommodationGroups[key] = [];
@@ -333,9 +336,12 @@ export const useRevenueBreakdown = () => {
             room = e.roomType ? String(e.roomType).slice(0, 4).toUpperCase() : "101";
           }
 
-          // Quantity & Gross
+          // Quantity & Gross (Front Office Standard: Full rate plan selling price Rp 600.000)
           const qty = Number(e.roomCount || e.quantity || 1) || 1;
-          const gross = Math.round(Number(e.amount ?? e.totalAmount ?? e.price ?? 0));
+          const rawAmt = Number(e.amount ?? e.price ?? 0);
+          const rawGross = Number(e.grossAmount ?? 0);
+          const effectiveGross = rawGross > 0 ? rawGross : (Number(e.totalAmount || rawAmt || 0));
+          const gross = Math.round(effectiveGross);
           const price = qty > 0 ? Math.round(gross / qty) : gross;
 
           // Exact VHP Formula (21% Tax & Service):
